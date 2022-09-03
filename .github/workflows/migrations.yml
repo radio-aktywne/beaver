@@ -31,7 +31,7 @@ env:
 jobs:
   test:
     name: Check migrations
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     defaults:
       run:
         # necessary for conda to work
