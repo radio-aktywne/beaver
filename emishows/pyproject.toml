@@ -18,6 +18,7 @@ Django = "~4.0.7"
 psycopg2-binary = "^2.9"
 django-cockroachdb = "~4.0.0"
 django-filter = "^21.1"
+django-probes = "^1.7"
 caldav = "^0.8"
 icalendar = "^4.0"
 recurring-ical-events = { version = "^1.0", allow-prereleases = true }

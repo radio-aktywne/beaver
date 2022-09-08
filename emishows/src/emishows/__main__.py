@@ -7,7 +7,7 @@ import time
 
 import typer
 import uvicorn
-from django.core.management import call_command
+from django.core.management import call_command, CommandError
 
 from emishows.asgi import app
 from emishows.config import config
@@ -28,6 +28,16 @@ def wait_for_certificates() -> None:
         f.write(files[0].read_text())
 
 
+def wait_for_database() -> None:
+    while True:
+        typer.echo("Waiting for database...")
+        try:
+            call_command("wait_for_database")
+            break
+        except CommandError:
+            time.sleep(1)
+
+
 def create_calendar() -> None:
     calendars["emitimes"] = Calendar(
         url=f"http://{config.emitimes_host}:{config.emitimes_port}",
@@ -39,6 +49,7 @@ def create_calendar() -> None:
 
 def setup() -> None:
     wait_for_certificates()
+    wait_for_database()
     call_command("migrate", "--no-input")
     create_calendar()
 
