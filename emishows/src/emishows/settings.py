@@ -43,10 +43,17 @@ TEMPLATES = [
 DATABASES = {
     "default": {
         "ENGINE": "django_cockroachdb",
-        "NAME": "defaultdb",
-        "USER": "root",
+        "NAME": "database",
+        "USER": "emishows",
         "HOST": config.db_host,
         "PORT": config.db_port,
+        "OPTIONS": {
+            "password": config.db_password,
+            "sslmode": "verify-full",
+            "sslrootcert": config.certs_dir / "ca.pem",
+            "sslcert": config.certs_dir / "client.cert.pem",
+            "sslkey": config.certs_dir / "client.key.pem",
+        },
     }
 }
 
