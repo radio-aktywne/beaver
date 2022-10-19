@@ -2,7 +2,9 @@ import os
 import warnings
 from pathlib import Path
 
-from emishows.config import config
+from emishows.config import ConfigLoader
+
+config = ConfigLoader.get()
 
 warnings.filterwarnings(
     "ignore", message="No directory at", module="whitenoise.base"
@@ -46,10 +48,10 @@ DATABASES = {
         "ENGINE": "django_cockroachdb",
         "NAME": "database",
         "USER": "emishows",
-        "HOST": config.db_host,
-        "PORT": config.db_port,
+        "HOST": config.db.host,
+        "PORT": config.db.port,
         "OPTIONS": {
-            "password": config.db_password,
+            "password": config.db.password,
             "sslmode": "verify-full",
             "sslrootcert": config.certs_dir / "ca.pem",
             "sslcert": config.certs_dir / "client.cert.pem",

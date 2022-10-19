@@ -1,6 +1,7 @@
-name: Checking migrations
+name: Migrations
 
 on:
+  workflow_dispatch:
   push:
     # trigger only on main branch
     branches:
@@ -9,7 +10,7 @@ on:
     paths:
       - "emishows/src/emishows/app/migrations/**"
       - "emishows/src/emishows/app/models.py"
-      - ".github/workflows/migrations.yml"
+      - ".github/workflows/migrations.yaml"
   pull_request:
     # trigger only on main branch
     branches:
@@ -18,7 +19,7 @@ on:
     paths:
       - "emishows/src/emishows/app/migrations/**"
       - "emishows/src/emishows/app/models.py"
-      - ".github/workflows/migrations.yml"
+      - ".github/workflows/migrations.yaml"
 
 # env for all jobs
 env:
@@ -29,7 +30,7 @@ env:
   CACHE_NUMBER: 0
 
 jobs:
-  test:
+  migrations:
     name: Check migrations
     runs-on: ubuntu-latest
     defaults:
@@ -39,10 +40,10 @@ jobs:
     steps:
       - # get repository code
         name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - # get conda, poetry and pip cache (persistent between runs)
         name: Cache packages
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ${{ env.CONDA_CACHE_DIR }}
@@ -50,9 +51,9 @@ jobs:
             ${{ env.PIP_CACHE_DIR }}
           key: ${{ runner.os }}-pkgs-${{ env.CACHE_NUMBER }}
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.9.7"
+          python-version: "3.10.6"
       - name: Set up pip cache
         run: python3 -m pip config set global.cache-dir ${{ env.PIP_CACHE_DIR }}
       - name: Install poetry
@@ -64,13 +65,13 @@ jobs:
         uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: emishows
-          environment-file: environment.yml
+          environment-file: environment.yaml
           # necessary for caching to work
           use-only-tar-bz2: true
       - # install only dependencies
         name: Install dependencies
         working-directory: emishows
-        run: poetry install --no-root
+        run: poetry install --no-root --only main
       - # workaround for non-editable install, waiting for https://github.com/python-poetry/poetry/issues/1382
         name: Build package
         working-directory: emishows

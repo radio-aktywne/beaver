@@ -1,4 +1,5 @@
 import json
+from abc import ABC
 from datetime import datetime
 from json import JSONDecodeError
 from uuid import uuid4
@@ -27,7 +28,8 @@ class DateTimeField(serializers.DateTimeField):
             return parse_datetime_with_timezone(data)
         except (ValueError, ZoneInfoNotFoundError) as e:
             raise ValidationError(
-                f"Invalid datetime format. Example of valid one: '2000-01-01T20:00:00 Europe/Warsaw'"
+                f"Invalid datetime format. "
+                f"Example of valid one: '2000-01-01T20:00:00 Europe/Warsaw'."
             ) from e
 
     @staticmethod
@@ -59,6 +61,7 @@ class JSONField(serializers.Field):
         return value
 
 
+# noinspection PyAbstractClass
 class BaseEventParamsSerializer(serializers.Serializer):
     start = DateTimeField()
     end = DateTimeField()
