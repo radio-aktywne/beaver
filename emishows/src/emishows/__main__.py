@@ -85,9 +85,8 @@ def main(
         raise typer.Exit(1)
     logger.info("Config loaded!")
 
-    setup(config)
-
     app = build_app()
+    setup(config)
     uvicorn.run(app, host=config.host, port=config.port)
 
 
