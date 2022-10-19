@@ -1,15 +1,17 @@
 from pathlib import Path
 
+from pydantic import BaseModel
+
 from emishows.config.base import BaseConfig
 
 
-class DatabaseConfig(BaseConfig):
+class DatabaseConfig(BaseModel):
     host: str = "localhost"
     port: int = 34000
     password: str = "password"
 
 
-class EmitimesConfig(BaseConfig):
+class EmitimesConfig(BaseModel):
     host: str = "localhost"
     port: int = 36000
     user: str = "user"
