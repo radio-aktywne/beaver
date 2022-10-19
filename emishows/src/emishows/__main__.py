@@ -28,7 +28,7 @@ def wait_for_certificates(directory: Path) -> None:
     files = [directory / filename for filename in filenames]
 
     while not all(file.exists() for file in files):
-        typer.echo("Waiting for certificates...")
+        logger.info("Waiting for certificates...")
         time.sleep(1)
 
     with open("/etc/ssl/certs/ca-certificates.crt", "a") as f:
@@ -37,11 +37,12 @@ def wait_for_certificates(directory: Path) -> None:
 
 def wait_for_database() -> None:
     while True:
-        typer.echo("Waiting for database...")
+        logger.info("Waiting for database...")
         try:
             call_command("wait_for_database")
             break
-        except CommandError:
+        except CommandError as e:
+            logger.warning(e)
             time.sleep(1)
 
 
