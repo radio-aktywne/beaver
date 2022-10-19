@@ -13,70 +13,78 @@ COPY --from=mc /usr/bin/mc /usr/bin/mc
 # and git to get pystreams
 RUN apk add --no-cache bash ffmpeg ca-certificates git
 
+WORKDIR /app/
+
 # install poetry
-COPY ./requirements.txt /tmp/requirements.txt
-RUN python3 -m pip install --no-cache-dir -r /tmp/requirements.txt
+COPY ./requirements.txt ./requirements.txt
+RUN --mount=type=cache,target=/root/.cache \
+    python3 -m pip install -r ./requirements.txt
 
 # create new environment
-# see: https://jcristharif.com/conda-docker-tips.html
 # warning: for some reason conda can hang on "Executing transaction" for a couple of minutes
-COPY environment.yml /tmp/environment.yml
-RUN conda env create -f /tmp/environment.yml && \
-    conda clean -afy && \
-    find /opt/conda/ -follow -type f -name '*.a' -delete && \
-    find /opt/conda/ -follow -type f -name '*.pyc' -delete && \
-    find /opt/conda/ -follow -type f -name '*.js.map' -delete
+COPY environment.yaml ./environment.yaml
+RUN --mount=type=cache,target=/opt/conda/pkgs \
+    conda env create -f ./environment.yaml
 
 # "activate" environment for all commands (note: ENTRYPOINT is separate from SHELL)
 SHELL ["conda", "run", "--no-capture-output", "-n", "emishows", "/bin/bash", "-c"]
 
+WORKDIR /app/emishows/
+
 # add poetry files
-COPY ./emishows/pyproject.toml ./emishows/poetry.lock /tmp/emishows/
-WORKDIR /tmp/emishows
-
-ENV EMISHOWS_DB_HOST=localhost \
-    EMISHOWS_DB_PORT=34000 \
-    EMISHOWS_DB_PASSWORD=password \
-    EMISHOWS_CERTS_DIR=/etc/certs \
-    EMISHOWS_EMITIMES_HOST=localhost \
-    EMISHOWS_EMITIMES_PORT=36000 \
-    EMISHOWS_EMITIMES_USER=user \
-    EMISHOWS_EMITIMES_PASSWORD=password \
-    EMISHOWS_EMITIMES_CALENDAR=emitimes
-
-EXPOSE 35000
-
-ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "emishows"]
+COPY ./emishows/pyproject.toml ./emishows/poetry.lock ./
 
 FROM base AS test
 
-# install dependencies only (notice that no source code is present yet) and delete cache
-RUN poetry install --no-root --extras test && \
-    rm -rf ~/.cache/pypoetry
+# install dependencies only (notice that no source code is present yet)
+RUN --mount=type=cache,target=/root/.cache \
+    poetry install --no-root --only main,test
 
 # add source, tests and necessary files
-COPY ./emishows/src/ /tmp/emishows/src/
-COPY ./emishows/tests/ /tmp/emishows/tests/
-COPY ./emishows/LICENSE ./emishows/README.md /tmp/emishows/
+COPY ./emishows/src/ ./src/
+COPY ./emishows/tests/ ./tests/
+COPY ./emishows/LICENSE ./emishows/README.md ./
 
 # build wheel by poetry and install by pip (to force non-editable mode)
 RUN poetry build -f wheel && \
     python -m pip install --no-deps --no-index --no-cache-dir --find-links=dist emishows
 
-CMD ["pytest"]
+# add entrypoint
+COPY ./entrypoint.sh ./entrypoint.sh
+
+ENTRYPOINT ["./entrypoint.sh", "pytest"]
+CMD []
 
 FROM base AS production
 
-# install dependencies only (notice that no source code is present yet) and delete cache
-RUN poetry install --no-root && \
-    rm -rf ~/.cache/pypoetry
+# install dependencies only (notice that no source code is present yet)
+RUN --mount=type=cache,target=/root/.cache \
+    poetry install --no-root --only main
 
 # add source and necessary files
-COPY ./emishows/src/ /tmp/emishows/src/
-COPY ./emishows/LICENSE ./emishows/README.md /tmp/emishows/
+COPY ./emishows/src/ ./src/
+COPY ./emishows/LICENSE ./emishows/README.md ./
 
 # build wheel by poetry and install by pip (to force non-editable mode)
 RUN poetry build -f wheel && \
     python -m pip install --no-deps --no-index --no-cache-dir --find-links=dist emishows
 
-CMD ["emishows", "--port", "35000"]
+# add entrypoint
+COPY ./entrypoint.sh ./entrypoint.sh
+
+ENV EMISHOWS_HOST=0.0.0.0 \
+    EMISHOWS_PORT=35000 \
+    EMISHOWS_CERTS_DIR=/etc/certs \
+    EMISHOWS_DB__HOST=localhost \
+    EMISHOWS_DB__PORT=34000 \
+    EMISHOWS_DB__PASSWORD=password \
+    EMISHOWS_EMITIMES__HOST=localhost \
+    EMISHOWS_EMITIMES__PORT=36000 \
+    EMISHOWS_EMITIMES__USER=user \
+    EMISHOWS_EMITIMES__PASSWORD=password \
+    EMISHOWS_EMITIMES__CALENDAR=emitimes
+
+EXPOSE 35000
+
+ENTRYPOINT ["./entrypoint.sh", "emishows"]
+CMD []
