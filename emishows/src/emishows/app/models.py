@@ -14,6 +14,7 @@ class Event(models.Model):
     class Type(models.IntegerChoices):
         LIVE = 1
         REPLAY = 2
+        PRERECORDED = 3
 
     id = models.UUIDField(primary_key=True)
     show = models.ForeignKey(Show, on_delete=models.CASCADE)
