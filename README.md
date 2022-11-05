@@ -14,9 +14,9 @@ emission shows 🎭
 
 This `README` provides info about the development process.
 
-For more info about the package itself
-see `emishows/README.md`
-or [docs](https://radio-aktywne.github.io/emishows).
+For more info about the package itself see
+[package `README`](emishows/README.md) or
+[docs](https://radio-aktywne.github.io/emishows).
 
 ## Quickstart (on Ubuntu)
 
