@@ -15,7 +15,7 @@ pydantic =  { version = "^1.10", extras = ["dotenv"] }
 omegaconf = "^2.2"
 typer = { version = "^0.6", extras = ["all"] }
 djangorestframework = "^3.13"
-Django = "~4.0.7"
+Django = "~4.1.7"
 psycopg2-binary = "^2.9"
 django-cockroachdb = "~4.0.0"
 django-filter = "^21.1"
