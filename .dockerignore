@@ -1,10 +1,44 @@
-*
-!emishows/src/**
-!emishows/tests/**
-!emishows/pyproject.toml
-!emishows/poetry.lock
-!emishows/LICENSE
-!emishows/README.md
-!environment.yaml
-!requirements.txt
-!entrypoint.sh
+#Task
+/.task/
+/Taskfile.yaml
+/Taskfile.yml
+
+# Misc
+.DS_Store
+.todo
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Pytest
+.pytest_cache/
+
+# Environment
+/.venv/
+
+# Prisma binaries
+/prisma/bin/
+
+# Tracked, but not needed
+/.devcontainer/
+/.github/
+/.trunk/
+/.vscode/
+/docs/
+/tests/
+/.copier-answers.yaml
+/.dockerignore
+/.envrc
+/.gitattributes
+/.gitignore
+/CONTRIBUTING.md
+/docker-compose.yaml
+/Dockerfile
+/LICENSE
+/README.md
+/Taskfile.dist.yaml

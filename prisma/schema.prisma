@@ -1,0 +1,55 @@
+datasource db {
+  provider = "cockroachdb"
+  url      = env("PRISMA_DB_URL")
+}
+
+generator client {
+  // Global settings
+  provider = "prisma-client-py"
+
+  // Settings for "prisma-client-py"
+  interface            = "asyncio"
+  recursive_type_depth = -1
+}
+
+/// Show data
+model Show {
+  /// Identifier of the show
+  id          String  @id @default(uuid()) @map("id") @db.Uuid
+  /// Title of the show
+  title       String  @map("title") @db.String(255)
+  /// Description of the show
+  description String? @map("description")
+
+  /// Events belonging to the show
+  events Event[]
+
+  @@map("shows")
+}
+
+/// Event data
+model Event {
+  /// Identifier of the event
+  id     String    @id @default(uuid()) @map("id") @db.Uuid
+  /// Type of the event
+  type   EventType @map("type")
+  /// Identifier of the show the event belongs to
+  showId String    @map("show_id") @db.Uuid
+
+  /// Show the event belongs to
+  show Show @relation(fields: [showId], references: [id])
+
+  @@map("events")
+}
+
+/// Type of an event
+enum EventType {
+  /// Live event
+  live
+  /// Replay of a previous live event
+  replay
+  /// Prerecorded event
+  prerecorded
+
+  @@map("event_type")
+}

@@ -1,0 +1,19 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: 0.6.0
+_src_path: gh:radio-aktywne/template-app-litestar
+accountname: radio-aktywne
+appname: emishows
+description: emission shows 🎭
+docs: true
+docsurl: https://radio-aktywne.github.io/app-emishows
+email: it@radioaktywne.pl
+envprefix: EMISHOWS
+events: true
+imagename: apps/emishows
+importname: emishows
+port: 35000
+registry: true
+releases: true
+reponame: app-emishows
+repourl: https://github.com/radio-aktywne/app-emishows
+sse: true
