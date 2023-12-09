@@ -1,1 +1,0 @@
-from emishows.resources import *
