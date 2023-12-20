@@ -37,7 +37,7 @@
         ...
       }: let
         node = pkgs.nodejs;
-        python = pkgs.python311;
+        python = pkgs.python312;
         nil = pkgs.nil;
         task = pkgs.go-task;
         coreutils = pkgs.coreutils;
@@ -45,6 +45,7 @@
         poetry = pkgs.poetry;
         copier = pkgs.copier;
         openssl = pkgs.openssl;
+        cacert = pkgs.cacert;
         tini = pkgs.tini;
         su-exec = pkgs.su-exec;
       in {
@@ -78,6 +79,8 @@
               trunk
               poetry
               copier
+              openssl
+              cacert
             ];
 
             PYTHON_SITE_PACKAGES = "${python.sitePackages}";
@@ -121,6 +124,7 @@
               python
               poetry
               openssl
+              cacert
               tini
               su-exec
             ];
@@ -172,6 +176,7 @@
               coreutils
               poetry
               openssl
+              cacert
             ];
 
             LD_LIBRARY_PATH = lib.makeLibraryPath [openssl];

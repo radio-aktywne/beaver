@@ -1,7 +1,7 @@
 from typing import Annotated, TypeVar
 
 from litestar import Controller as BaseController
-from litestar import Response, delete, get, patch, post
+from litestar import delete, get, patch, post
 from litestar.channels import ChannelsPlugin
 from litestar.di import Provide
 from litestar.params import Parameter
@@ -13,22 +13,23 @@ from emishows.api.routes.events.errors import NotFoundError, ValidationError
 from emishows.api.routes.events.models import (
     CreateIncludeParameter,
     CreateRequest,
+    CreateResponse,
     DeleteIdParameter,
+    DeleteResponse,
     GetIdParameter,
     GetIncludeParameter,
+    GetResponse,
     ListIncludeParameter,
     ListLimitParameter,
     ListOffsetParameter,
     ListOrderParameter,
     ListQueryParameter,
+    ListResponse,
     ListWhereParameter,
-    NonRecursiveCreateResponse,
-    NonRecursiveGetResponse,
-    NonRecursiveListResponse,
-    NonRecursiveUpdateResponse,
     UpdateIdParameter,
     UpdateIncludeParameter,
     UpdateRequest,
+    UpdateResponse,
 )
 from emishows.api.routes.events.service import Service
 from emishows.events.service import EventsService
@@ -107,7 +108,7 @@ class Controller(BaseController):
             str | None,
             Parameter(description="Order to apply to events."),
         ] = None,
-    ) -> Response[NonRecursiveListResponse]:
+    ) -> ListResponse:
         where = self._validate_json(ListWhereParameter, where) if where else None
         query = self._validate_json(ListQueryParameter, q) if q else None
         include = (
@@ -116,7 +117,7 @@ class Controller(BaseController):
         order = self._validate_json(ListOrderParameter, order) if order else None
 
         try:
-            response = await service.list(
+            return await service.list(
                 limit=limit,
                 offset=offset,
                 where=where,
@@ -126,8 +127,6 @@ class Controller(BaseController):
             )
         except ValidationError as e:
             raise BadRequestException(extra=e.message) from e
-
-        return Response(response)
 
     @get(
         "/{id:uuid}",
@@ -142,11 +141,11 @@ class Controller(BaseController):
             str | None,
             Parameter(description="Relations to include with event."),
         ] = None,
-    ) -> Response[NonRecursiveGetResponse]:
+    ) -> GetResponse:
         include = self._validate_json(GetIncludeParameter, include) if include else None
 
         try:
-            response = await service.get(
+            return await service.get(
                 id=id,
                 include=include,
             )
@@ -154,8 +153,6 @@ class Controller(BaseController):
             raise BadRequestException(extra=e.message) from e
         except NotFoundError as e:
             raise NotFoundException(extra=e.message) from e
-
-        return Response(response)
 
     @post(
         summary="Create event",
@@ -169,21 +166,19 @@ class Controller(BaseController):
             str | None,
             Parameter(description="Relations to include with event."),
         ] = None,
-    ) -> Response[NonRecursiveCreateResponse]:
+    ) -> CreateResponse:
         data = self._validate_pydantic(CreateRequest, data)
         include = (
             self._validate_json(CreateIncludeParameter, include) if include else None
         )
 
         try:
-            response = await service.create(
+            return await service.create(
                 data=data,
                 include=include,
             )
         except ValidationError as e:
             raise BadRequestException(extra=e.message) from e
-
-        return Response(response)
 
     @patch(
         "/{id:uuid}",
@@ -199,14 +194,14 @@ class Controller(BaseController):
             str | None,
             Parameter(description="Relations to include with event."),
         ] = None,
-    ) -> Response[NonRecursiveUpdateResponse]:
+    ) -> UpdateResponse:
         data = self._validate_pydantic(UpdateRequest, data)
         include = (
             self._validate_json(UpdateIncludeParameter, include) if include else None
         )
 
         try:
-            response = await service.update(
+            return await service.update(
                 id=id,
                 data=data,
                 include=include,
@@ -215,8 +210,6 @@ class Controller(BaseController):
             raise BadRequestException(extra=e.message) from e
         except NotFoundError as e:
             raise NotFoundException(extra=e.message) from e
-
-        return Response(response)
 
     @delete(
         "/{id:uuid}",
@@ -227,9 +220,9 @@ class Controller(BaseController):
         self,
         service: Service,
         id: DeleteIdParameter,
-    ) -> None:
+    ) -> DeleteResponse:
         try:
-            await service.delete(
+            return await service.delete(
                 id=id,
             )
         except ValidationError as e:

@@ -144,7 +144,7 @@ class Service:
     async def delete(
         self,
         id: m.DeleteIdParameter,
-    ) -> None:
+    ) -> m.DeleteResponse:
         """Delete a show."""
 
         request = sm.DeleteRequest(
@@ -164,3 +164,5 @@ class Service:
 
         if show is None:
             raise e.NotFoundError()
+
+        return None

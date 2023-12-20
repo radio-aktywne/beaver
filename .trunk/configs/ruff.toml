@@ -39,6 +39,6 @@ src = [
 
 [lint.isort]
 known-first-party = [
-  # Treat tests as a first-party module
+  # Treat tests as a first-party module.
   "tests",
 ]
