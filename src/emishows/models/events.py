@@ -187,20 +187,13 @@ class EventDeletedEvent(SerializableModel):
     )
 
 
-Event = (
+Event = Annotated[
     ShowCreatedEvent
     | ShowUpdatedEvent
     | ShowDeletedEvent
     | EventCreatedEvent
     | EventUpdatedEvent
-    | EventDeletedEvent
-)
-
-
-class ParsableEvent(RootModel):
-    """Event that can be parsed from a serialized form."""
-
-    root: Event = Field(
-        ...,
-        discriminator="type",
-    )
+    | EventDeletedEvent,
+    Field(..., discriminator="type"),
+]
+ParsableEvent = RootModel[Event]

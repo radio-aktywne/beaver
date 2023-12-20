@@ -43,46 +43,17 @@ class ListResponse(SerializableModel):
     )
 
 
-class NonRecursiveListResponse(SerializableModel):
-    """Non-recursive response from GET /events."""
-
-    count: int = Field(
-        ...,
-        title="NonRecursiveListResponse.Count",
-        description="Number of events that matched the request.",
-    )
-    limit: int | None = Field(
-        ...,
-        title="NonRecursiveListResponse.Limit",
-        description="Maximum number of returned events.",
-    )
-    offset: int | None = Field(
-        ...,
-        title="NonRecursiveListResponse.Offset",
-        description="Number of events skipped.",
-    )
-    events: list[em.NonRecursiveEvent] = Field(
-        ...,
-        title="NonRecursiveListResponse.Events",
-        description="Events that matched the request.",
-    )
-
-
 GetIdParameter = UUID
 
 GetIncludeParameter = em.EventInclude | None
 
 GetResponse = em.Event
 
-NonRecursiveGetResponse = em.NonRecursiveEvent
-
 CreateIncludeParameter = em.EventInclude | None
 
 CreateRequest = em.EventCreateInput
 
 CreateResponse = em.Event
-
-NonRecursiveCreateResponse = em.NonRecursiveEvent
 
 UpdateIdParameter = UUID
 
@@ -92,6 +63,6 @@ UpdateRequest = em.EventUpdateInput
 
 UpdateResponse = em.Event
 
-NonRecursiveUpdateResponse = em.NonRecursiveEvent
-
 DeleteIdParameter = UUID
+
+DeleteResponse = None

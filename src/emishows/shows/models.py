@@ -1,5 +1,4 @@
 from prisma import models as pm
-from prisma import partials as pp
 from prisma import types as pt
 from pydantic import Field
 
@@ -18,7 +17,6 @@ pt.EventOrderByInput = (
 )
 
 
-EventWithoutRelations = pp.EventWithoutRelations
 ShowWhereInput = pt.ShowWhereInput
 ShowInclude = pt.ShowInclude
 ShowOrderByInput = pt.ShowOrderByInput
@@ -26,12 +24,6 @@ Show = pm.Show
 ShowWhereUniqueInput = pt.ShowWhereUniqueInput
 ShowCreateInput = pt.ShowCreateInput
 ShowUpdateInput = pt.ShowUpdateInput
-
-
-class NonRecursiveShow(pp.ShowWithoutRelations):
-    """Non-recursive show model."""
-
-    events: list[EventWithoutRelations] | None = None
 
 
 class CountRequest(SerializableModel):

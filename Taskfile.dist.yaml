@@ -226,7 +226,7 @@ tasks:
         &&
         poetry
         version
-        {{ .CLI_ARGS | default "patch" }}
+        {{ .CLI_ARGS | default "minor" }}
   test:
     desc: Run tests
     cmds:
@@ -240,6 +240,7 @@ tasks:
   generate-prisma:
     desc: Generate Prisma client
     sources:
+      - prisma/partial_types.py
       - prisma/schema.prisma
     generates:
       - .venv/lib/python*/site-packages/prisma/**/*

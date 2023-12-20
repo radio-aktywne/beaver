@@ -34,21 +34,6 @@ class EventSchedule(SerializableModel):
     )
 
 
-class NonRecursiveEventSchedule(SerializableModel):
-    """Non-recursive event schedule."""
-
-    event: em.NonRecursiveEvent = Field(
-        ...,
-        title="NonRecursiveEventSchedule.Event",
-        description="Event.",
-    )
-    instances: list[im.EventInstance] = Field(
-        ...,
-        title="NonRecursiveEventSchedule.Instances",
-        description="Event instances.",
-    )
-
-
 class ListResponse(SerializableModel):
     """Response from GET /schedule."""
 
@@ -70,30 +55,5 @@ class ListResponse(SerializableModel):
     schedules: list[EventSchedule] = Field(
         ...,
         title="ListResponse.Schedules",
-        description="Event schedules that matched the request.",
-    )
-
-
-class NonRecursiveListResponse(SerializableModel):
-    """Non-recursive response from GET /schedule."""
-
-    count: int = Field(
-        ...,
-        title="NonRecursiveListResponse.Count",
-        description="Number of event schedules that matched the request.",
-    )
-    limit: int | None = Field(
-        ...,
-        title="NonRecursiveListResponse.Limit",
-        description="Maximum number of returned event schedules.",
-    )
-    offset: int | None = Field(
-        ...,
-        title="NonRecursiveListResponse.Offset",
-        description="Number of event schedules skipped.",
-    )
-    schedules: list[NonRecursiveEventSchedule] = Field(
-        ...,
-        title="NonRecursiveListResponse.Schedules",
         description="Event schedules that matched the request.",
     )

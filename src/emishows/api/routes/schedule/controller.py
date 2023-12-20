@@ -1,7 +1,7 @@
 from typing import Annotated, TypeVar
 
 from litestar import Controller as BaseController
-from litestar import Response, get
+from litestar import get
 from litestar.channels import ChannelsPlugin
 from litestar.di import Provide
 from litestar.params import Parameter
@@ -16,9 +16,9 @@ from emishows.api.routes.schedule.models import (
     ListLimitParameter,
     ListOffsetParameter,
     ListOrderParameter,
+    ListResponse,
     ListStartParameter,
     ListWhereParameter,
-    NonRecursiveListResponse,
 )
 from emishows.api.routes.schedule.service import Service
 from emishows.events.service import EventsService
@@ -105,7 +105,7 @@ class Controller(BaseController):
             str | None,
             Parameter(description="Order to apply to events."),
         ] = None,
-    ) -> Response[NonRecursiveListResponse]:
+    ) -> ListResponse:
         start = self._validate_pydantic(ListStartParameter, start) if start else None
         end = self._validate_pydantic(ListEndParameter, end) if end else None
         where = self._validate_json(ListWhereParameter, where) if where else None
@@ -115,7 +115,7 @@ class Controller(BaseController):
         order = self._validate_json(ListOrderParameter, order) if order else None
 
         try:
-            response = await service.list(
+            return await service.list(
                 start=start,
                 end=end,
                 limit=limit,
@@ -126,5 +126,3 @@ class Controller(BaseController):
             )
         except ValidationError as e:
             raise BadRequestException(extra=e.message) from e
-
-        return Response(response)

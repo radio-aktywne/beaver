@@ -1,10 +1,8 @@
-from typing import Annotated, NotRequired
+from typing import Annotated, NotRequired, TypedDict
 
 from prisma import models as pm
-from prisma import partials as pp
 from prisma import types as pt
 from pydantic import Field, NaiveDatetime, PlainValidator, TypeAdapter
-from typing_extensions import TypedDict
 
 from emishows.emitimes import models as em
 from emishows.models.base import SerializableModel
@@ -24,7 +22,6 @@ pt.EventOrderByInput = (
 
 EventDatabaseModel = pm.Event
 Recurrence = em.Recurrence
-ShowWithoutRelations = pp.ShowWithoutRelations
 SortOrder = pt.SortOrder
 EventWhereInput = pt.EventWhereInput
 TimeRangeQuery = em.TimeRangeQuery
@@ -36,33 +33,6 @@ EventWhereUniqueInput = pt.EventWhereUniqueInput
 
 class Event(EventDatabaseModel):
     """Event model."""
-
-    start: NaiveDatetime = Field(
-        ...,
-        title="Event.Start",
-        description="Start time of the event in event timezone.",
-    )
-    end: NaiveDatetime = Field(
-        ...,
-        title="Event.End",
-        description="End time of the event in event timezone.",
-    )
-    timezone: Timezone = Field(
-        ...,
-        title="Event.Timezone",
-        description="Timezone of the event.",
-    )
-    recurrence: Recurrence | None = Field(
-        None,
-        title="Event.Recurrence",
-        description="Recurrence of the event.",
-    )
-
-
-class NonRecursiveEvent(pp.EventWithoutRelations):
-    """Non-recursive event model."""
-
-    show: ShowWithoutRelations | None = None
 
     start: NaiveDatetime = Field(
         ...,

@@ -157,7 +157,7 @@ class Service:
     async def delete(
         self,
         id: m.DeleteIdParameter,
-    ) -> None:
+    ) -> m.DeleteResponse:
         """Delete an event."""
 
         request = em.DeleteRequest(
@@ -179,3 +179,5 @@ class Service:
 
         if event is None:
             raise e.NotFoundError()
+
+        return None
