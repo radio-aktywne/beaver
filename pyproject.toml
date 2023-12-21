@@ -30,10 +30,15 @@ recurring-ical-events = "^2.1"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7.4"
+# Asyncio support for pytest
 pytest-asyncio = "^0.23"
+# Running dependent services in containers
 testcontainers = "^3.7"
+# Async HTTP requests
+httpx = "^0.26"
 
 [tool.prisma]
+# Store Prisma binaries in local directory
 binary_cache_dir = "prisma/bin"
 
 [tool.poetry.scripts]
