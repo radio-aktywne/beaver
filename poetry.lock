@@ -1677,4 +1677,4 @@ pytz = "*"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "34a6dd677195f4a33cde04fcf9e16ae6aa1ff520a69b8b6413012658ff58c80f"
+content-hash = "7b257ba113caefd8b2d7c9a5d38c2768836f2f6180dd8c3717b2cb518492cd51"
