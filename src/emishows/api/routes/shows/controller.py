@@ -5,6 +5,7 @@ from litestar import delete, get, patch, post
 from litestar.channels import ChannelsPlugin
 from litestar.di import Provide
 from litestar.params import Parameter
+from litestar.response import Response
 from pydantic import Json, TypeAdapter
 from pydantic import ValidationError as PydanticValidationError
 
@@ -102,7 +103,7 @@ class Controller(BaseController):
             str | None,
             Parameter(description="Order to apply to shows."),
         ] = None,
-    ) -> ListResponse:
+    ) -> Response[ListResponse]:
         where = self._validate_json(ListWhereParameter, where) if where else None
         include = (
             self._validate_json(ListIncludeParameter, include) if include else None
@@ -110,7 +111,7 @@ class Controller(BaseController):
         order = self._validate_json(ListOrderParameter, order) if order else None
 
         try:
-            return await service.list(
+            response = await service.list(
                 limit=limit,
                 offset=offset,
                 where=where,
@@ -119,6 +120,8 @@ class Controller(BaseController):
             )
         except ValidationError as e:
             raise BadRequestException(extra=e.message) from e
+
+        return Response(response)
 
     @get(
         "/{id:uuid}",
@@ -133,11 +136,11 @@ class Controller(BaseController):
             str | None,
             Parameter(description="Relations to include with show."),
         ] = None,
-    ) -> GetResponse:
+    ) -> Response[GetResponse]:
         include = self._validate_json(GetIncludeParameter, include) if include else None
 
         try:
-            return await service.get(
+            response = await service.get(
                 id=id,
                 include=include,
             )
@@ -145,6 +148,8 @@ class Controller(BaseController):
             raise BadRequestException(extra=e.message) from e
         except NotFoundError as e:
             raise NotFoundException(extra=e.message) from e
+
+        return Response(response)
 
     @post(
         summary="Create show",
@@ -158,19 +163,21 @@ class Controller(BaseController):
             str | None,
             Parameter(description="Relations to include with show."),
         ] = None,
-    ) -> CreateResponse:
+    ) -> Response[CreateResponse]:
         data = self._validate_pydantic(CreateRequest, data)
         include = (
             self._validate_json(CreateIncludeParameter, include) if include else None
         )
 
         try:
-            return await service.create(
+            response = await service.create(
                 data=data,
                 include=include,
             )
         except ValidationError as e:
             raise BadRequestException(extra=e.message) from e
+
+        return Response(response)
 
     @patch(
         "/{id:uuid}",
@@ -186,14 +193,14 @@ class Controller(BaseController):
             str | None,
             Parameter(description="Relations to include with show."),
         ] = None,
-    ) -> UpdateResponse:
+    ) -> Response[UpdateResponse]:
         data = self._validate_pydantic(UpdateRequest, data)
         include = (
             self._validate_json(UpdateIncludeParameter, include) if include else None
         )
 
         try:
-            return await service.update(
+            response = await service.update(
                 id=id,
                 data=data,
                 include=include,
@@ -202,6 +209,8 @@ class Controller(BaseController):
             raise BadRequestException(extra=e.message) from e
         except NotFoundError as e:
             raise NotFoundException(extra=e.message) from e
+
+        return Response(response)
 
     @delete(
         "/{id:uuid}",
@@ -212,12 +221,14 @@ class Controller(BaseController):
         self,
         service: Service,
         id: DeleteIdParameter,
-    ) -> DeleteResponse:
+    ) -> Response[DeleteResponse]:
         try:
-            return await service.delete(
+            response = await service.delete(
                 id=id,
             )
         except ValidationError as e:
             raise BadRequestException(extra=e.message) from e
         except NotFoundError as e:
             raise NotFoundException(extra=e.message) from e
+
+        return Response(response)

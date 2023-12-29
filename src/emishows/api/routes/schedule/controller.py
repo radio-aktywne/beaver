@@ -5,6 +5,7 @@ from litestar import get
 from litestar.channels import ChannelsPlugin
 from litestar.di import Provide
 from litestar.params import Parameter
+from litestar.response import Response
 from pydantic import Json, TypeAdapter
 from pydantic import ValidationError as PydanticValidationError
 
@@ -105,7 +106,7 @@ class Controller(BaseController):
             str | None,
             Parameter(description="Order to apply to events."),
         ] = None,
-    ) -> ListResponse:
+    ) -> Response[ListResponse]:
         start = self._validate_pydantic(ListStartParameter, start) if start else None
         end = self._validate_pydantic(ListEndParameter, end) if end else None
         where = self._validate_json(ListWhereParameter, where) if where else None
@@ -115,7 +116,7 @@ class Controller(BaseController):
         order = self._validate_json(ListOrderParameter, order) if order else None
 
         try:
-            return await service.list(
+            response = await service.list(
                 start=start,
                 end=end,
                 limit=limit,
@@ -126,3 +127,5 @@ class Controller(BaseController):
             )
         except ValidationError as e:
             raise BadRequestException(extra=e.message) from e
+
+        return Response(response)
