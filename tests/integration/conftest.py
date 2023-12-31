@@ -1,3 +1,5 @@
+from collections.abc import AsyncGenerator
+
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient, BasicAuth
@@ -29,7 +31,7 @@ def app(config: Config) -> Litestar:
 
 
 @pytest_asyncio.fixture(scope="session")
-async def database() -> AsyncDockerContainer:
+async def database() -> AsyncGenerator[AsyncDockerContainer, None]:
     """Database container."""
 
     async def _check() -> None:
@@ -55,7 +57,7 @@ async def database() -> AsyncDockerContainer:
 
 
 @pytest_asyncio.fixture(scope="session")
-async def emitimes() -> AsyncDockerContainer:
+async def emitimes() -> AsyncGenerator[AsyncDockerContainer, None]:
     """Emitimes container."""
 
     async def _check() -> None:
@@ -82,7 +84,7 @@ async def emitimes() -> AsyncDockerContainer:
 @pytest_asyncio.fixture(scope="session")
 async def client(
     app: Litestar, database: AsyncDockerContainer, emitimes: AsyncDockerContainer
-) -> AsyncTestClient:
+) -> AsyncGenerator[AsyncTestClient, None]:
     """Reusable test client."""
 
     async with AsyncTestClient(app=app) as client:
