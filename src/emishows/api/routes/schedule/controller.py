@@ -77,13 +77,13 @@ class Controller(BaseController):
         start: Annotated[
             str | None,
             Parameter(
-                description="Start datetime of the event instances to return. By default, the current datetime."
+                description="Start time in UTC of the event instances to return. By default, the current datetime."
             ),
         ] = None,
         end: Annotated[
             str | None,
             Parameter(
-                description="End datetime of the event instances to return. By default, the current datetime."
+                description="End time in UTC of the event instances to return. By default, the current datetime."
             ),
         ] = None,
         limit: Annotated[
