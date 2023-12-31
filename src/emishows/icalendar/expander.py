@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 
 from emishows.icalendar.models import Calendar, Event, EventInstance
 from emishows.icalendar.parser import ICalendarParser
+from emishows.time import utczone
 
 
 class EventExpander:
@@ -35,9 +36,10 @@ class EventExpander:
         """Expand the event into instances between start and end."""
 
         timezone = ZoneInfo(event.timezone)
+        utctimezone = utczone()
 
-        start = start.replace(tzinfo=timezone)
-        end = end.replace(tzinfo=timezone)
+        start = start.replace(tzinfo=utctimezone)
+        end = end.replace(tzinfo=utctimezone)
 
         calendar = Calendar(events=[event])
         calendar = self._parser.calendar_to_ical(calendar)
