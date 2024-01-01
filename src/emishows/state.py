@@ -9,7 +9,9 @@ class State(LitestarState):
     """Use this class as a type hint for the state of your application.
 
     Attributes:
-        config: The configuration for the application.
+        config: Configuration for the application.
+        prisma: Database client.
+        emitimes: Service for emitimes API.
     """
 
     config: Config
