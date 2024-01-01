@@ -296,13 +296,13 @@ class EventsService:
                 )
                 if "start" in request.data:
                     start = request.data["start"]
-                    start = TypeAdapter(NaiveDatetime).validate_python(
+                    start = TypeAdapter(NaiveDatetime).validate_strings(
                         start, strict=True
                     )
                     data.start = start
                 if "end" in request.data:
                     end = request.data["end"]
-                    end = TypeAdapter(NaiveDatetime).validate_python(end, strict=True)
+                    end = TypeAdapter(NaiveDatetime).validate_strings(end, strict=True)
                     data.end = end
                 if "timezone" in request.data:
                     timezone = request.data["timezone"]
