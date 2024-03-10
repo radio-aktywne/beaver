@@ -1,3 +1,5 @@
+from datetime import timezone
+
 import recurring_ical_events
 from icalendar import Event as vEvent
 from icalendar import vDatetime
@@ -6,7 +8,6 @@ from zoneinfo import ZoneInfo
 
 from emishows.icalendar.models import Calendar, Event, EventInstance
 from emishows.icalendar.parser import ICalendarParser
-from emishows.time import utczone
 
 
 class EventExpander:
@@ -35,15 +36,14 @@ class EventExpander:
     ) -> list[EventInstance]:
         """Expand the event into instances between start and end."""
 
-        timezone = ZoneInfo(event.timezone)
-        utctimezone = utczone()
+        tz = ZoneInfo(event.timezone)
 
-        start = start.replace(tzinfo=utctimezone)
-        end = end.replace(tzinfo=utctimezone)
+        start = start.replace(tzinfo=timezone.utc)
+        end = end.replace(tzinfo=timezone.utc)
 
         calendar = Calendar(events=[event])
         calendar = self._parser.calendar_to_ical(calendar)
 
         vevents = recurring_ical_events.of(calendar).between(start, end)
 
-        return [self._build_instance(vevent, timezone) for vevent in vevents]
+        return [self._build_instance(vevent, tz) for vevent in vevents]

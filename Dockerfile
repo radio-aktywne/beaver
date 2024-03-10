@@ -1,5 +1,5 @@
 # Use generic base image with Nix installed
-FROM nixos/nix:2.19.2 AS env
+FROM nixos/nix:2.20.5 AS env
 
 # Configure Nix
 RUN echo "extra-experimental-features = nix-command flakes" >> /etc/nix/nix.conf
@@ -37,13 +37,9 @@ WORKDIR /app/
 # Create app user
 RUN useradd --create-home app
 
-# Create virtual environment
-# hadolint ignore=SC1091
-RUN . /env/activate && python -m venv .venv/
-
 # Setup entrypoint for RUN commands
 COPY scripts/shell.sh scripts/shell.sh
-SHELL ["./scripts/shell.sh"]
+SHELL ["/app/scripts/shell.sh"]
 
 # Copy Poetry files
 COPY poetry.lock poetry.toml pyproject.toml ./
@@ -65,7 +61,7 @@ RUN \
     --mount=type=cache,target=/root/.cache/prisma/ \
     # Mount prisma-python cache
     --mount=type=cache,target=/root/.cache/prisma-python/ \
-    prisma generate
+    poetry run prisma generate
 
 # Copy source
 COPY src/ src/
@@ -74,10 +70,13 @@ COPY src/ src/
 # See: https://github.com/python-poetry/poetry/issues/1382
 # hadolint ignore=SC2239
 RUN poetry build --no-interaction --format wheel && \
-    python -m pip install --no-deps --no-index --no-cache-dir dist/*.whl && \
+    poetry run python -m pip install --no-deps --no-index --no-cache-dir dist/*.whl && \
     rm -rf dist/ ./*.egg-info
 
 # Setup main entrypoint
 COPY scripts/entrypoint.sh scripts/entrypoint.sh
-ENTRYPOINT ["./scripts/entrypoint.sh", "emishows"]
+ENTRYPOINT ["/app/scripts/entrypoint.sh", "poetry", "run", "emishows"]
 CMD []
+
+# Setup ownership
+RUN chown -R app: /app/

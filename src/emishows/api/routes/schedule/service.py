@@ -5,7 +5,7 @@ from emishows.events import models as em
 from emishows.events.service import EventsService
 from emishows.icalendar import models as im
 from emishows.icalendar.expander import EventExpander
-from emishows.time import utcnow
+from emishows.time import naiveutcnow
 
 
 class Service:
@@ -101,7 +101,7 @@ class Service:
     ) -> m.ListResponse:
         """List schedules."""
 
-        now = utcnow().replace(tzinfo=None)
+        now = naiveutcnow()
         start = start if start is not None else now
         end = end if end is not None else now
 
