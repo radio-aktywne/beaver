@@ -34,7 +34,7 @@ class AppBuilder:
         return OpenAPIConfig(
             title="emishows app",
             version=metadata.version("emishows"),
-            description="emission shows 🎭",
+            description="Emission shows 🎭",
         )
 
     def _build_channels_plugin(self) -> ChannelsPlugin:

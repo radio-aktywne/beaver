@@ -2,7 +2,7 @@
 
 <div align="center">
 
-emission shows 🎭
+Emission shows 🎭
 
 [![Lint](https://github.com/radio-aktywne/app-emishows/actions/workflows/lint.yaml/badge.svg)](https://github.com/radio-aktywne/app-emishows/actions/workflows/lint.yaml)
 [![Test](https://github.com/radio-aktywne/app-emishows/actions/workflows/test.yaml/badge.svg)](https://github.com/radio-aktywne/app-emishows/actions/workflows/test.yaml)

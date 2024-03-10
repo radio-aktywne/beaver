@@ -5,7 +5,7 @@ title: Index
 
 # emishows app
 
-emission shows 🎭
+Emission shows 🎭
 
 ## 💡 About
 

@@ -3,7 +3,7 @@ _commit: 0.11.0
 _src_path: gh:radio-aktywne/template-app-litestar
 accountname: radio-aktywne
 appname: emishows
-description: emission shows 🎭
+description: Emission shows 🎭
 docs: true
 docsurl: https://radio-aktywne.github.io/app-emishows
 email: it@radioaktywne.pl
