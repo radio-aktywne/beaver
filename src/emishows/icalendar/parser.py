@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Iterable
 from uuid import UUID
 
@@ -18,7 +18,6 @@ from emishows.icalendar.models import (
     Weekday,
     WeekdayRule,
 )
-from emishows.time import utczone
 
 
 class ICalendarParser:
@@ -218,7 +217,7 @@ class ICalendarParser:
         parts["FREQ"] = self.frequency_to_ical(rule.frequency).to_ical().decode("utf-8")
 
         if rule.until is not None:
-            until = rule.until.replace(tzinfo=utczone())
+            until = rule.until.replace(timezone.utc)
             parts["UNTIL"] = self.datetime_to_ical(until).to_ical().decode("utf-8")
 
         if rule.count is not None:
@@ -318,7 +317,7 @@ class ICalendarParser:
         until = vrecur.get("until")
         if until is not None:
             until = self.ical_to_datetime(icalendar.vDatetime(until[0]))
-            until = until.astimezone(utczone()).replace(tzinfo=None)
+            until = until.astimezone(timezone.utc).replace(tzinfo=None)
 
         count = vrecur.get("count")
         if count is not None:

@@ -6,7 +6,7 @@ from pydantic import Field, RootModel
 from emishows.events import models as em
 from emishows.models.base import SerializableModel
 from emishows.shows import models as sm
-from emishows.time import utcnow
+from emishows.time import naiveutcnow
 
 TypeType = TypeVar("TypeType")
 DataType = TypeVar("DataType", bound=SerializableModel)
@@ -17,7 +17,9 @@ TypeFieldType = Annotated[
 ]
 CreatedAtFieldType = Annotated[
     datetime,
-    Field(default_factory=utcnow, description="Time at which the event was created."),
+    Field(
+        default_factory=naiveutcnow, description="Time at which the event was created."
+    ),
 ]
 DataFieldType = Annotated[
     DataType,

@@ -1,20 +1,20 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated
 
-from pydantic import AfterValidator
+from pydantic import AfterValidator, AwareDatetime, NaiveDatetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
-def utczone() -> ZoneInfo:
-    """Return the UTC time zone."""
+def awareutcnow() -> AwareDatetime:
+    """Return the current datetime in UTC with timezone information."""
 
-    return ZoneInfo("Etc/UTC")
+    return datetime.now(timezone.utc)
 
 
-def utcnow() -> datetime:
-    """Return the current datetime in UTC."""
+def naiveutcnow() -> NaiveDatetime:
+    """Return the current datetime in UTC without timezone information."""
 
-    return datetime.now(utczone())
+    return awareutcnow().replace(tzinfo=None)
 
 
 def stringify(dt: datetime) -> str:

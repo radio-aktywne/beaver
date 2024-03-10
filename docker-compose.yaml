@@ -3,7 +3,6 @@ services:
     build:
       context: ./
       network: host
-    network_mode: host
     environment:
       - "EMISHOWS__SERVER__HOST=${EMISHOWS__SERVER__HOST:-0.0.0.0}"
       - "EMISHOWS__SERVER__PORT=${EMISHOWS__SERVER__PORT:-35000}"
@@ -15,3 +14,4 @@ services:
       - "EMISHOWS__EMITIMES__USER=${EMISHOWS__EMITIMES__USER:-user}"
       - "EMISHOWS__EMITIMES__PASSWORD=${EMISHOWS__EMITIMES__PASSWORD:-password}"
       - "EMISHOWS__EMITIMES__CALENDAR=${EMISHOWS__EMITIMES__CALENDAR:-emitimes}"
+    network_mode: host

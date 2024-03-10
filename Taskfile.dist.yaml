@@ -137,30 +137,6 @@ tasks:
         '!'
         -d
         .venv/
-  venv:
-    desc: Create virtualenv
-    cmds:
-      - >
-        test
-        -f
-        .venv/bin/activate
-        &&
-        source
-        .venv/bin/activate
-        &&
-        deactivate
-        ;
-        python
-        -m
-        venv
-        {{ .CLI_ARGS }}
-        .venv/
-        &&
-        python
-        -m
-        venv
-        --upgrade
-        .venv/
   install:
     desc: Install package
     sources:
@@ -174,13 +150,12 @@ tasks:
     generates:
       - .venv/**/*
     cmds:
-      - task: venv
-        vars:
-          CLI_ARGS: ""
       - >
-        source
-        .venv/bin/activate
-        &&
+        poetry
+        env
+        use
+        "$(which python)"
+      - >
         poetry
         install
         --sync
@@ -198,9 +173,6 @@ tasks:
     cmds:
       - task: install-internal
       - >
-        source
-        .venv/bin/activate
-        &&
         poetry
         update
         --no-interaction
@@ -210,9 +182,6 @@ tasks:
     cmds:
       - task: install-internal
       - >
-        source
-        .venv/bin/activate
-        &&
         poetry
         lock
         --no-interaction
@@ -222,46 +191,37 @@ tasks:
     cmds:
       - task: install-internal
       - >
-        source
-        .venv/bin/activate
-        &&
         poetry
         version
         {{ .CLI_ARGS | default "minor" }}
+  generate-prisma:
+    desc: Generate Prisma client
+    cmds:
+      - task: install-internal
+      - >
+        poetry
+        run
+        prisma
+        generate
+        {{ .CLI_ARGS }}
   test:
     desc: Run tests
     cmds:
       - task: install-internal
+      - task: generate-prisma
       - >
-        source
-        .venv/bin/activate
-        &&
+        poetry
+        run
         pytest
-        {{ .CLI_ARGS }}
-  generate-prisma:
-    desc: Generate Prisma client
-    sources:
-      - prisma/partial_types.py
-      - prisma/schema.prisma
-    generates:
-      - .venv/lib/python*/site-packages/prisma/**/*
-    cmds:
-      - task: install-internal
-      - >
-        source
-        .venv/bin/activate
-        &&
-        prisma
-        generate
         {{ .CLI_ARGS }}
   pull-db:
     desc: Pull database models
     cmds:
       - task: install-internal
+      - task: generate-prisma
       - >
-        source
-        .venv/bin/activate
-        &&
+        poetry
+        run
         prisma
         db
         pull
@@ -270,10 +230,10 @@ tasks:
     desc: Push schema to database without migrations
     cmds:
       - task: install-internal
+      - task: generate-prisma
       - >
-        source
-        .venv/bin/activate
-        &&
+        poetry
+        run
         prisma
         db
         push
@@ -282,10 +242,10 @@ tasks:
     desc: Apply migrations to database in development mode
     cmds:
       - task: install-internal
+      - task: generate-prisma
       - >
-        source
-        .venv/bin/activate
-        &&
+        poetry
+        run
         prisma
         migrate
         dev
@@ -294,10 +254,10 @@ tasks:
     desc: Apply migrations to database in production mode
     cmds:
       - task: install-internal
+      - task: generate-prisma
       - >
-        source
-        .venv/bin/activate
-        &&
+        poetry
+        run
         prisma
         migrate
         deploy
@@ -307,10 +267,10 @@ tasks:
     interactive: true
     cmds:
       - task: install-internal
+      - task: generate-prisma
       - >
-        source
-        .venv/bin/activate
-        &&
+        poetry
+        run
         emishows
         {{ .CLI_ARGS }}
   docker:

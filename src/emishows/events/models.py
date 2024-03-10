@@ -1,8 +1,9 @@
-from typing import Annotated, NotRequired, TypedDict
+from typing import Annotated, NotRequired
 
 from prisma import models as pm
 from prisma import types as pt
 from pydantic import Field, NaiveDatetime, PlainValidator, TypeAdapter
+from typing_extensions import TypedDict
 
 from emishows.emitimes import models as em
 from emishows.models.base import SerializableModel

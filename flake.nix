@@ -1,7 +1,7 @@
 {
   inputs = {
     nixpkgs = {
-      url = "github:NixOS/nixpkgs/nixos-unstable";
+      url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     };
 
     flake-parts = {
@@ -37,7 +37,7 @@
         ...
       }: let
         node = pkgs.nodejs;
-        python = pkgs.python312;
+        python = pkgs.python311;
         nil = pkgs.nil;
         task = pkgs.go-task;
         coreutils = pkgs.coreutils;
@@ -83,15 +83,9 @@
               cacert
             ];
 
-            PYTHON_SITE_PACKAGES = "${python.sitePackages}";
-
             shellHook = ''
               export TMPDIR=/tmp
               export PRISMA_DB_URL="postgres://user:''${EMISHOWS__DATABASE__PASSWORD:-password}@''${EMISHOWS__DATABASE__HOST:-localhost}:''${EMISHOWS__DATABASE__PORT:-34000}/database"
-              task install
-              task generate-prisma
-              . .venv/bin/activate
-              export PYTHONPATH="''${VIRTUAL_ENV:?}/''${PYTHON_SITE_PACKAGES:?}:''${PYTHONPATH:-}"
             '';
           };
 
@@ -105,14 +99,8 @@
               poetry
             ];
 
-            PYTHON_SITE_PACKAGES = "${python.sitePackages}";
-
             shellHook = ''
               export TMPDIR=/tmp
-              task install
-              task generate-prisma
-              . .venv/bin/activate
-              export PYTHONPATH="''${VIRTUAL_ENV:?}/''${PYTHON_SITE_PACKAGES:?}:''${PYTHONPATH:-}"
             '';
           };
 
@@ -130,7 +118,6 @@
             ];
 
             LD_LIBRARY_PATH = lib.makeLibraryPath [openssl];
-            PYTHON_SITE_PACKAGES = "${python.sitePackages}";
 
             shellHook = ''
               export TMPDIR=/tmp
@@ -180,14 +167,9 @@
             ];
 
             LD_LIBRARY_PATH = lib.makeLibraryPath [openssl];
-            PYTHON_SITE_PACKAGES = "${python.sitePackages}";
 
             shellHook = ''
               export TMPDIR=/tmp
-              task install
-              task generate-prisma
-              . .venv/bin/activate
-              export PYTHONPATH="''${VIRTUAL_ENV:?}/''${PYTHON_SITE_PACKAGES:?}:''${PYTHONPATH:-}"
             '';
           };
 

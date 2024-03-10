@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
+from datetime import timezone
 from xml.etree import ElementTree
 
 from emishows.emitimes.models import Query, RecurringQuery, TimeRangeQuery
 from emishows.icalendar.parser import ICalendarParser
-from emishows.time import utczone
 
 
 class QueryBuilder(ABC):
@@ -83,12 +83,12 @@ class TimeRangeQueryBuilder(QueryBuilder):
         attrib = {}
 
         if self._query.start is not None:
-            start = self._query.start.replace(tzinfo=utczone())
+            start = self._query.start.replace(tzinfo=timezone.utc)
             start = self._parser.datetime_to_ical(start)
             start = start.to_ical().decode("utf-8")
             attrib["start"] = start
         if self._query.end is not None:
-            end = self._query.end.replace(tzinfo=utczone())
+            end = self._query.end.replace(tzinfo=timezone.utc)
             end = self._parser.datetime_to_ical(end)
             end = end.to_ical().decode("utf-8")
             attrib["end"] = end
