@@ -201,6 +201,7 @@ tasks:
       - >
         poetry
         run
+        --
         prisma
         generate
         {{ .CLI_ARGS }}
@@ -212,6 +213,7 @@ tasks:
       - >
         poetry
         run
+        --
         pytest
         {{ .CLI_ARGS }}
   pull-db:
@@ -222,6 +224,7 @@ tasks:
       - >
         poetry
         run
+        --
         prisma
         db
         pull
@@ -234,6 +237,7 @@ tasks:
       - >
         poetry
         run
+        --
         prisma
         db
         push
@@ -246,6 +250,7 @@ tasks:
       - >
         poetry
         run
+        --
         prisma
         migrate
         dev
@@ -258,6 +263,7 @@ tasks:
       - >
         poetry
         run
+        --
         prisma
         migrate
         deploy
@@ -271,6 +277,7 @@ tasks:
       - >
         poetry
         run
+        --
         emishows
         {{ .CLI_ARGS }}
   docker:

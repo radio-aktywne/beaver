@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "emishows",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "module": "emishows",
       "justMyCode": false
