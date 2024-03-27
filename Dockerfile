@@ -61,7 +61,7 @@ RUN \
     --mount=type=cache,target=/root/.cache/prisma/ \
     # Mount prisma-python cache
     --mount=type=cache,target=/root/.cache/prisma-python/ \
-    poetry run prisma generate
+    poetry run -- prisma generate
 
 # Copy source
 COPY src/ src/
@@ -70,13 +70,13 @@ COPY src/ src/
 # See: https://github.com/python-poetry/poetry/issues/1382
 # hadolint ignore=SC2239
 RUN poetry build --no-interaction --format wheel && \
-    poetry run python -m pip install --no-deps --no-index --no-cache-dir dist/*.whl && \
-    rm -rf dist/ ./*.egg-info
+    poetry run -- python -m pip install --no-deps --no-index --no-cache-dir dist/*.whl && \
+    rm --recursive --force dist/ ./*.egg-info
 
 # Setup main entrypoint
 COPY scripts/entrypoint.sh scripts/entrypoint.sh
-ENTRYPOINT ["/app/scripts/entrypoint.sh", "poetry", "run", "emishows"]
+ENTRYPOINT ["/app/scripts/entrypoint.sh", "poetry", "run", "--", "emishows"]
 CMD []
 
 # Setup ownership
-RUN chown -R app: /app/
+RUN chown --recursive app: ./
