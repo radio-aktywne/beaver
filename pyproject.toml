@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "emishows"
-version = "0.6.0"
+version = "0.7.0"
 description = "Emission shows 🎭"
 authors = ["radio-aktywne <it@radioaktywne.pl>"]
 
