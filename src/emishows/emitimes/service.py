@@ -22,9 +22,7 @@ class EmitimesServiceBase(Gracy[EmitimesEndpoint]):
 
     def __init__(self, config: EmitimesConfig, *args, **kwargs) -> None:
         class Config:
-            BASE_URL = (
-                f"http://{config.host}:{config.port}/{config.user}/{config.calendar}"
-            )
+            BASE_URL = config.url
             SETTINGS = GracyConfig(
                 retry=GracefulRetry(
                     delay=1,

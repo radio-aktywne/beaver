@@ -26,52 +26,73 @@ class DatabaseConfig(BaseModel):
     host: str = Field(
         "localhost",
         title="Host",
-        description="Host to connect to.",
+        description="Host of the SQL database.",
     )
     port: int = Field(
         34000,
-        ge=0,
+        ge=1,
         le=65535,
         title="Port",
-        description="Port to connect to.",
+        description="Port of the SQL database.",
     )
     password: str = Field(
         "password",
         title="Password",
-        description="Password to authenticate with.",
+        description="Password to authenticate with the SQL database.",
     )
 
 
 class EmitimesConfig(BaseModel):
     """Configuration for the Emitimes service."""
 
+    scheme: str = Field(
+        "http",
+        title="Scheme",
+        description="Scheme of the CalDAV API.",
+    )
     host: str = Field(
         "localhost",
         title="Host",
-        description="Host to connect to.",
+        description="Host of the CalDAV API.",
     )
-    port: int = Field(
+    port: int | None = Field(
         36000,
-        ge=0,
+        ge=1,
         le=65535,
         title="Port",
-        description="Port to connect to.",
+        description="Port of the CalDAV API.",
+    )
+    path: str | None = Field(
+        None,
+        title="Path",
+        description="Path of the CalDAV API.",
     )
     user: str = Field(
         "user",
         title="User",
-        description="User to authenticate with.",
+        description="User to authenticate with the CalDAV API.",
     )
     password: str = Field(
         "password",
         title="Password",
-        description="Password to authenticate with.",
+        description="Password to authenticate with the CalDAV API.",
     )
     calendar: str = Field(
         "emitimes",
         title="Calendar",
-        description="Calendar to use.",
+        description="Calendar to use with the CalDAV API.",
     )
+
+    @property
+    def url(self) -> str:
+        url = f"{self.scheme}://{self.host}"
+        if self.port:
+            url = f"{url}:{self.port}"
+        if self.path:
+            path = self.path if self.path.startswith("/") else f"/{self.path}"
+            path = path.rstrip("/")
+            url = f"{url}{path}"
+        return f"{url}/{self.user}/{self.calendar}"
 
 
 class Config(BaseConfig):
