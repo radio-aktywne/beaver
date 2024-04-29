@@ -47,7 +47,9 @@ class EmitimesService(EmitimesServiceBase):
         self._query_builder_factory = QueryBuilderFactory()
 
     def _build_auth(self) -> BasicAuth:
-        return BasicAuth(username=self._config.user, password=self._config.password)
+        return BasicAuth(
+            username=self._config.caldav.user, password=self._config.caldav.password
+        )
 
     def _build_query_payload(self, query: ElementTree.Element) -> str:
         return ElementTree.tostring(query).decode("utf-8")
