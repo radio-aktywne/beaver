@@ -55,7 +55,7 @@ class AppBuilder:
         ]
 
     def _build_database_url(self) -> str:
-        return f"postgres://user:{self._config.database.password}@{self._config.database.host}:{self._config.database.port}/database"
+        return self._config.database.sql.url
 
     def _build_initial_state(self) -> State:
         return State(

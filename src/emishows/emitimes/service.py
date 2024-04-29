@@ -22,7 +22,7 @@ class EmitimesServiceBase(Gracy[EmitimesEndpoint]):
 
     def __init__(self, config: EmitimesConfig, *args, **kwargs) -> None:
         class Config:
-            BASE_URL = config.url
+            BASE_URL = config.caldav.url
             SETTINGS = GracyConfig(
                 retry=GracefulRetry(
                     delay=1,
