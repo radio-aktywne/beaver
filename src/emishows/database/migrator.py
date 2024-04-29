@@ -18,7 +18,7 @@ class DatabaseMigrator:
     def _get_connection_string(self) -> str:
         """Get the connection string."""
 
-        return f"postgres://user:{self._config.database.password}@{self._config.database.host}:{self._config.database.port}/database"
+        return self._config.database.sql.url
 
     def _get_env(self) -> dict[str, str]:
         """Get the environment variables."""

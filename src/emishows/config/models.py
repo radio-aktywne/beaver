@@ -20,30 +20,44 @@ class ServerConfig(BaseModel):
     )
 
 
-class DatabaseConfig(BaseModel):
-    """Configuration for the database."""
+class DatabaseSQLConfig(BaseModel):
+    """Configuration for the SQL API of the database."""
 
     host: str = Field(
         "localhost",
         title="Host",
-        description="Host of the SQL database.",
+        description="Host of the SQL API.",
     )
     port: int = Field(
         34000,
         ge=1,
         le=65535,
         title="Port",
-        description="Port of the SQL database.",
+        description="Port of the SQL API .",
     )
     password: str = Field(
         "password",
         title="Password",
-        description="Password to authenticate with the SQL database.",
+        description="Password to authenticate with the SQL API.",
+    )
+
+    @property
+    def url(self) -> str:
+        return f"postgres://user:{self.password}@{self.host}:{self.port}/database"
+
+
+class DatabaseConfig(BaseModel):
+    """Configuration for the database."""
+
+    sql: DatabaseSQLConfig = Field(
+        DatabaseSQLConfig(),
+        title="SQL",
+        description="Configuration for the SQL API of the database.",
     )
 
 
-class EmitimesConfig(BaseModel):
-    """Configuration for the Emitimes service."""
+class EmitimesCalDAVConfig(BaseModel):
+    """Configuration for the CalDAV API of the Emitimes service."""
 
     scheme: str = Field(
         "http",
@@ -93,6 +107,16 @@ class EmitimesConfig(BaseModel):
             path = path.rstrip("/")
             url = f"{url}{path}"
         return f"{url}/{self.user}/{self.calendar}"
+
+
+class EmitimesConfig(BaseModel):
+    """Configuration for the Emitimes service."""
+
+    caldav: EmitimesCalDAVConfig = Field(
+        EmitimesCalDAVConfig(),
+        title="CalDAV",
+        description="Configuration for the CalDAV API of the Emitimes service.",
+    )
 
 
 class Config(BaseConfig):
