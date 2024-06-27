@@ -452,10 +452,18 @@ class ICalendarParser:
             rule = self.ical_to_recurrence_rule(rrule) if rrule is not None else None
 
             include = self.ical_to_datetimes(rdate) if rdate is not None else None
-            include = [dt.replace(tzinfo=None) for dt in include]
+            include = (
+                [dt.replace(tzinfo=None) for dt in include]
+                if include is not None
+                else None
+            )
 
             exclude = self.ical_to_datetimes(exdate) if exdate is not None else None
-            exclude = [dt.replace(tzinfo=None) for dt in exclude]
+            exclude = (
+                [dt.replace(tzinfo=None) for dt in exclude]
+                if exclude is not None
+                else None
+            )
 
             recurrence = Recurrence(rule=rule, include=include, exclude=exclude)
 
