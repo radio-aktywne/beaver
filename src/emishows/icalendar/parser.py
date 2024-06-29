@@ -217,7 +217,7 @@ class ICalendarParser:
         parts["FREQ"] = self.frequency_to_ical(rule.frequency).to_ical().decode("utf-8")
 
         if rule.until is not None:
-            until = rule.until.replace(timezone.utc)
+            until = rule.until.replace(tzinfo=timezone.utc)
             parts["UNTIL"] = self.datetime_to_ical(until).to_ical().decode("utf-8")
 
         if rule.count is not None:
