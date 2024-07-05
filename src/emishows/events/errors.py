@@ -18,13 +18,13 @@ class ValidationError(ServiceError):
     pass
 
 
-class DatabaseError(ServiceError):
-    """Raised when a database operation fails."""
+class DatashowsError(ServiceError):
+    """Raised when a datashows database operation fails."""
 
     pass
 
 
-class EmitimesError(ServiceError):
-    """Raised when an operation with emitimes API fails."""
+class DatatimesError(ServiceError):
+    """Raised when an operation with datatimes API fails."""
 
     pass

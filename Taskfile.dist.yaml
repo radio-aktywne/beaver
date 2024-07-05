@@ -216,8 +216,8 @@ tasks:
         --
         pytest
         {{ .CLI_ARGS }}
-  pull-db:
-    desc: Pull database models
+  pull-datashows:
+    desc: Pull datashows models
     cmds:
       - task: install-internal
       - task: generate-prisma
@@ -229,8 +229,8 @@ tasks:
         db
         pull
         {{ .CLI_ARGS }}
-  push-db:
-    desc: Push schema to database without migrations
+  push-datashows:
+    desc: Push schema to datashows without migrations
     cmds:
       - task: install-internal
       - task: generate-prisma
@@ -243,7 +243,7 @@ tasks:
         push
         {{ .CLI_ARGS }}
   migrate-dev:
-    desc: Apply migrations to database in development mode
+    desc: Apply migrations to datashows in development mode
     cmds:
       - task: install-internal
       - task: generate-prisma
@@ -256,7 +256,7 @@ tasks:
         dev
         {{ .CLI_ARGS }}
   migrate:
-    desc: Apply migrations to database in production mode
+    desc: Apply migrations to datashows in production mode
     cmds:
       - task: install-internal
       - task: generate-prisma

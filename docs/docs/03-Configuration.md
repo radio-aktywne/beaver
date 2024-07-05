@@ -13,33 +13,33 @@ You can configure the app at runtime using various environment variables:
 - `EMISHOWS__SERVER__PORT` -
   port to run the server on
   (default: `35000`)
-- `EMISHOWS__DATABASE__SQL__HOST` -
-  host of the SQL database of emishows-db
+- `EMISHOWS__DATASHOWS__SQL__HOST` -
+  host of the SQL database of datashows
   (default: `localhost`)
-- `EMISHOWS__DATABASE__SQL__PORT` -
-  port of the SQL database of emishows-db
+- `EMISHOWS__DATASHOWS__SQL__PORT` -
+  port of the SQL database of datashows
   (default: `34000`)
-- `EMISHOWS__DATABASE__SQL__PASSWORD` -
-  password to authenticate with the SQL database of emishows-db
+- `EMISHOWS__DATASHOWS__SQL__PASSWORD` -
+  password to authenticate with the SQL database of datashows
   (default: `password`)
-- `EMISHOWS__EMITIMES__CALDAV__SCHEME` -
-  scheme of the CalDAV API of emitimes service
+- `EMISHOWS__DATATIMES__CALDAV__SCHEME` -
+  scheme of the CalDAV API of datatimes service
   (default: `http`)
-- `EMISHOWS__EMITIMES__CALDAV__HOST` -
-  host of the CalDAV API of emitimes service
+- `EMISHOWS__DATATIMES__CALDAV__HOST` -
+  host of the CalDAV API of datatimes service
   (default: `localhost`)
-- `EMISHOWS__EMITIMES__CALDAV__PORT` -
-  port of the CalDAV API of emitimes service
+- `EMISHOWS__DATATIMES__CALDAV__PORT` -
+  port of the CalDAV API of datatimes service
   (default: `36000`)
-- `EMISHOWS__EMITIMES__CALDAV__PATH` -
-  path of the CalDAV API of emitimes service
+- `EMISHOWS__DATATIMES__CALDAV__PATH` -
+  path of the CalDAV API of datatimes service
   (default: ``)
-- `EMISHOWS__EMITIMES__CALDAV__USER` -
-  user to authenticate with the CalDAV API of emitimes service
+- `EMISHOWS__DATATIMES__CALDAV__USER` -
+  user to authenticate with the CalDAV API of datatimes service
   (default: `user`)
-- `EMISHOWS__EMITIMES__CALDAV__PASSWORD` -
-  password to authenticate with the CalDAV API of emitimes service
+- `EMISHOWS__DATATIMES__CALDAV__PASSWORD` -
+  password to authenticate with the CalDAV API of datatimes service
   (default: `password`)
-- `EMISHOWS__EMITIMES__CALDAV__CALENDAR` -
-  calendar to use with the CalDAV API of emitimes service
-  (default: `emitimes`)
+- `EMISHOWS__DATATIMES__CALDAV__CALENDAR` -
+  calendar to use with the CalDAV API of datatimes service
+  (default: `datatimes`)

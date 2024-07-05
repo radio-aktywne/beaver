@@ -2,7 +2,7 @@ from litestar.datastructures import State as LitestarState
 from prisma import Prisma
 
 from emishows.config.models import Config
-from emishows.emitimes.service import EmitimesService
+from emishows.datatimes.service import DatatimesService
 
 
 class State(LitestarState):
@@ -10,10 +10,10 @@ class State(LitestarState):
 
     Attributes:
         config: Configuration for the application.
-        prisma: Database client.
-        emitimes: Service for emitimes API.
+        prisma: Datashows database client.
+        datatimes: Service for datatimes API.
     """
 
     config: Config
     prisma: Prisma
-    emitimes: EmitimesService
+    datatimes: DatatimesService

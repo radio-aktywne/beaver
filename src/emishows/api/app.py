@@ -13,7 +13,7 @@ from prisma import Prisma
 
 from emishows.api.routes.router import router
 from emishows.config.models import Config
-from emishows.emitimes.service import EmitimesService
+from emishows.datatimes.service import DatatimesService
 from emishows.state import State
 
 
@@ -54,15 +54,15 @@ class AppBuilder:
             self._build_pydantic_plugin(),
         ]
 
-    def _build_database_url(self) -> str:
-        return self._config.database.sql.url
+    def _build_datashows_url(self) -> str:
+        return self._config.datashows.sql.url
 
     def _build_initial_state(self) -> State:
         return State(
             {
                 "config": self._config,
-                "prisma": Prisma(datasource={"url": self._build_database_url()}),
-                "emitimes": EmitimesService(self._config.emitimes),
+                "prisma": Prisma(datasource={"url": self._build_datashows_url()}),
+                "datatimes": DatatimesService(self._config.datatimes),
             }
         )
 

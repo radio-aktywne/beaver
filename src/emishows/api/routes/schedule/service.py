@@ -27,10 +27,10 @@ class Service:
             response = await self._events.count(request)
         except ee.ValidationError as error:
             raise e.ValidationError(error.message) from error
-        except ee.DatabaseError as error:
-            raise e.DatabaseError(error.message) from error
-        except ee.EmitimesError as error:
-            raise e.EmitimesError(error.message) from error
+        except ee.DatashowsError as error:
+            raise e.DatashowsError(error.message) from error
+        except ee.DatatimesError as error:
+            raise e.DatatimesError(error.message) from error
         except ee.ServiceError as error:
             raise e.ServiceError(error.message) from error
 
@@ -60,10 +60,10 @@ class Service:
             response = await self._events.list(request)
         except ee.ValidationError as error:
             raise e.ValidationError(error.message) from error
-        except ee.DatabaseError as error:
-            raise e.DatabaseError(error.message) from error
-        except ee.EmitimesError as error:
-            raise e.EmitimesError(error.message) from error
+        except ee.DatashowsError as error:
+            raise e.DatashowsError(error.message) from error
+        except ee.DatatimesError as error:
+            raise e.DatatimesError(error.message) from error
         except ee.ServiceError as error:
             raise e.ServiceError(error.message) from error
 

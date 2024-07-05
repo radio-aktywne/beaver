@@ -20,8 +20,8 @@ class ServerConfig(BaseModel):
     )
 
 
-class DatabaseSQLConfig(BaseModel):
-    """Configuration for the SQL API of the database."""
+class DatashowsSQLConfig(BaseModel):
+    """Configuration for the SQL API of the Datashows database."""
 
     host: str = Field(
         "localhost",
@@ -46,18 +46,18 @@ class DatabaseSQLConfig(BaseModel):
         return f"postgres://user:{self.password}@{self.host}:{self.port}/database"
 
 
-class DatabaseConfig(BaseModel):
-    """Configuration for the database."""
+class DatashowsConfig(BaseModel):
+    """Configuration for the Datashows database."""
 
-    sql: DatabaseSQLConfig = Field(
-        DatabaseSQLConfig(),
+    sql: DatashowsSQLConfig = Field(
+        DatashowsSQLConfig(),
         title="SQL",
-        description="Configuration for the SQL API of the database.",
+        description="Configuration for the SQL API of the Datashows database.",
     )
 
 
-class EmitimesCalDAVConfig(BaseModel):
-    """Configuration for the CalDAV API of the Emitimes service."""
+class DatatimesCalDAVConfig(BaseModel):
+    """Configuration for the CalDAV API of the Datatimes service."""
 
     scheme: str = Field(
         "http",
@@ -92,7 +92,7 @@ class EmitimesCalDAVConfig(BaseModel):
         description="Password to authenticate with the CalDAV API.",
     )
     calendar: str = Field(
-        "emitimes",
+        "datatimes",
         title="Calendar",
         description="Calendar to use with the CalDAV API.",
     )
@@ -109,13 +109,13 @@ class EmitimesCalDAVConfig(BaseModel):
         return f"{url}/{self.user}/{self.calendar}"
 
 
-class EmitimesConfig(BaseModel):
-    """Configuration for the Emitimes service."""
+class DatatimesConfig(BaseModel):
+    """Configuration for the Datatimes service."""
 
-    caldav: EmitimesCalDAVConfig = Field(
-        EmitimesCalDAVConfig(),
+    caldav: DatatimesCalDAVConfig = Field(
+        DatatimesCalDAVConfig(),
         title="CalDAV",
-        description="Configuration for the CalDAV API of the Emitimes service.",
+        description="Configuration for the CalDAV API of the Datatimes service.",
     )
 
 
@@ -127,13 +127,13 @@ class Config(BaseConfig):
         title="Server",
         description="Configuration for the server.",
     )
-    database: DatabaseConfig = Field(
-        DatabaseConfig(),
-        title="Database",
-        description="Configuration for the database.",
+    datashows: DatashowsConfig = Field(
+        DatashowsConfig(),
+        title="Datashows",
+        description="Configuration for the Datashows database.",
     )
-    emitimes: EmitimesConfig = Field(
-        EmitimesConfig(),
-        title="Emitimes",
-        description="Configuration for the Emitimes service.",
+    datatimes: DatatimesConfig = Field(
+        DatatimesConfig(),
+        title="Datatimes",
+        description="Configuration for the Datatimes service.",
     )

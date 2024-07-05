@@ -39,7 +39,7 @@ class DependenciesBuilder:
         return Service(
             events=EventsService(
                 prisma=state.prisma,
-                emitimes=state.emitimes,
+                datatimes=state.datatimes,
                 channels=channels,
             )
         )
