@@ -5,9 +5,9 @@ from prisma import Prisma
 from prisma import errors as pe
 from pydantic import NaiveDatetime, TypeAdapter
 
-from emishows.emitimes import errors as te
-from emishows.emitimes import models as tm
-from emishows.emitimes.service import EmitimesService
+from emishows.datatimes import errors as te
+from emishows.datatimes import models as tm
+from emishows.datatimes.service import DatatimesService
 from emishows.events import errors as ee
 from emishows.events import models as em
 from emishows.models import events as ev
@@ -18,10 +18,10 @@ class EventsService:
     """Service to manage events."""
 
     def __init__(
-        self, prisma: Prisma, emitimes: EmitimesService, channels: ChannelsPlugin
+        self, prisma: Prisma, datatimes: DatatimesService, channels: ChannelsPlugin
     ) -> None:
         self._prisma = prisma
-        self._emitimes = emitimes
+        self._datatimes = datatimes
         self._channels = channels
 
     def _emit_event(self, event: ev.Event) -> None:
@@ -66,20 +66,20 @@ class EventsService:
 
     def _merge_events(
         self,
-        database: em.EventDatabaseModel,
-        emitimes: tm.Event,
+        datashows: em.EventDatashowsModel,
+        datatimes: tm.Event,
     ) -> em.Event:
-        """Merge database and emitimes events."""
+        """Merge datashows and datatimes events."""
 
         return em.Event(
-            id=database.id,
-            type=database.type,
-            showId=database.showId,
-            show=database.show,
-            start=emitimes.start,
-            end=emitimes.end,
-            timezone=emitimes.timezone,
-            recurrence=emitimes.recurrence,
+            id=datashows.id,
+            type=datashows.type,
+            showId=datashows.showId,
+            show=datashows.show,
+            start=datatimes.start,
+            end=datatimes.end,
+            timezone=datatimes.timezone,
+            recurrence=datatimes.recurrence,
         )
 
     async def count(
@@ -92,11 +92,11 @@ class EventsService:
 
         if request.query:
             try:
-                events = await self._emitimes.query_events(
+                events = await self._datatimes.query_events(
                     query=request.query,
                 )
-            except te.EmitimesError as e:
-                raise ee.EmitimesError(str(e)) from e
+            except te.DatatimesError as e:
+                raise ee.DatatimesError(str(e)) from e
 
             where = where.copy() if where else {}
             ids = [str(event.id) for event in events]
@@ -114,7 +114,7 @@ class EventsService:
         except pe.DataError as e:
             raise ee.ValidationError(str(e)) from e
         except pe.PrismaError as e:
-            raise ee.DatabaseError(str(e)) from e
+            raise ee.DatashowsError(str(e)) from e
 
         return em.CountResponse(count=count)
 
@@ -128,11 +128,11 @@ class EventsService:
 
         if request.query:
             try:
-                events = await self._emitimes.query_events(
+                events = await self._datatimes.query_events(
                     query=request.query,
                 )
-            except te.EmitimesError as e:
-                raise ee.EmitimesError(str(e)) from e
+            except te.DatatimesError as e:
+                raise ee.DatatimesError(str(e)) from e
 
             where = where.copy() if where else {}
             ids = [str(event.id) for event in events]
@@ -144,7 +144,7 @@ class EventsService:
                 where["AND"] = [filter]
 
         try:
-            database_events = await self._prisma.event.find_many(
+            datashows_events = await self._prisma.event.find_many(
                 take=request.limit,
                 skip=request.offset,
                 where=where,
@@ -154,19 +154,19 @@ class EventsService:
         except pe.DataError as e:
             raise ee.ValidationError(str(e)) from e
         except pe.PrismaError as e:
-            raise ee.DatabaseError(str(e)) from e
+            raise ee.DatashowsError(str(e)) from e
 
         events = []
 
-        for database_event in database_events:
+        for datashows_event in datashows_events:
             try:
-                emitimes_event = await self._emitimes.get_event(
-                    id=UUID(database_event.id),
+                datatimes_event = await self._datatimes.get_event(
+                    id=UUID(datashows_event.id),
                 )
-            except te.EmitimesError as e:
-                raise ee.EmitimesError(str(e)) from e
+            except te.DatatimesError as e:
+                raise ee.DatatimesError(str(e)) from e
 
-            event = self._merge_events(database_event, emitimes_event)
+            event = self._merge_events(datashows_event, datatimes_event)
             events.append(event)
 
         order = request.order
@@ -196,26 +196,26 @@ class EventsService:
         """Get an event."""
 
         try:
-            database_event = await self._prisma.event.find_unique(
+            datashows_event = await self._prisma.event.find_unique(
                 where=request.where,
                 include=request.include,
             )
         except pe.DataError as e:
             raise ee.ValidationError(str(e)) from e
         except pe.PrismaError as e:
-            raise ee.DatabaseError(str(e)) from e
+            raise ee.DatashowsError(str(e)) from e
 
-        if database_event is None:
+        if datashows_event is None:
             return em.GetResponse(event=None)
 
         try:
-            emitimes_event = await self._emitimes.get_event(
-                id=UUID(database_event.id),
+            datatimes_event = await self._datatimes.get_event(
+                id=UUID(datashows_event.id),
             )
-        except te.EmitimesError as e:
-            raise ee.EmitimesError(str(e)) from e
+        except te.DatatimesError as e:
+            raise ee.DatatimesError(str(e)) from e
 
-        event = self._merge_events(database_event, emitimes_event)
+        event = self._merge_events(datashows_event, datatimes_event)
         return em.GetResponse(event=event)
 
     async def create(
@@ -234,28 +234,28 @@ class EventsService:
                 if "show" in request.data:
                     data["show"] = request.data["show"]
 
-                database_event = await transaction.event.create(
+                datashows_event = await transaction.event.create(
                     data=data,
                     include=request.include,
                 )
             except pe.DataError as e:
                 raise ee.ValidationError(str(e)) from e
             except pe.PrismaError as e:
-                raise ee.DatabaseError(str(e)) from e
+                raise ee.DatashowsError(str(e)) from e
 
             try:
                 data = tm.Event(
-                    id=database_event.id,
+                    id=datashows_event.id,
                     start=request.data.get("start"),
                     end=request.data.get("end"),
                     timezone=request.data.get("timezone"),
                     recurrence=request.data.get("recurrence"),
                 )
-                emitimes_event = await self._emitimes.upsert_event(data)
-            except te.EmitimesError as e:
-                raise ee.EmitimesError(str(e)) from e
+                datatimes_event = await self._datatimes.upsert_event(data)
+            except te.DatatimesError as e:
+                raise ee.DatatimesError(str(e)) from e
 
-        event = self._merge_events(database_event, emitimes_event)
+        event = self._merge_events(datashows_event, datatimes_event)
 
         self._emit_event_created_event(event)
 
@@ -277,7 +277,7 @@ class EventsService:
                 if "show" in request.data:
                     data["show"] = request.data["show"]
 
-                database_event = await transaction.event.update(
+                datashows_event = await transaction.event.update(
                     data=data,
                     where=request.where,
                     include=request.include,
@@ -285,14 +285,14 @@ class EventsService:
             except pe.DataError as e:
                 raise ee.ValidationError(str(e)) from e
             except pe.PrismaError as e:
-                raise ee.DatabaseError(str(e)) from e
+                raise ee.DatashowsError(str(e)) from e
 
-            if database_event is None:
+            if datashows_event is None:
                 return em.UpdateResponse(event=None)
 
             try:
-                data = await self._emitimes.get_event(
-                    id=UUID(database_event.id),
+                data = await self._datatimes.get_event(
+                    id=UUID(datashows_event.id),
                 )
                 if "start" in request.data:
                     start = request.data["start"]
@@ -317,11 +317,11 @@ class EventsService:
                     )
                     data.recurrence = recurrence
 
-                emitimes_event = await self._emitimes.upsert_event(data)
-            except te.EmitimesError as e:
-                raise ee.EmitimesError(str(e)) from e
+                datatimes_event = await self._datatimes.upsert_event(data)
+            except te.DatatimesError as e:
+                raise ee.DatatimesError(str(e)) from e
 
-        event = self._merge_events(database_event, emitimes_event)
+        event = self._merge_events(datashows_event, datatimes_event)
 
         self._emit_event_updated_event(event)
 
@@ -335,29 +335,29 @@ class EventsService:
 
         async with self._prisma.tx() as transaction:
             try:
-                database_event = await transaction.event.delete(
+                datashows_event = await transaction.event.delete(
                     where=request.where,
                     include=request.include,
                 )
             except pe.DataError as e:
                 raise ee.ValidationError(str(e)) from e
             except pe.PrismaError as e:
-                raise ee.DatabaseError(str(e)) from e
+                raise ee.DatashowsError(str(e)) from e
 
-            if database_event is None:
+            if datashows_event is None:
                 return em.DeleteResponse(event=None)
 
             try:
-                emitimes_event = await self._emitimes.get_event(
-                    id=UUID(database_event.id),
+                datatimes_event = await self._datatimes.get_event(
+                    id=UUID(datashows_event.id),
                 )
-                await self._emitimes.delete_event(
-                    id=UUID(database_event.id),
+                await self._datatimes.delete_event(
+                    id=UUID(datashows_event.id),
                 )
-            except te.EmitimesError as e:
-                raise ee.EmitimesError(str(e)) from e
+            except te.DatatimesError as e:
+                raise ee.DatatimesError(str(e)) from e
 
-        event = self._merge_events(database_event, emitimes_event)
+        event = self._merge_events(datashows_event, datatimes_event)
 
         self._emit_event_deleted_event(event)
 

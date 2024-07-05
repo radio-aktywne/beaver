@@ -18,7 +18,7 @@ class ValidationError(ServiceError):
     pass
 
 
-class DatabaseError(ServiceError):
-    """Raised when a database operation fails."""
+class DatashowsError(ServiceError):
+    """Raised when a datashows database operation fails."""
 
     pass

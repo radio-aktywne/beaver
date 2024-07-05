@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import timezone
 from xml.etree import ElementTree
 
-from emishows.emitimes.models import Query, RecurringQuery, TimeRangeQuery
+from emishows.datatimes.models import Query, RecurringQuery, TimeRangeQuery
 from emishows.icalendar.parser import ICalendarParser
 
 

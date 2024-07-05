@@ -67,7 +67,7 @@ class ShowsService:
         except pe.DataError as e:
             raise se.ValidationError(str(e)) from e
         except pe.PrismaError as e:
-            raise se.DatabaseError(str(e)) from e
+            raise se.DatashowsError(str(e)) from e
 
         return sm.CountResponse(count=count)
 
@@ -88,7 +88,7 @@ class ShowsService:
         except pe.DataError as e:
             raise se.ValidationError(str(e)) from e
         except pe.PrismaError as e:
-            raise se.DatabaseError(str(e)) from e
+            raise se.DatashowsError(str(e)) from e
 
         return sm.ListResponse(shows=shows)
 
@@ -106,7 +106,7 @@ class ShowsService:
         except pe.DataError as e:
             raise se.ValidationError(str(e)) from e
         except pe.PrismaError as e:
-            raise se.DatabaseError(str(e)) from e
+            raise se.DatashowsError(str(e)) from e
 
         return sm.GetResponse(show=show)
 
@@ -124,7 +124,7 @@ class ShowsService:
         except pe.DataError as e:
             raise se.ValidationError(str(e)) from e
         except pe.PrismaError as e:
-            raise se.DatabaseError(str(e)) from e
+            raise se.DatashowsError(str(e)) from e
 
         self._emit_show_created_event(show)
 
@@ -145,7 +145,7 @@ class ShowsService:
         except pe.DataError as e:
             raise se.ValidationError(str(e)) from e
         except pe.PrismaError as e:
-            raise se.DatabaseError(str(e)) from e
+            raise se.DatashowsError(str(e)) from e
 
         if show is not None:
             self._emit_show_updated_event(show)
@@ -166,7 +166,7 @@ class ShowsService:
         except pe.DataError as e:
             raise se.ValidationError(str(e)) from e
         except pe.PrismaError as e:
-            raise se.DatabaseError(str(e)) from e
+            raise se.DatashowsError(str(e)) from e
 
         if show is not None:
             self._emit_show_deleted_event(show)

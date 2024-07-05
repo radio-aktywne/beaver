@@ -24,7 +24,7 @@ class NotFoundError(ServiceError):
     pass
 
 
-class DatabaseError(ServiceError):
-    """Raised when a database error occurs."""
+class DatashowsError(ServiceError):
+    """Raised when a datashows database error occurs."""
 
     pass

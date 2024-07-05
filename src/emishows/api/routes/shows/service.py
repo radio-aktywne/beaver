@@ -29,8 +29,8 @@ class Service:
             response = await self._shows.count(request)
         except se.ValidationError as error:
             raise e.ValidationError(error.message) from error
-        except se.DatabaseError as error:
-            raise e.DatabaseError(error.message) from error
+        except se.DatashowsError as error:
+            raise e.DatashowsError(error.message) from error
         except se.ServiceError as error:
             raise e.ServiceError(error.message) from error
 
@@ -48,8 +48,8 @@ class Service:
             response = await self._shows.list(request)
         except se.ValidationError as error:
             raise e.ValidationError(error.message) from error
-        except se.DatabaseError as error:
-            raise e.DatabaseError(error.message) from error
+        except se.DatashowsError as error:
+            raise e.DatashowsError(error.message) from error
         except se.ServiceError as error:
             raise e.ServiceError(error.message) from error
 
@@ -76,8 +76,8 @@ class Service:
             response = await self._shows.get(request)
         except se.ValidationError as error:
             raise e.ValidationError(error.message) from error
-        except se.DatabaseError as error:
-            raise e.DatabaseError(error.message) from error
+        except se.DatashowsError as error:
+            raise e.DatashowsError(error.message) from error
         except se.ServiceError as error:
             raise e.ServiceError(error.message) from error
 
@@ -104,8 +104,8 @@ class Service:
             response = await self._shows.create(request)
         except se.ValidationError as error:
             raise e.ValidationError(error.message) from error
-        except se.DatabaseError as error:
-            raise e.DatabaseError(error.message) from error
+        except se.DatashowsError as error:
+            raise e.DatashowsError(error.message) from error
         except se.ServiceError as error:
             raise e.ServiceError(error.message) from error
 
@@ -129,8 +129,8 @@ class Service:
             response = await self._shows.update(request)
         except se.ValidationError as error:
             raise e.ValidationError(error.message) from error
-        except se.DatabaseError as error:
-            raise e.DatabaseError(error.message) from error
+        except se.DatashowsError as error:
+            raise e.DatashowsError(error.message) from error
         except se.ServiceError as error:
             raise e.ServiceError(error.message) from error
 
@@ -155,8 +155,8 @@ class Service:
             response = await self._shows.delete(request)
         except se.ValidationError as error:
             raise e.ValidationError(error.message) from error
-        except se.DatabaseError as error:
-            raise e.DatabaseError(error.message) from error
+        except se.DatashowsError as error:
+            raise e.DatashowsError(error.message) from error
         except se.ServiceError as error:
             raise e.ServiceError(error.message) from error
 

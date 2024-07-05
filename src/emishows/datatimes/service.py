@@ -4,23 +4,23 @@ from xml.etree import ElementTree
 from gracy import BaseEndpoint, GracefulRetry, Gracy, GracyConfig
 from httpx import BasicAuth
 
-from emishows.config.models import EmitimesConfig
-from emishows.emitimes.models import Calendar, Event, Query
-from emishows.emitimes.queries import QueryBuilderFactory
+from emishows.config.models import DatatimesConfig
+from emishows.datatimes.models import Calendar, Event, Query
+from emishows.datatimes.queries import QueryBuilderFactory
 from emishows.icalendar.parser import ICalendarParser
 
 
-class EmitimesEndpoint(BaseEndpoint):
-    """Endpoints for emitimes API."""
+class DatatimesEndpoint(BaseEndpoint):
+    """Endpoints for datatimes API."""
 
     CALENDAR = "/"
     EVENT = "/{EVENT}.ics"
 
 
-class EmitimesServiceBase(Gracy[EmitimesEndpoint]):
-    """Base class for emitimes API service."""
+class DatatimesServiceBase(Gracy[DatatimesEndpoint]):
+    """Base class for datatimes API service."""
 
-    def __init__(self, config: EmitimesConfig, *args, **kwargs) -> None:
+    def __init__(self, config: DatatimesConfig, *args, **kwargs) -> None:
         class Config:
             BASE_URL = config.caldav.url
             SETTINGS = GracyConfig(
@@ -38,8 +38,8 @@ class EmitimesServiceBase(Gracy[EmitimesEndpoint]):
         self._config = config
 
 
-class EmitimesService(EmitimesServiceBase):
-    """Service for emitimes API."""
+class DatatimesService(DatatimesServiceBase):
+    """Service for datatimes API."""
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -62,12 +62,12 @@ class EmitimesService(EmitimesServiceBase):
         return [calendar.text for calendar in calendars]
 
     async def get_calendar(self) -> Calendar:
-        response = await self.get(EmitimesEndpoint.CALENDAR, auth=self._build_auth())
+        response = await self.get(DatatimesEndpoint.CALENDAR, auth=self._build_auth())
         return self._parser.string_to_calendar(response.text)
 
     async def get_event(self, id: UUID) -> Event:
         response = await self.get(
-            EmitimesEndpoint.EVENT, {"EVENT": id}, auth=self._build_auth()
+            DatatimesEndpoint.EVENT, {"EVENT": id}, auth=self._build_auth()
         )
         calendar = self._parser.string_to_calendar(response.text)
         return calendar.events[0]
@@ -81,7 +81,7 @@ class EmitimesService(EmitimesServiceBase):
 
         response = await self._request(
             "REPORT",
-            EmitimesEndpoint.CALENDAR,
+            DatatimesEndpoint.CALENDAR,
             auth=self._build_auth(),
             content=payload,
             headers={"Content-Type": "application/xml"},
@@ -100,7 +100,7 @@ class EmitimesService(EmitimesServiceBase):
         payload = self._parser.calendar_to_string(calendar)
 
         await self.put(
-            EmitimesEndpoint.EVENT,
+            DatatimesEndpoint.EVENT,
             {"EVENT": data.id},
             auth=self._build_auth(),
             content=payload,
@@ -111,7 +111,7 @@ class EmitimesService(EmitimesServiceBase):
 
     async def delete_event(self, id: UUID) -> None:
         await self.delete(
-            EmitimesEndpoint.EVENT,
+            DatatimesEndpoint.EVENT,
             {"EVENT": id},
             auth=self._build_auth(),
         )

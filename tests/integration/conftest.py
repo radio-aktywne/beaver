@@ -31,8 +31,8 @@ def app(config: Config) -> Litestar:
 
 
 @pytest_asyncio.fixture(scope="session")
-async def database() -> AsyncGenerator[AsyncDockerContainer, None]:
-    """Database container."""
+async def datashows() -> AsyncGenerator[AsyncDockerContainer, None]:
+    """Datashows container."""
 
     async def _check() -> None:
         async with Prisma(
@@ -41,7 +41,7 @@ async def database() -> AsyncGenerator[AsyncDockerContainer, None]:
             return
 
     container = AsyncDockerContainer(
-        "ghcr.io/radio-aktywne/databases/emishows-db:latest",
+        "ghcr.io/radio-aktywne/databases/datashows:latest",
         network="host",
         privileged=True,
     )
@@ -57,17 +57,17 @@ async def database() -> AsyncGenerator[AsyncDockerContainer, None]:
 
 
 @pytest_asyncio.fixture(scope="session")
-async def emitimes() -> AsyncGenerator[AsyncDockerContainer, None]:
-    """Emitimes container."""
+async def datatimes() -> AsyncGenerator[AsyncDockerContainer, None]:
+    """Datatimes container."""
 
     async def _check() -> None:
         auth = BasicAuth(username="user", password="password")
         async with AsyncClient(base_url="http://localhost:36000", auth=auth) as client:
-            response = await client.get("/user/emitimes")
+            response = await client.get("/user/datatimes")
             response.raise_for_status()
 
     container = AsyncDockerContainer(
-        "ghcr.io/radio-aktywne/databases/emitimes:latest",
+        "ghcr.io/radio-aktywne/databases/datatimes:latest",
         network="host",
     )
 
@@ -83,7 +83,7 @@ async def emitimes() -> AsyncGenerator[AsyncDockerContainer, None]:
 
 @pytest_asyncio.fixture(scope="session")
 async def client(
-    app: Litestar, database: AsyncDockerContainer, emitimes: AsyncDockerContainer
+    app: Litestar, datashows: AsyncDockerContainer, datatimes: AsyncDockerContainer
 ) -> AsyncGenerator[AsyncTestClient, None]:
     """Reusable test client."""
 

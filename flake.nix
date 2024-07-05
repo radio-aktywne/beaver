@@ -85,7 +85,7 @@
 
             shellHook = ''
               export TMPDIR=/tmp
-              export PRISMA_DB_URL="postgres://user:''${EMISHOWS__DATABASE__SQL__PASSWORD:-password}@''${EMISHOWS__DATABASE__SQL__HOST:-localhost}:''${EMISHOWS__DATABASE__SQL__PORT:-34000}/database"
+              export PRISMA_DB_URL="postgres://user:''${EMISHOWS__DATASHOWS__SQL__PASSWORD:-password}@''${EMISHOWS__DATASHOWS__SQL__HOST:-localhost}:''${EMISHOWS__DATASHOWS__SQL__PORT:-34000}/database"
             '';
           };
 

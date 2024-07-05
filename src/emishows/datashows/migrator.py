@@ -4,8 +4,8 @@ import subprocess
 from emishows.config.models import Config
 
 
-class DatabaseMigrator:
-    """Migrator class for database migrations."""
+class DatashowsMigrator:
+    """Migrator class for datashows database migrations."""
 
     def __init__(self, config: Config) -> None:
         self._config = config
@@ -18,7 +18,7 @@ class DatabaseMigrator:
     def _get_connection_string(self) -> str:
         """Get the connection string."""
 
-        return self._config.database.sql.url
+        return self._config.datashows.sql.url
 
     def _get_env(self) -> dict[str, str]:
         """Get the environment variables."""

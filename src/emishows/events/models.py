@@ -5,7 +5,7 @@ from prisma import types as pt
 from pydantic import Field, NaiveDatetime, PlainValidator, TypeAdapter
 from typing_extensions import TypedDict
 
-from emishows.emitimes import models as em
+from emishows.datatimes import models as em
 from emishows.models.base import SerializableModel
 from emishows.time import Timezone
 
@@ -21,7 +21,7 @@ pt.EventOrderByInput = (
     | pt._Event_showId_OrderByInput
 )
 
-EventDatabaseModel = pm.Event
+EventDatashowsModel = pm.Event
 Recurrence = em.Recurrence
 SortOrder = pt.SortOrder
 EventWhereInput = pt.EventWhereInput
@@ -32,7 +32,7 @@ EventInclude = pt.EventInclude
 EventWhereUniqueInput = pt.EventWhereUniqueInput
 
 
-class Event(EventDatabaseModel):
+class Event(EventDatashowsModel):
     """Event model."""
 
     start: NaiveDatetime = Field(
