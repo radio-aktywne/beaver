@@ -53,3 +53,33 @@ curl \
 ```
 
 The start and end times should be in the UTC timezone.
+
+## Ping
+
+You can check the status of the app by sending
+either a `GET` or `HEAD` request to the `/ping` endpoint.
+The app should respond with a `204 No Content` status code.
+
+For example, you can use `curl` to do that:
+
+```sh
+curl \
+    --request HEAD \
+    --head \
+    http://localhost:35000/ping
+```
+
+## Server-Sent Events
+
+You can subscribe to the Server-Sent Events (SSE) by sending
+a `GET` request to the `/sse` endpoint.
+The app will send you the events as they happen.
+
+For example, you can use `curl` to do that:
+
+```sh
+curl \
+    --request GET \
+    --no-buffer \
+    http://localhost:35000/sse
+```

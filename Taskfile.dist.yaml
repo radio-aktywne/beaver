@@ -205,13 +205,25 @@ tasks:
         prisma
         generate
         {{ .CLI_ARGS }}
+  generate-prisma-internal:
+    desc: Generate Prisma client
+    internal: true
+    cmds:
+      - task: generate-prisma
+        vars:
+          CLI_ARGS: ""
   test:
     desc: Run tests
     cmds:
       - task: install-internal
-      - task: generate-prisma
+      - task: generate-prisma-internal
       - >
         poetry
+        run
+        --
+        dotenv
+        --file
+        .env.python
         run
         --
         pytest
@@ -220,7 +232,7 @@ tasks:
     desc: Pull datashows models
     cmds:
       - task: install-internal
-      - task: generate-prisma
+      - task: generate-prisma-internal
       - >
         poetry
         run
@@ -233,7 +245,7 @@ tasks:
     desc: Push schema to datashows without migrations
     cmds:
       - task: install-internal
-      - task: generate-prisma
+      - task: generate-prisma-internal
       - >
         poetry
         run
@@ -246,7 +258,7 @@ tasks:
     desc: Apply migrations to datashows in development mode
     cmds:
       - task: install-internal
-      - task: generate-prisma
+      - task: generate-prisma-internal
       - >
         poetry
         run
@@ -259,7 +271,7 @@ tasks:
     desc: Apply migrations to datashows in production mode
     cmds:
       - task: install-internal
-      - task: generate-prisma
+      - task: generate-prisma-internal
       - >
         poetry
         run
@@ -273,9 +285,14 @@ tasks:
     interactive: true
     cmds:
       - task: install-internal
-      - task: generate-prisma
+      - task: generate-prisma-internal
       - >
         poetry
+        run
+        --
+        dotenv
+        --file
+        .env.python
         run
         --
         emishows

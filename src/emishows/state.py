@@ -1,19 +1,18 @@
 from litestar.datastructures import State as LitestarState
-from prisma import Prisma
 
 from emishows.config.models import Config
-from emishows.datatimes.service import DatatimesService
+from emishows.services.datashows.service import DatashowsService
+from emishows.services.datatimes.service import DatatimesService
 
 
 class State(LitestarState):
-    """Use this class as a type hint for the state of your application.
-
-    Attributes:
-        config: Configuration for the application.
-        prisma: Datashows database client.
-        datatimes: Service for datatimes API.
-    """
+    """Use this class as a type hint for the state of the application."""
 
     config: Config
-    prisma: Prisma
+    """Configuration for the application."""
+
+    datashows: DatashowsService
+    """Service for datashows database."""
+
     datatimes: DatatimesService
+    """Service for datatimes database."""

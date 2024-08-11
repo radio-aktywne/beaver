@@ -1,8 +1,11 @@
+from collections.abc import Generator
+from contextlib import contextmanager
+
 from emishows.api.routes.shows import errors as e
 from emishows.api.routes.shows import models as m
-from emishows.shows import errors as se
-from emishows.shows import models as sm
-from emishows.shows.service import ShowsService
+from emishows.services.shows import errors as se
+from emishows.services.shows import models as sm
+from emishows.services.shows.service import ShowsService
 
 
 class Service:
@@ -11,32 +14,38 @@ class Service:
     def __init__(self, shows: ShowsService) -> None:
         self._shows = shows
 
-    async def list(
-        self,
-        limit: m.ListLimitParameter,
-        offset: m.ListOffsetParameter,
-        where: m.ListWhereParameter,
-        include: m.ListIncludeParameter,
-        order: m.ListOrderParameter,
-    ) -> m.ListResponse:
+    @contextmanager
+    def _handle_errors(self) -> Generator[None]:
+        try:
+            yield
+        except se.ValidationError as ex:
+            raise e.ValidationError(str(ex)) from ex
+        except se.DatashowsError as ex:
+            raise e.DatashowsError(str(ex)) from ex
+        except se.DatatimesError as ex:
+            raise e.DatatimesError(str(ex)) from ex
+        except se.ServiceError as ex:
+            raise e.ServiceError(str(ex)) from ex
+
+    async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List shows."""
 
-        request = sm.CountRequest(
+        limit = request.limit
+        offset = request.offset
+        where = request.where
+        include = request.include
+        order = request.order
+
+        req = sm.CountRequest(
             where=where,
         )
 
-        try:
-            response = await self._shows.count(request)
-        except se.ValidationError as error:
-            raise e.ValidationError(error.message) from error
-        except se.DatashowsError as error:
-            raise e.DatashowsError(error.message) from error
-        except se.ServiceError as error:
-            raise e.ServiceError(error.message) from error
+        with self._handle_errors():
+            res = await self._shows.count(req)
 
-        count = response.count
+        count = res.count
 
-        request = sm.ListRequest(
+        req = sm.ListRequest(
             limit=limit,
             offset=offset,
             where=where,
@@ -44,125 +53,115 @@ class Service:
             order=order,
         )
 
-        try:
-            response = await self._shows.list(request)
-        except se.ValidationError as error:
-            raise e.ValidationError(error.message) from error
-        except se.DatashowsError as error:
-            raise e.DatashowsError(error.message) from error
-        except se.ServiceError as error:
-            raise e.ServiceError(error.message) from error
+        with self._handle_errors():
+            res = await self._shows.list(req)
 
-        return m.ListResponse(
+        shows = res.shows
+
+        shows = [m.Show.map(show) for show in shows]
+        results = m.ShowList(
             count=count,
             limit=limit,
             offset=offset,
-            shows=response.shows,
+            shows=shows,
+        )
+        return m.ListResponse(
+            results=results,
         )
 
-    async def get(
-        self,
-        id: m.GetIdParameter,
-        include: m.GetIncludeParameter,
-    ) -> m.GetResponse:
-        """Get a show."""
+    async def get(self, request: m.GetRequest) -> m.GetResponse:
+        """Get show."""
 
-        request = sm.GetRequest(
-            where={"id": str(id)},
+        id = request.id
+        include = request.include
+
+        req = sm.GetRequest(
+            where={
+                "id": str(id),
+            },
             include=include,
         )
 
-        try:
-            response = await self._shows.get(request)
-        except se.ValidationError as error:
-            raise e.ValidationError(error.message) from error
-        except se.DatashowsError as error:
-            raise e.DatashowsError(error.message) from error
-        except se.ServiceError as error:
-            raise e.ServiceError(error.message) from error
+        with self._handle_errors():
+            res = await self._shows.get(req)
 
-        show = response.show
+        show = res.show
 
         if show is None:
-            raise e.NotFoundError()
+            raise e.ShowNotFoundError(id)
 
-        return show
+        show = m.Show.map(show)
+        return m.GetResponse(
+            show=show,
+        )
 
-    async def create(
-        self,
-        data: m.CreateRequest,
-        include: m.CreateIncludeParameter,
-    ) -> m.CreateResponse:
-        """Create a show."""
+    async def create(self, request: m.CreateRequest) -> m.CreateResponse:
+        """Create show."""
 
-        request = sm.CreateRequest(
+        data = request.data
+        include = request.include
+
+        req = sm.CreateRequest(
             data=data,
             include=include,
         )
 
-        try:
-            response = await self._shows.create(request)
-        except se.ValidationError as error:
-            raise e.ValidationError(error.message) from error
-        except se.DatashowsError as error:
-            raise e.DatashowsError(error.message) from error
-        except se.ServiceError as error:
-            raise e.ServiceError(error.message) from error
+        with self._handle_errors():
+            res = await self._shows.create(req)
 
-        return response.show
+        show = res.show
 
-    async def update(
-        self,
-        id: m.UpdateIdParameter,
-        data: m.UpdateRequest,
-        include: m.UpdateIncludeParameter,
-    ) -> m.UpdateResponse:
-        """Update a show."""
+        show = m.Show.map(show)
+        return m.CreateResponse(
+            show=show,
+        )
 
-        request = sm.UpdateRequest(
+    async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
+        """Update show."""
+
+        data = request.data
+        id = request.id
+        include = request.include
+
+        req = sm.UpdateRequest(
             data=data,
-            where={"id": str(id)},
+            where={
+                "id": str(id),
+            },
             include=include,
         )
 
-        try:
-            response = await self._shows.update(request)
-        except se.ValidationError as error:
-            raise e.ValidationError(error.message) from error
-        except se.DatashowsError as error:
-            raise e.DatashowsError(error.message) from error
-        except se.ServiceError as error:
-            raise e.ServiceError(error.message) from error
+        with self._handle_errors():
+            res = await self._shows.update(req)
 
-        show = response.show
+        show = res.show
 
         if show is None:
-            raise e.NotFoundError()
+            raise e.ShowNotFoundError(id)
 
-        return show
-
-    async def delete(
-        self,
-        id: m.DeleteIdParameter,
-    ) -> m.DeleteResponse:
-        """Delete a show."""
-
-        request = sm.DeleteRequest(
-            where={"id": str(id)},
+        show = m.Show.map(show)
+        return m.UpdateResponse(
+            show=show,
         )
 
-        try:
-            response = await self._shows.delete(request)
-        except se.ValidationError as error:
-            raise e.ValidationError(error.message) from error
-        except se.DatashowsError as error:
-            raise e.DatashowsError(error.message) from error
-        except se.ServiceError as error:
-            raise e.ServiceError(error.message) from error
+    async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
+        """Delete show."""
 
-        show = response.show
+        id = request.id
+
+        req = sm.DeleteRequest(
+            where={
+                "id": str(id),
+            },
+            include=None,
+        )
+
+        with self._handle_errors():
+            res = await self._shows.delete(req)
+
+        show = res.show
 
         if show is None:
-            raise e.NotFoundError()
+            raise e.ShowNotFoundError(id)
 
-        return None
+        return m.DeleteResponse()

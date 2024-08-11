@@ -31,12 +31,14 @@ def app(config: Config) -> Litestar:
 
 
 @pytest_asyncio.fixture(scope="session")
-async def datashows() -> AsyncGenerator[AsyncDockerContainer, None]:
+async def datashows() -> AsyncGenerator[AsyncDockerContainer]:
     """Datashows container."""
 
     async def _check() -> None:
         async with Prisma(
-            datasource={"url": "postgres://user:password@localhost:34000/database"}
+            datasource={
+                "url": "postgres://user:password@localhost:34000/database",
+            }
         ):
             return
 
@@ -57,12 +59,16 @@ async def datashows() -> AsyncGenerator[AsyncDockerContainer, None]:
 
 
 @pytest_asyncio.fixture(scope="session")
-async def datatimes() -> AsyncGenerator[AsyncDockerContainer, None]:
+async def datatimes() -> AsyncGenerator[AsyncDockerContainer]:
     """Datatimes container."""
 
     async def _check() -> None:
         auth = BasicAuth(username="user", password="password")
-        async with AsyncClient(base_url="http://localhost:36000", auth=auth) as client:
+        client = AsyncClient(
+            base_url="http://localhost:36000",
+            auth=auth,
+        )
+        async with client as client:
             response = await client.get("/user/datatimes")
             response.raise_for_status()
 
@@ -84,7 +90,7 @@ async def datatimes() -> AsyncGenerator[AsyncDockerContainer, None]:
 @pytest_asyncio.fixture(scope="session")
 async def client(
     app: Litestar, datashows: AsyncDockerContainer, datatimes: AsyncDockerContainer
-) -> AsyncGenerator[AsyncTestClient, None]:
+) -> AsyncGenerator[AsyncTestClient]:
     """Reusable test client."""
 
     async with AsyncTestClient(app=app) as client:

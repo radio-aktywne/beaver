@@ -37,15 +37,16 @@
         ...
       }: let
         node = pkgs.nodejs;
-        python = pkgs.python311;
+        python = pkgs.python312;
         nil = pkgs.nil;
         task = pkgs.go-task;
         coreutils = pkgs.coreutils;
         trunk = pkgs.trunk-io;
         poetry = pkgs.poetry;
+        cacert = pkgs.cacert;
         copier = pkgs.copier;
         openssl = pkgs.openssl;
-        cacert = pkgs.cacert;
+        usql = pkgs.usql;
         tini = pkgs.tini;
         su-exec = pkgs.su-exec;
       in {
@@ -78,10 +79,13 @@
               coreutils
               trunk
               poetry
+              cacert
               copier
               openssl
-              cacert
+              usql
             ];
+
+            EXTRAPYTHONPATH = "${python}/${python.sitePackages}";
 
             shellHook = ''
               export TMPDIR=/tmp
@@ -97,6 +101,7 @@
               task
               coreutils
               poetry
+              cacert
             ];
 
             shellHook = ''
@@ -111,12 +116,13 @@
               node
               python
               poetry
-              openssl
               cacert
+              openssl
               tini
               su-exec
             ];
 
+            EXTRAPYTHONPATH = "${python}/${python.sitePackages}";
             LD_LIBRARY_PATH = lib.makeLibraryPath [openssl];
 
             shellHook = ''
@@ -162,10 +168,11 @@
               task
               coreutils
               poetry
-              openssl
               cacert
+              openssl
             ];
 
+            EXTRAPYTHONPATH = "${python}/${python.sitePackages}";
             LD_LIBRARY_PATH = lib.makeLibraryPath [openssl];
 
             shellHook = ''
