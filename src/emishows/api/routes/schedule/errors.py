@@ -1,25 +1,11 @@
 class ServiceError(Exception):
     """Base class for service errors."""
 
-    def __init__(self, message: str | None = None) -> None:
-        self._message = message
-
-        args = (message,) if message else ()
-        super().__init__(*args)
-
-    @property
-    def message(self) -> str | None:
-        return self._message
+    pass
 
 
 class ValidationError(ServiceError):
     """Raised when a validation error occurs."""
-
-    pass
-
-
-class NotFoundError(ServiceError):
-    """Raised when a resource is not found."""
 
     pass
 
@@ -31,6 +17,6 @@ class DatashowsError(ServiceError):
 
 
 class DatatimesError(ServiceError):
-    """Raised when an datatimes API error occurs."""
+    """Raised when an datatimes database error occurs."""
 
     pass

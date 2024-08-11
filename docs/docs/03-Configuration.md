@@ -1,5 +1,5 @@
 ---
-slug: /configuration
+slug: /config
 title: Configuration
 ---
 
@@ -13,6 +13,9 @@ You can configure the app at runtime using various environment variables:
 - `EMISHOWS__SERVER__PORT` -
   port to run the server on
   (default: `35000`)
+- `EMISHOWS__SERVER__TRUSTED` -
+  trusted IP addresses
+  (default: `*`)
 - `EMISHOWS__DATASHOWS__SQL__HOST` -
   host of the SQL database of datashows
   (default: `localhost`)
@@ -43,3 +46,6 @@ You can configure the app at runtime using various environment variables:
 - `EMISHOWS__DATATIMES__CALDAV__CALENDAR` -
   calendar to use with the CalDAV API of datatimes service
   (default: `datatimes`)
+- `EMISHOWS__DEBUG` -
+  enable debug mode
+  (default: `false`)

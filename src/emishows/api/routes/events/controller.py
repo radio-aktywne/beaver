@@ -1,42 +1,19 @@
-from typing import Annotated, TypeVar
+from typing import Annotated
 
 from litestar import Controller as BaseController
-from litestar import delete, get, patch, post
+from litestar import handlers
 from litestar.channels import ChannelsPlugin
 from litestar.di import Provide
-from litestar.params import Parameter
+from litestar.params import Body, Parameter
 from litestar.response import Response
-from pydantic import Json, TypeAdapter
-from pydantic import ValidationError as PydanticValidationError
 
 from emishows.api.exceptions import BadRequestException, NotFoundException
-from emishows.api.routes.events.errors import NotFoundError, ValidationError
-from emishows.api.routes.events.models import (
-    CreateIncludeParameter,
-    CreateRequest,
-    CreateResponse,
-    DeleteIdParameter,
-    DeleteResponse,
-    GetIdParameter,
-    GetIncludeParameter,
-    GetResponse,
-    ListIncludeParameter,
-    ListLimitParameter,
-    ListOffsetParameter,
-    ListOrderParameter,
-    ListQueryParameter,
-    ListResponse,
-    ListWhereParameter,
-    UpdateIdParameter,
-    UpdateIncludeParameter,
-    UpdateRequest,
-    UpdateResponse,
-)
+from emishows.api.routes.events import errors as e
+from emishows.api.routes.events import models as m
 from emishows.api.routes.events.service import Service
-from emishows.events.service import EventsService
+from emishows.api.validator import Validator
+from emishows.services.mevents.service import EventsService
 from emishows.state import State
-
-T = TypeVar("T")
 
 
 class DependenciesBuilder:
@@ -49,7 +26,7 @@ class DependenciesBuilder:
     ) -> Service:
         return Service(
             events=EventsService(
-                prisma=state.prisma,
+                datashows=state.datashows,
                 datatimes=state.datatimes,
                 channels=channels,
             )
@@ -66,177 +43,226 @@ class Controller(BaseController):
 
     dependencies = DependenciesBuilder().build()
 
-    def _validate_pydantic(self, t: type[T], v: str) -> T:
-        try:
-            return TypeAdapter(t).validate_python(v)
-        except PydanticValidationError as e:
-            raise BadRequestException(extra=e.errors(include_context=False)) from e
-
-    def _validate_json(self, t: type[T], v: str) -> T:
-        try:
-            return TypeAdapter(Json[t]).validate_strings(v)
-        except PydanticValidationError as e:
-            raise BadRequestException(extra=e.errors(include_context=False)) from e
-
-    @get(
+    @handlers.get(
         summary="List events",
-        description="List events that match the request.",
     )
     async def list(
         self,
         service: Service,
         limit: Annotated[
-            ListLimitParameter,
-            Parameter(description="Maximum number of events to return.", default=10),
+            m.ListRequestLimit,
+            Parameter(
+                description="Maximum number of events to return.",
+            ),
         ] = 10,
         offset: Annotated[
-            ListOffsetParameter,
-            Parameter(description="Number of events to skip."),
+            m.ListRequestOffset,
+            Parameter(
+                description="Number of events to skip.",
+            ),
         ] = None,
         where: Annotated[
             str | None,
-            Parameter(description="Filter to apply to events."),
+            Parameter(
+                description="Filter to apply to find events.",
+            ),
         ] = None,
         q: Annotated[
             str | None,
-            Parameter(description="Advanced query to apply to events.", query="query"),
+            Parameter(
+                description="Advanced query to apply to find events.",
+                query="query",
+            ),
         ] = None,
         include: Annotated[
             str | None,
-            Parameter(description="Relations to include with events."),
+            Parameter(
+                description="Relations to include in the response.",
+            ),
         ] = None,
         order: Annotated[
             str | None,
-            Parameter(description="Order to apply to events."),
+            Parameter(
+                description="Order to apply to the results.",
+            ),
         ] = None,
-    ) -> Response[ListResponse]:
-        where = self._validate_json(ListWhereParameter, where) if where else None
-        query = self._validate_json(ListQueryParameter, q) if q else None
-        include = (
-            self._validate_json(ListIncludeParameter, include) if include else None
+    ) -> Response[m.ListResponseResults]:
+        """List events that match the request."""
+
+        where = Validator(m.ListRequestWhere).json(where) if where else None
+        query = Validator(m.Query).json(q) if q else None
+        include = Validator(m.ListRequestInclude).json(include) if include else None
+        order = Validator(m.ListRequestOrder).json(order) if order else None
+
+        req = m.ListRequest(
+            limit=limit,
+            offset=offset,
+            where=where,
+            query=query,
+            include=include,
+            order=order,
         )
-        order = self._validate_json(ListOrderParameter, order) if order else None
 
         try:
-            response = await service.list(
-                limit=limit,
-                offset=offset,
-                where=where,
-                query=query,
-                include=include,
-                order=order,
-            )
-        except ValidationError as e:
-            raise BadRequestException(extra=e.message) from e
+            res = await service.list(req)
+        except e.ValidationError as ex:
+            raise BadRequestException(extra=str(ex)) from ex
 
-        return Response(response)
+        results = res.results
 
-    @get(
+        return Response(results)
+
+    @handlers.get(
         "/{id:uuid}",
         summary="Get event",
-        description="Get an event by ID.",
     )
     async def get(
         self,
         service: Service,
-        id: GetIdParameter,
+        id: Annotated[
+            m.GetRequestId,
+            Parameter(
+                description="Identifier of the event to get.",
+            ),
+        ],
         include: Annotated[
             str | None,
-            Parameter(description="Relations to include with event."),
+            Parameter(
+                description="Relations to include in the response.",
+            ),
         ] = None,
-    ) -> Response[GetResponse]:
-        include = self._validate_json(GetIncludeParameter, include) if include else None
+    ) -> Response[m.GetResponseEvent]:
+        """Get an event by ID."""
+
+        include = Validator(m.GetRequestInclude).json(include) if include else None
+
+        req = m.GetRequest(
+            id=id,
+            include=include,
+        )
 
         try:
-            response = await service.get(
-                id=id,
-                include=include,
-            )
-        except ValidationError as e:
-            raise BadRequestException(extra=e.message) from e
-        except NotFoundError as e:
-            raise NotFoundException(extra=e.message) from e
+            res = await service.get(req)
+        except e.ValidationError as ex:
+            raise BadRequestException(extra=str(ex)) from ex
+        except e.EventNotFoundError as ex:
+            raise NotFoundException(extra=str(ex)) from ex
 
-        return Response(response)
+        event = res.event
 
-    @post(
+        return Response(event)
+
+    @handlers.post(
         summary="Create event",
-        description="Create an event.",
     )
     async def create(
         self,
         service: Service,
-        data: CreateRequest,
+        data: Annotated[
+            m.CreateRequestData,
+            Body(
+                description="Data to create an event.",
+            ),
+        ],
         include: Annotated[
             str | None,
-            Parameter(description="Relations to include with event."),
+            Parameter(
+                description="Relations to include in the response.",
+            ),
         ] = None,
-    ) -> Response[CreateResponse]:
-        data = self._validate_pydantic(CreateRequest, data)
-        include = (
-            self._validate_json(CreateIncludeParameter, include) if include else None
+    ) -> Response[m.CreateResponseEvent]:
+        """Create a new event."""
+
+        data = Validator(m.CreateRequestData).object(data)
+        include = Validator(m.CreateRequestInclude).json(include) if include else None
+
+        req = m.CreateRequest(
+            data=data,
+            include=include,
         )
 
         try:
-            response = await service.create(
-                data=data,
-                include=include,
-            )
-        except ValidationError as e:
-            raise BadRequestException(extra=e.message) from e
+            res = await service.create(req)
+        except e.ValidationError as ex:
+            raise BadRequestException(extra=str(ex)) from ex
 
-        return Response(response)
+        event = res.event
 
-    @patch(
+        return Response(event)
+
+    @handlers.patch(
         "/{id:uuid}",
         summary="Update event",
-        description="Update an event by ID.",
     )
     async def update(
         self,
         service: Service,
-        id: UpdateIdParameter,
-        data: UpdateRequest,
+        id: Annotated[
+            m.UpdateRequestId,
+            Parameter(
+                description="Identifier of the event to update.",
+            ),
+        ],
+        data: Annotated[
+            m.UpdateRequestData,
+            Body(
+                description="Data to update an event.",
+            ),
+        ],
         include: Annotated[
             str | None,
-            Parameter(description="Relations to include with event."),
+            Parameter(
+                description="Relations to include in the response.",
+            ),
         ] = None,
-    ) -> Response[UpdateResponse]:
-        data = self._validate_pydantic(UpdateRequest, data)
-        include = (
-            self._validate_json(UpdateIncludeParameter, include) if include else None
+    ) -> Response[m.UpdateResponseEvent]:
+        """Update an event by ID."""
+
+        data = Validator(m.UpdateRequestData).object(data)
+        include = Validator(m.UpdateRequestInclude).json(include) if include else None
+
+        req = m.UpdateRequest(
+            data=data,
+            id=id,
+            include=include,
         )
 
         try:
-            response = await service.update(
-                id=id,
-                data=data,
-                include=include,
-            )
-        except ValidationError as e:
-            raise BadRequestException(extra=e.message) from e
-        except NotFoundError as e:
-            raise NotFoundException(extra=e.message) from e
+            res = await service.update(req)
+        except e.ValidationError as ex:
+            raise BadRequestException(extra=str(ex)) from ex
+        except e.EventNotFoundError as ex:
+            raise NotFoundException(extra=str(ex)) from ex
 
-        return Response(response)
+        event = res.event
 
-    @delete(
+        return Response(event)
+
+    @handlers.delete(
         "/{id:uuid}",
         summary="Delete event",
-        description="Delete an event by ID.",
     )
     async def delete(
         self,
         service: Service,
-        id: DeleteIdParameter,
-    ) -> Response[DeleteResponse]:
-        try:
-            response = await service.delete(
-                id=id,
-            )
-        except ValidationError as e:
-            raise BadRequestException(extra=e.message) from e
-        except NotFoundError as e:
-            raise NotFoundException(extra=e.message) from e
+        id: Annotated[
+            m.DeleteRequestId,
+            Parameter(
+                description="Identifier of the event to delete.",
+            ),
+        ],
+    ) -> Response[None]:
+        """Delete an event by ID."""
 
-        return Response(response)
+        req = m.DeleteRequest(
+            id=id,
+        )
+
+        try:
+            await service.delete(req)
+        except e.ValidationError as ex:
+            raise BadRequestException(extra=str(ex)) from ex
+        except e.EventNotFoundError as ex:
+            raise NotFoundException(extra=str(ex)) from ex
+
+        return Response(None)

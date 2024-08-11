@@ -12,36 +12,6 @@ generator client {
   recursive_type_depth = -1
 }
 
-/// Show data
-model Show {
-  /// Identifier of the show
-  id          String  @id @default(uuid()) @map("id") @db.Uuid
-  /// Title of the show
-  title       String  @map("title") @db.String(255)
-  /// Description of the show
-  description String? @map("description")
-
-  /// Events belonging to the show
-  events Event[]
-
-  @@map("shows")
-}
-
-/// Event data
-model Event {
-  /// Identifier of the event
-  id     String    @id @default(uuid()) @map("id") @db.Uuid
-  /// Type of the event
-  type   EventType @map("type")
-  /// Identifier of the show the event belongs to
-  showId String    @map("show_id") @db.Uuid
-
-  /// Show the event belongs to
-  show Show @relation(fields: [showId], references: [id])
-
-  @@map("events")
-}
-
 /// Type of an event
 enum EventType {
   /// Live event
@@ -52,4 +22,34 @@ enum EventType {
   prerecorded
 
   @@map("event_type")
+}
+
+/// Show data
+model Show {
+  /// Identifier of the show
+  id          String  @id(map: "shows_pkey") @default(uuid()) @map("id") @db.Uuid
+  /// Title of the show
+  title       String  @unique(map: "title_unique") @map("title") @db.String(255)
+  /// Description of the show
+  description String? @map("description") @db.String(16384)
+
+  /// Events belonging to the show
+  events Event[]
+
+  @@map("shows")
+}
+
+/// Event data
+model Event {
+  /// Identifier of the event
+  id     String    @id(map: "events_pkey") @default(uuid()) @map("id") @db.Uuid
+  /// Type of the event
+  type   EventType @map("type")
+  /// Identifier of the show the event belongs to
+  showId String    @map("show_id") @db.Uuid
+
+  /// Show the event belongs to
+  show Show @relation(fields: [showId], references: [id], map: "show_id_fkey", onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("events")
 }

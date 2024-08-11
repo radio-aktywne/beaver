@@ -24,5 +24,8 @@ __pycache__/
 # Environment
 /.venv/
 
+# Environment variables
+.env
+
 # Prisma binaries
 /prisma/bin/

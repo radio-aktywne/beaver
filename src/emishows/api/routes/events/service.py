@@ -1,8 +1,13 @@
+from collections.abc import Generator
+from contextlib import contextmanager
+
+from zoneinfo import ZoneInfo
+
 from emishows.api.routes.events import errors as e
 from emishows.api.routes.events import models as m
-from emishows.events import errors as ee
-from emishows.events import models as em
-from emishows.events.service import EventsService
+from emishows.services.mevents import errors as ee
+from emishows.services.mevents import models as em
+from emishows.services.mevents.service import EventsService
 
 
 class Service:
@@ -11,173 +16,188 @@ class Service:
     def __init__(self, events: EventsService) -> None:
         self._events = events
 
-    async def list(
-        self,
-        limit: m.ListLimitParameter,
-        offset: m.ListOffsetParameter,
-        where: m.ListWhereParameter,
-        query: m.ListQueryParameter,
-        include: m.ListIncludeParameter,
-        order: m.ListOrderParameter,
-    ) -> m.ListResponse:
+    @contextmanager
+    def _handle_errors(self) -> Generator[None]:
+        try:
+            yield
+        except ee.ValidationError as ex:
+            raise e.ValidationError(str(ex)) from ex
+        except ee.DatashowsError as ex:
+            raise e.DatashowsError(str(ex)) from ex
+        except ee.DatatimesError as ex:
+            raise e.DatatimesError(str(ex)) from ex
+        except ee.ServiceError as ex:
+            raise e.ServiceError(str(ex)) from ex
+
+    async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List events."""
 
-        request = em.CountRequest(
+        limit = request.limit
+        offset = request.offset
+        where = request.where
+        query = request.query
+        include = request.include
+        order = request.order
+
+        req = em.CountRequest(
             where=where,
-            query=query,
+            query=query.map() if query is not None else None,
         )
 
-        try:
-            response = await self._events.count(request)
-        except ee.ValidationError as error:
-            raise e.ValidationError(error.message) from error
-        except ee.DatashowsError as error:
-            raise e.DatashowsError(error.message) from error
-        except ee.DatatimesError as error:
-            raise e.DatatimesError(error.message) from error
-        except ee.ServiceError as error:
-            raise e.ServiceError(error.message) from error
+        with self._handle_errors():
+            res = await self._events.count(req)
 
-        count = response.count
+        count = res.count
 
-        request = em.ListRequest(
+        req = em.ListRequest(
             limit=limit,
             offset=offset,
             where=where,
-            query=query,
+            query=query.map() if query is not None else None,
             include=include,
             order=order,
         )
 
-        try:
-            response = await self._events.list(request)
-        except ee.ValidationError as error:
-            raise e.ValidationError(error.message) from error
-        except ee.DatashowsError as error:
-            raise e.DatashowsError(error.message) from error
-        except ee.DatatimesError as error:
-            raise e.DatatimesError(error.message) from error
-        except ee.ServiceError as error:
-            raise e.ServiceError(error.message) from error
+        with self._handle_errors():
+            res = await self._events.list(req)
 
-        return m.ListResponse(
+        events = res.events
+
+        events = [m.Event.map(event) for event in events]
+        results = m.EventList(
             count=count,
             limit=limit,
             offset=offset,
-            events=response.events,
+            events=events,
+        )
+        return m.ListResponse(
+            results=results,
         )
 
-    async def get(
-        self,
-        id: m.GetIdParameter,
-        include: m.GetIncludeParameter,
-    ) -> m.GetResponse:
-        """Get an event."""
+    async def get(self, request: m.GetRequest) -> m.GetResponse:
+        """Get event."""
 
-        request = em.GetRequest(
-            where={"id": str(id)},
+        id = request.id
+        include = request.include
+
+        req = em.GetRequest(
+            where={
+                "id": str(id),
+            },
             include=include,
         )
 
-        try:
-            response = await self._events.get(request)
-        except ee.ValidationError as error:
-            raise e.ValidationError(error.message) from error
-        except ee.DatashowsError as error:
-            raise e.DatashowsError(error.message) from error
-        except ee.DatatimesError as error:
-            raise e.DatatimesError(error.message) from error
-        except ee.ServiceError as error:
-            raise e.ServiceError(error.message) from error
+        with self._handle_errors():
+            res = await self._events.get(req)
 
-        event = response.event
+        event = res.event
 
         if event is None:
-            raise e.NotFoundError()
+            raise e.EventNotFoundError(id)
 
-        return event
+        event = m.Event.map(event)
+        return m.GetResponse(
+            event=event,
+        )
 
-    async def create(
-        self,
-        data: m.CreateRequest,
-        include: m.CreateIncludeParameter,
-    ) -> m.CreateResponse:
-        """Create an event."""
+    async def create(self, request: m.CreateRequest) -> m.CreateResponse:
+        """Create event."""
 
-        request = em.CreateRequest(
-            data=data,
+        data = request.data
+        include = request.include
+
+        d = {
+            "type": data["type"],
+            "start": data["start"],
+            "end": data["end"],
+            "timezone": ZoneInfo(data["timezone"]),
+        }
+        if "id" in data:
+            d["id"] = data["id"]
+        if "showId" in data:
+            d["showId"] = data["showId"]
+        if "recurrence" in data:
+            d["recurrence"] = (
+                data["recurrence"].emap() if data["recurrence"] is not None else None
+            )
+
+        req = em.CreateRequest(
+            data=d,
             include=include,
         )
 
-        try:
-            response = await self._events.create(request)
-        except ee.ValidationError as error:
-            raise e.ValidationError(error.message) from error
-        except ee.DatashowsError as error:
-            raise e.DatashowsError(error.message) from error
-        except ee.DatatimesError as error:
-            raise e.DatatimesError(error.message) from error
-        except ee.ServiceError as error:
-            raise e.ServiceError(error.message) from error
+        with self._handle_errors():
+            res = await self._events.create(req)
 
-        return response.event
+        event = res.event
 
-    async def update(
-        self,
-        id: m.UpdateIdParameter,
-        data: m.UpdateRequest,
-        include: m.UpdateIncludeParameter,
-    ) -> m.UpdateResponse:
-        """Update an event."""
+        event = m.Event.map(event)
+        return m.CreateResponse(
+            event=event,
+        )
 
-        request = em.UpdateRequest(
-            data=data,
-            where={"id": str(id)},
+    async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
+        """Update event."""
+
+        data = request.data
+        id = request.id
+        include = request.include
+
+        d = {}
+        if "id" in data:
+            d["id"] = data["id"]
+        if "type" in data:
+            d["type"] = data["type"]
+        if "start" in data:
+            d["start"] = data["start"]
+        if "end" in data:
+            d["end"] = data["end"]
+        if "timezone" in data:
+            d["timezone"] = ZoneInfo(data["timezone"])
+        if "recurrence" in data:
+            d["recurrence"] = (
+                data["recurrence"].emap() if data["recurrence"] is not None else None
+            )
+
+        req = em.UpdateRequest(
+            data=d,
+            where={
+                "id": str(id),
+            },
             include=include,
         )
 
-        try:
-            response = await self._events.update(request)
-        except ee.ValidationError as error:
-            raise e.ValidationError(error.message) from error
-        except ee.DatashowsError as error:
-            raise e.DatashowsError(error.message) from error
-        except ee.DatatimesError as error:
-            raise e.DatatimesError(error.message) from error
-        except ee.ServiceError as error:
-            raise e.ServiceError(error.message) from error
+        with self._handle_errors():
+            res = await self._events.update(req)
 
-        event = response.event
+        event = res.event
 
         if event is None:
-            raise e.NotFoundError()
+            raise e.EventNotFoundError(id)
 
-        return event
-
-    async def delete(
-        self,
-        id: m.DeleteIdParameter,
-    ) -> m.DeleteResponse:
-        """Delete an event."""
-
-        request = em.DeleteRequest(
-            where={"id": str(id)},
+        event = m.Event.map(event)
+        return m.UpdateResponse(
+            event=event,
         )
 
-        try:
-            response = await self._events.delete(request)
-        except ee.ValidationError as error:
-            raise e.ValidationError(error.message) from error
-        except ee.DatashowsError as error:
-            raise e.DatashowsError(error.message) from error
-        except ee.DatatimesError as error:
-            raise e.DatatimesError(error.message) from error
-        except ee.ServiceError as error:
-            raise e.ServiceError(error.message) from error
+    async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
+        """Delete event."""
 
-        event = response.event
+        id = request.id
+
+        req = em.DeleteRequest(
+            where={
+                "id": str(id),
+            },
+            include=None,
+        )
+
+        with self._handle_errors():
+            res = await self._events.delete(req)
+
+        event = res.event
 
         if event is None:
-            raise e.NotFoundError()
+            raise e.EventNotFoundError(id)
 
-        return None
+        return m.DeleteResponse()

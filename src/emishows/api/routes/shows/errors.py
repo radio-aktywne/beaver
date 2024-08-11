@@ -1,15 +1,10 @@
+from uuid import UUID
+
+
 class ServiceError(Exception):
     """Base class for service errors."""
 
-    def __init__(self, message: str | None = None) -> None:
-        self._message = message
-
-        args = (message,) if message else ()
-        super().__init__(*args)
-
-    @property
-    def message(self) -> str | None:
-        return self._message
+    pass
 
 
 class ValidationError(ServiceError):
@@ -18,13 +13,20 @@ class ValidationError(ServiceError):
     pass
 
 
-class NotFoundError(ServiceError):
-    """Raised when a resource is not found."""
+class ShowNotFoundError(ServiceError):
+    """Raised when show is not found."""
 
-    pass
+    def __init__(self, id: UUID) -> None:
+        super().__init__(f"Show not found: {id}.")
 
 
 class DatashowsError(ServiceError):
     """Raised when a datashows database error occurs."""
+
+    pass
+
+
+class DatatimesError(ServiceError):
+    """Raised when an datatimes database error occurs."""
 
     pass
