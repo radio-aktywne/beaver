@@ -2,7 +2,7 @@
 package-mode = true
 name = "emishows"
 version = "0.12.0"
-description = "Emission shows 🎭"
+description = "Broadcast shows 🎭"
 authors = ["radio-aktywne <it@radioaktywne.pl>"]
 
 [tool.poetry.dependencies]

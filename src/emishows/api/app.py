@@ -63,12 +63,12 @@ class AppBuilder:
 
     def _build_openapi_config(self) -> OpenAPIConfig:
         return OpenAPIConfig(
-            # Title of the app
-            title="emishows app",
-            # Version of the app
+            # Title of the service
+            title="emishows",
+            # Version of the service
             version=metadata.version("emishows"),
-            # Description of the app
-            summary="Emission shows 🎭",
+            # Description of the service
+            summary="Broadcast shows 🎭",
             # Use handler docstrings as operation descriptions
             use_handler_docstrings=True,
             # Endpoint to serve the OpenAPI docs from
@@ -77,7 +77,7 @@ class AppBuilder:
 
     def _build_channels_plugin(self) -> ChannelsPlugin:
         return ChannelsPlugin(
-            # Store events in memory (good only for single instance apps)
+            # Store events in memory (good only for single instance services)
             backend=MemoryChannelsBackend(),
             # Channels to handle
             channels=["events"],
