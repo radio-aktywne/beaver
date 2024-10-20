@@ -3,9 +3,9 @@ slug: /
 title: Index
 ---
 
-# emishows app
+# emishows
 
-Emission shows 🎭
+Broadcast shows 🎭
 
 ## 💡 About
 

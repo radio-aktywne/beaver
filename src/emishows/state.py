@@ -6,10 +6,10 @@ from emishows.services.datatimes.service import DatatimesService
 
 
 class State(LitestarState):
-    """Use this class as a type hint for the state of the application."""
+    """Use this class as a type hint for the state of the service."""
 
     config: Config
-    """Configuration for the application."""
+    """Configuration for the service."""
 
     datashows: DatashowsService
     """Service for datashows database."""

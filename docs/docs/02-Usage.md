@@ -56,9 +56,9 @@ The start and end times should be in the UTC timezone.
 
 ## Ping
 
-You can check the status of the app by sending
+You can check the status of the service by sending
 either a `GET` or `HEAD` request to the `/ping` endpoint.
-The app should respond with a `204 No Content` status code.
+The service should respond with a `204 No Content` status code.
 
 For example, you can use `curl` to do that:
 
@@ -73,7 +73,7 @@ curl \
 
 You can subscribe to the Server-Sent Events (SSE) by sending
 a `GET` request to the `/sse` endpoint.
-The app will send you the events as they happen.
+The service will send you the events as they happen.
 
 For example, you can use `curl` to do that:
 

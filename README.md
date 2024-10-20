@@ -1,14 +1,14 @@
-<h1 align="center">emishows app</h1>
+<h1 align="center">emishows</h1>
 
 <div align="center">
 
-Emission shows 🎭
+Broadcast shows 🎭
 
-[![Lint](https://github.com/radio-aktywne/app-emishows/actions/workflows/lint.yaml/badge.svg)](https://github.com/radio-aktywne/app-emishows/actions/workflows/lint.yaml)
-[![Test](https://github.com/radio-aktywne/app-emishows/actions/workflows/test.yaml/badge.svg)](https://github.com/radio-aktywne/app-emishows/actions/workflows/test.yaml)
-[![Image](https://github.com/radio-aktywne/app-emishows/actions/workflows/image.yaml/badge.svg)](https://github.com/radio-aktywne/app-emishows/actions/workflows/image.yaml)
-[![Registry](https://github.com/radio-aktywne/app-emishows/actions/workflows/registry.yaml/badge.svg)](https://github.com/radio-aktywne/app-emishows/actions/workflows/registry.yaml)
-[![Docs](https://github.com/radio-aktywne/app-emishows/actions/workflows/docs.yaml/badge.svg)](https://github.com/radio-aktywne/app-emishows/actions/workflows/docs.yaml)
+[![Lint](https://github.com/radio-aktywne/emishows/actions/workflows/lint.yaml/badge.svg)](https://github.com/radio-aktywne/emishows/actions/workflows/lint.yaml)
+[![Test](https://github.com/radio-aktywne/emishows/actions/workflows/test.yaml/badge.svg)](https://github.com/radio-aktywne/emishows/actions/workflows/test.yaml)
+[![Image](https://github.com/radio-aktywne/emishows/actions/workflows/image.yaml/badge.svg)](https://github.com/radio-aktywne/emishows/actions/workflows/image.yaml)
+[![Registry](https://github.com/radio-aktywne/emishows/actions/workflows/registry.yaml/badge.svg)](https://github.com/radio-aktywne/emishows/actions/workflows/registry.yaml)
+[![Docs](https://github.com/radio-aktywne/emishows/actions/workflows/docs.yaml/badge.svg)](https://github.com/radio-aktywne/emishows/actions/workflows/docs.yaml)
 
 </div>
 
@@ -21,9 +21,9 @@ Emission shows 🎭
 ## 📄 Further Reading
 
 More in-depth documentation can be found
-[here](https://radio-aktywne.github.io/app-emishows).
+[here](https://radio-aktywne.github.io/emishows).
 
 ## 💻 Development
 
 Read more about how to develop the project
-[here](https://github.com/radio-aktywne/app-emishows/blob/main/CONTRIBUTING.md).
+[here](https://github.com/radio-aktywne/emishows/blob/main/CONTRIBUTING.md).
