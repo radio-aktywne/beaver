@@ -89,7 +89,7 @@
 
             shellHook = ''
               export TMPDIR=/tmp
-              export PRISMA_DB_URL="postgres://user:''${BEAVER__SAPPHIRE__SQL__PASSWORD:-password}@''${BEAVER__SAPPHIRE__SQL__HOST:-localhost}:''${BEAVER__SAPPHIRE__SQL__PORT:-34000}/database"
+              export PRISMA_DB_URL="postgres://user:''${BEAVER__SAPPHIRE__SQL__PASSWORD:-password}@''${BEAVER__SAPPHIRE__SQL__HOST:-localhost}:''${BEAVER__SAPPHIRE__SQL__PORT:-10510}/database"
             '';
           };
 

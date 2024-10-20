@@ -24,7 +24,7 @@ curl \
     --request POST \
     --header "Content-Type: application/json" \
     --data '{"title": "My Show"}' \
-    http://localhost:35000/shows
+    http://localhost:10500/shows
 ```
 
 ## Retrieving the schedule
@@ -49,7 +49,7 @@ curl \
     --header "Content-Type: application/json" \
     --data-urlencode "start=2024-01-01T00:00:00" \
     --data-urlencode "end=2024-01-08T00:00:00" \
-    http://localhost:35000/schedule
+    http://localhost:10500/schedule
 ```
 
 The start and end times should be in the UTC timezone.
@@ -66,7 +66,7 @@ For example, you can use `curl` to do that:
 curl \
     --request HEAD \
     --head \
-    http://localhost:35000/ping
+    http://localhost:10500/ping
 ```
 
 ## Server-Sent Events
@@ -81,5 +81,5 @@ For example, you can use `curl` to do that:
 curl \
     --request GET \
     --no-buffer \
-    http://localhost:35000/sse
+    http://localhost:10500/sse
 ```

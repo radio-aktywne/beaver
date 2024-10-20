@@ -10,7 +10,7 @@ envprefix: BEAVER
 events: true
 imagename: services/beaver
 importname: beaver
-port: 35000
+port: 10500
 registry: true
 releases: true
 reponame: beaver
