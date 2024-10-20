@@ -7,45 +7,45 @@ title: Configuration
 
 You can configure the service at runtime using various environment variables:
 
-- `EMISHOWS__SERVER__HOST` -
+- `BEAVER__SERVER__HOST` -
   host to run the server on
   (default: `0.0.0.0`)
-- `EMISHOWS__SERVER__PORT` -
+- `BEAVER__SERVER__PORT` -
   port to run the server on
   (default: `35000`)
-- `EMISHOWS__SERVER__TRUSTED` -
+- `BEAVER__SERVER__TRUSTED` -
   trusted IP addresses
   (default: `*`)
-- `EMISHOWS__DATASHOWS__SQL__HOST` -
-  host of the SQL database of datashows
-  (default: `localhost`)
-- `EMISHOWS__DATASHOWS__SQL__PORT` -
-  port of the SQL database of datashows
-  (default: `34000`)
-- `EMISHOWS__DATASHOWS__SQL__PASSWORD` -
-  password to authenticate with the SQL database of datashows
-  (default: `password`)
-- `EMISHOWS__DATATIMES__CALDAV__SCHEME` -
-  scheme of the CalDAV API of datatimes service
+- `BEAVER__HOWLITE__CALDAV__SCHEME` -
+  scheme of the CalDAV API of howlite database
   (default: `http`)
-- `EMISHOWS__DATATIMES__CALDAV__HOST` -
-  host of the CalDAV API of datatimes service
+- `BEAVER__HOWLITE__CALDAV__HOST` -
+  host of the CalDAV API of howlite database
   (default: `localhost`)
-- `EMISHOWS__DATATIMES__CALDAV__PORT` -
-  port of the CalDAV API of datatimes service
+- `BEAVER__HOWLITE__CALDAV__PORT` -
+  port of the CalDAV API of howlite database
   (default: `36000`)
-- `EMISHOWS__DATATIMES__CALDAV__PATH` -
-  path of the CalDAV API of datatimes service
+- `BEAVER__HOWLITE__CALDAV__PATH` -
+  path of the CalDAV API of howlite database
   (default: ``)
-- `EMISHOWS__DATATIMES__CALDAV__USER` -
-  user to authenticate with the CalDAV API of datatimes service
+- `BEAVER__HOWLITE__CALDAV__USER` -
+  user to authenticate with the CalDAV API of howlite database
   (default: `user`)
-- `EMISHOWS__DATATIMES__CALDAV__PASSWORD` -
-  password to authenticate with the CalDAV API of datatimes service
+- `BEAVER__HOWLITE__CALDAV__PASSWORD` -
+  password to authenticate with the CalDAV API of howlite database
   (default: `password`)
-- `EMISHOWS__DATATIMES__CALDAV__CALENDAR` -
-  calendar to use with the CalDAV API of datatimes service
-  (default: `datatimes`)
-- `EMISHOWS__DEBUG` -
+- `BEAVER__HOWLITE__CALDAV__CALENDAR` -
+  calendar to use with the CalDAV API of howlite database
+  (default: `calendar`)
+- `BEAVER__SAPPHIRE__SQL__HOST` -
+  host of the SQL database of sapphire
+  (default: `localhost`)
+- `BEAVER__SAPPHIRE__SQL__PORT` -
+  port of the SQL database of sapphire
+  (default: `34000`)
+- `BEAVER__SAPPHIRE__SQL__PASSWORD` -
+  password to authenticate with the SQL database of sapphire
+  (default: `password`)
+- `BEAVER__DEBUG` -
   enable debug mode
   (default: `false`)

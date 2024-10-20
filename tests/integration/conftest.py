@@ -7,9 +7,9 @@ from litestar import Litestar
 from litestar.testing import AsyncTestClient
 from prisma import Prisma
 
-from emishows.api.app import AppBuilder
-from emishows.config.builder import ConfigBuilder
-from emishows.config.models import Config
+from beaver.api.app import AppBuilder
+from beaver.config.builder import ConfigBuilder
+from beaver.config.models import Config
 from tests.utils.containers import AsyncDockerContainer
 from tests.utils.waiting.conditions import CallableCondition
 from tests.utils.waiting.strategies import TimeoutStrategy
@@ -31,8 +31,37 @@ def app(config: Config) -> Litestar:
 
 
 @pytest_asyncio.fixture(scope="session")
-async def datashows() -> AsyncGenerator[AsyncDockerContainer]:
-    """Datashows container."""
+async def howlite() -> AsyncGenerator[AsyncDockerContainer]:
+    """Howlite container."""
+
+    async def _check() -> None:
+        auth = BasicAuth(username="user", password="password")
+        client = AsyncClient(
+            base_url="http://localhost:36000",
+            auth=auth,
+        )
+        async with client as client:
+            response = await client.get("/user/howlite")
+            response.raise_for_status()
+
+    container = AsyncDockerContainer(
+        "ghcr.io/radio-aktywne/databases/howlite:latest",
+        network="host",
+    )
+
+    waiter = Waiter(
+        condition=CallableCondition(_check),
+        strategy=TimeoutStrategy(30),
+    )
+
+    async with container as container:
+        await waiter.wait()
+        yield container
+
+
+@pytest_asyncio.fixture(scope="session")
+async def sapphire() -> AsyncGenerator[AsyncDockerContainer]:
+    """Sapphire container."""
 
     async def _check() -> None:
         async with Prisma(
@@ -43,7 +72,7 @@ async def datashows() -> AsyncGenerator[AsyncDockerContainer]:
             return
 
     container = AsyncDockerContainer(
-        "ghcr.io/radio-aktywne/databases/datashows:latest",
+        "ghcr.io/radio-aktywne/databases/sapphire:latest",
         network="host",
         privileged=True,
     )
@@ -59,37 +88,8 @@ async def datashows() -> AsyncGenerator[AsyncDockerContainer]:
 
 
 @pytest_asyncio.fixture(scope="session")
-async def datatimes() -> AsyncGenerator[AsyncDockerContainer]:
-    """Datatimes container."""
-
-    async def _check() -> None:
-        auth = BasicAuth(username="user", password="password")
-        client = AsyncClient(
-            base_url="http://localhost:36000",
-            auth=auth,
-        )
-        async with client as client:
-            response = await client.get("/user/datatimes")
-            response.raise_for_status()
-
-    container = AsyncDockerContainer(
-        "ghcr.io/radio-aktywne/databases/datatimes:latest",
-        network="host",
-    )
-
-    waiter = Waiter(
-        condition=CallableCondition(_check),
-        strategy=TimeoutStrategy(30),
-    )
-
-    async with container as container:
-        await waiter.wait()
-        yield container
-
-
-@pytest_asyncio.fixture(scope="session")
 async def client(
-    app: Litestar, datashows: AsyncDockerContainer, datatimes: AsyncDockerContainer
+    app: Litestar, howlite: AsyncDockerContainer, sapphire: AsyncDockerContainer
 ) -> AsyncGenerator[AsyncTestClient]:
     """Reusable test client."""
 

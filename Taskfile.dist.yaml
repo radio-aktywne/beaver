@@ -228,8 +228,8 @@ tasks:
         --
         pytest
         {{ .CLI_ARGS }}
-  pull-datashows:
-    desc: Pull datashows models
+  pull-sapphire:
+    desc: Pull sapphire models
     cmds:
       - task: install-internal
       - task: generate-prisma-internal
@@ -241,8 +241,8 @@ tasks:
         db
         pull
         {{ .CLI_ARGS }}
-  push-datashows:
-    desc: Push schema to datashows without migrations
+  push-sapphire:
+    desc: Push schema to sapphire without migrations
     cmds:
       - task: install-internal
       - task: generate-prisma-internal
@@ -255,7 +255,7 @@ tasks:
         push
         {{ .CLI_ARGS }}
   migrate-dev:
-    desc: Apply migrations to datashows in development mode
+    desc: Apply migrations to sapphire in development mode
     cmds:
       - task: install-internal
       - task: generate-prisma-internal
@@ -268,7 +268,7 @@ tasks:
         dev
         {{ .CLI_ARGS }}
   migrate:
-    desc: Apply migrations to datashows in production mode
+    desc: Apply migrations to sapphire in production mode
     cmds:
       - task: install-internal
       - task: generate-prisma-internal
@@ -295,7 +295,7 @@ tasks:
         .env.python
         run
         --
-        emishows
+        beaver
         {{ .CLI_ARGS }}
   docker:
     desc: Run in docker container

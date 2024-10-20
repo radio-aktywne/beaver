@@ -3,10 +3,10 @@ slug: /
 title: Index
 ---
 
-# emishows
+# beaver
 
 Broadcast shows 🎭
 
 ## 💡 About
 
-`emishows` is a service for managing shows and events.
+`beaver` is a service for managing shows and events.
