@@ -9,7 +9,7 @@ class ServerConfig(BaseModel):
     host: str = "0.0.0.0"
     """Host to run the server on."""
 
-    port: int = Field(35000, ge=0, le=65535)
+    port: int = Field(10500, ge=0, le=65535)
     """Port to run the server on."""
 
     trusted: str | list[str] | None = "*"
@@ -25,7 +25,7 @@ class HowliteCalDAVConfig(BaseModel):
     host: str = "localhost"
     """Host of the CalDAV API."""
 
-    port: int | None = Field(36000, ge=1, le=65535)
+    port: int | None = Field(10520, ge=1, le=65535)
     """Port of the CalDAV API."""
 
     path: str | None = None
@@ -67,7 +67,7 @@ class SapphireSQLConfig(BaseModel):
     host: str = "localhost"
     """Host of the SQL API."""
 
-    port: int = Field(34000, ge=1, le=65535)
+    port: int = Field(10510, ge=1, le=65535)
     """Port of the SQL API."""
 
     password: str = "password"

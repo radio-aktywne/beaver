@@ -37,11 +37,11 @@ async def howlite() -> AsyncGenerator[AsyncDockerContainer]:
     async def _check() -> None:
         auth = BasicAuth(username="user", password="password")
         client = AsyncClient(
-            base_url="http://localhost:36000",
+            base_url="http://localhost:10520",
             auth=auth,
         )
         async with client as client:
-            response = await client.get("/user/howlite")
+            response = await client.get("/user/calendar")
             response.raise_for_status()
 
     container = AsyncDockerContainer(
@@ -66,7 +66,7 @@ async def sapphire() -> AsyncGenerator[AsyncDockerContainer]:
     async def _check() -> None:
         async with Prisma(
             datasource={
-                "url": "postgres://user:password@localhost:34000/database",
+                "url": "postgres://user:password@localhost:10510/database",
             }
         ):
             return

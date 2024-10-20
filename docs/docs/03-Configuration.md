@@ -12,7 +12,7 @@ You can configure the service at runtime using various environment variables:
   (default: `0.0.0.0`)
 - `BEAVER__SERVER__PORT` -
   port to run the server on
-  (default: `35000`)
+  (default: `10500`)
 - `BEAVER__SERVER__TRUSTED` -
   trusted IP addresses
   (default: `*`)
@@ -24,7 +24,7 @@ You can configure the service at runtime using various environment variables:
   (default: `localhost`)
 - `BEAVER__HOWLITE__CALDAV__PORT` -
   port of the CalDAV API of howlite database
-  (default: `36000`)
+  (default: `10520`)
 - `BEAVER__HOWLITE__CALDAV__PATH` -
   path of the CalDAV API of howlite database
   (default: ``)
@@ -42,7 +42,7 @@ You can configure the service at runtime using various environment variables:
   (default: `localhost`)
 - `BEAVER__SAPPHIRE__SQL__PORT` -
   port of the SQL database of sapphire
-  (default: `34000`)
+  (default: `10510`)
 - `BEAVER__SAPPHIRE__SQL__PASSWORD` -
   password to authenticate with the SQL database of sapphire
   (default: `password`)
