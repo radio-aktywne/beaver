@@ -1,6 +1,6 @@
 [tool.poetry]
 package-mode = true
-name = "emishows"
+name = "beaver"
 version = "0.12.0"
 description = "Broadcast shows 🎭"
 authors = ["radio-aktywne <it@radioaktywne.pl>"]
@@ -44,7 +44,7 @@ binary_cache_dir = "prisma/bin"
 
 [tool.poetry.scripts]
 # Register CLI
-emishows = "emishows.__main__:cli"
+beaver = "beaver.__main__:cli"
 
 # See: https://python-poetry.org/docs/pyproject/#poetry-and-pep-517
 [build-system]

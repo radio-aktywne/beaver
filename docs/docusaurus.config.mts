@@ -2,10 +2,10 @@ import type * as Preset from "@docusaurus/preset-classic";
 import type { Config } from "@docusaurus/types";
 import { themes } from "prism-react-renderer";
 
-const url = new URL("https://radio-aktywne.github.io/emishows");
+const url = new URL("https://radio-aktywne.github.io/beaver");
 
 const config: Config = {
-  title: "emishows docs",
+  title: "beaver docs",
   favicon: "favicon.svg?v=1",
 
   url: `${url.protocol}//${url.host}`,
@@ -41,14 +41,14 @@ const config: Config = {
 
   themeConfig: {
     navbar: {
-      title: "emishows docs",
+      title: "beaver docs",
       logo: {
-        alt: "emishows docs logo",
+        alt: "beaver docs logo",
         src: "logo.svg?v=1",
       },
       items: [
         {
-          href: "https://github.com/radio-aktywne/emishows",
+          href: "https://github.com/radio-aktywne/beaver",
           position: "right",
           className: "header-github-link",
           "aria-label": "GitHub repository",
