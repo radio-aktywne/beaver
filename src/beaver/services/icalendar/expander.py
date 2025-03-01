@@ -1,9 +1,9 @@
 from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
 
 import recurring_ical_events
 from icalendar import Event as vEvent
 from icalendar import vDatetime
-from zoneinfo import ZoneInfo
 
 from beaver.services.icalendar import models as m
 from beaver.services.icalendar.parser import ICalendarParser

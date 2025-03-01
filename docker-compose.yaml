@@ -17,5 +17,5 @@ services:
       - "BEAVER__SAPPHIRE__SQL__HOST=${BEAVER__SAPPHIRE__SQL__HOST:-localhost}"
       - "BEAVER__SAPPHIRE__SQL__PORT=${BEAVER__SAPPHIRE__SQL__PORT:-10510}"
       - "BEAVER__SAPPHIRE__SQL__PASSWORD=${BEAVER__SAPPHIRE__SQL__PASSWORD:-password}"
-      - "BEAVER__DEBUG=${BEAVER__DEBUG:-false}"
+      - "BEAVER__DEBUG=${BEAVER__DEBUG:-true}"
     network_mode: host

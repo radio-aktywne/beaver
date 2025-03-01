@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import NotRequired, TypedDict
-
 from zoneinfo import ZoneInfo
 
 from beaver.models.base import datamodel

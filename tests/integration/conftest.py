@@ -30,7 +30,7 @@ def app(config: Config) -> Litestar:
     return AppBuilder(config).build()
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(loop_scope="session", scope="session")
 async def howlite() -> AsyncGenerator[AsyncDockerContainer]:
     """Howlite container."""
 
@@ -59,7 +59,7 @@ async def howlite() -> AsyncGenerator[AsyncDockerContainer]:
         yield container
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(loop_scope="session", scope="session")
 async def sapphire() -> AsyncGenerator[AsyncDockerContainer]:
     """Sapphire container."""
 
@@ -87,7 +87,7 @@ async def sapphire() -> AsyncGenerator[AsyncDockerContainer]:
         yield container
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(loop_scope="session", scope="session")
 async def client(
     app: Litestar, howlite: AsyncDockerContainer, sapphire: AsyncDockerContainer
 ) -> AsyncGenerator[AsyncTestClient]:

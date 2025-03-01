@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from zoneinfo import ZoneInfo
 
 from beaver.models.base import datamodel
