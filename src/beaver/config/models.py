@@ -99,5 +99,5 @@ class Config(BaseConfig):
     sapphire: SapphireConfig = SapphireConfig()
     """Configuration for the sapphire database."""
 
-    debug: bool = False
+    debug: bool = True
     """Enable debug mode."""

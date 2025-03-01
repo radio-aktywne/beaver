@@ -1,6 +1,5 @@
 from collections.abc import Generator
 from contextlib import contextmanager
-
 from zoneinfo import ZoneInfo
 
 from beaver.api.routes.events import errors as e

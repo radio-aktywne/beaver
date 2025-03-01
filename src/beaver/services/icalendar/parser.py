@@ -1,12 +1,12 @@
 from collections import OrderedDict
+from collections.abc import Iterable
 from datetime import UTC, datetime
-from typing import Iterable
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 import icalendar
-from icalendar.parser import tzid_from_dt
 from icalendar.prop import WEEKDAY_RULE, vDDDLists
-from zoneinfo import ZoneInfo
+from icalendar.timezone import tzid_from_dt
 
 from beaver.services.icalendar import errors as e
 from beaver.services.icalendar import models as m
