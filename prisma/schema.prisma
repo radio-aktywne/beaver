@@ -1,5 +1,5 @@
 datasource db {
-  provider = "cockroachdb"
+  provider = "postgresql"
   url      = env("PRISMA_DB_URL")
 }
 
@@ -29,9 +29,9 @@ model Show {
   /// Identifier of the show
   id          String  @id(map: "shows_pkey") @default(uuid()) @map("id") @db.Uuid
   /// Title of the show
-  title       String  @unique(map: "title_unique") @map("title") @db.String(255)
+  title       String  @unique(map: "title_unique") @map("title") @db.Text
   /// Description of the show
-  description String? @map("description") @db.String(16384)
+  description String? @map("description") @db.Text
 
   /// Events belonging to the show
   events Event[]

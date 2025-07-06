@@ -4,8 +4,8 @@ CREATE TYPE "event_type" AS ENUM('live', 'replay', 'prerecorded');
 -- CreateTable
 CREATE TABLE "shows" (
   "id" UUID NOT NULL,
-  "title" STRING(255) NOT NULL,
-  "description" STRING(16384),
+  "title" TEXT NOT NULL,
+  "description" TEXT,
   CONSTRAINT "shows_pkey" PRIMARY KEY ("id")
 );
 
