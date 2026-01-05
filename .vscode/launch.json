@@ -1,17 +1,14 @@
 {
-  "version": "0.2.0",
   "configurations": [
     {
-      "name": "beaver",
-      "type": "debugpy",
-      "request": "launch",
-      "module": "beaver",
       "justMyCode": false,
-      "env": {
-        "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}",
-        "PYTHONPATH": "${workspaceFolder}/.venv/lib/python3.12/site-packages:${env:EXTRAPYTHONPATH}",
-        "BEAVER__DEBUG": "true"
-      }
+      "module": "beaver",
+      "name": "beaver",
+      "python": "uv",
+      "pythonArgs": ["run", "python"],
+      "request": "launch",
+      "type": "debugpy"
     }
-  ]
+  ],
+  "version": "0.2.0"
 }

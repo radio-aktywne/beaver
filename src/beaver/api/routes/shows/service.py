@@ -29,7 +29,6 @@ class Service:
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List shows."""
-
         limit = request.limit
         offset = request.offset
         where = request.where
@@ -71,13 +70,12 @@ class Service:
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get show."""
-
-        id = request.id
+        show_id = request.id
         include = request.include
 
         req = sm.GetRequest(
             where={
-                "id": str(id),
+                "id": str(show_id),
             },
             include=include,
         )
@@ -88,7 +86,7 @@ class Service:
         show = res.show
 
         if show is None:
-            raise e.ShowNotFoundError(id)
+            raise e.ShowNotFoundError(show_id)
 
         show = m.Show.map(show)
         return m.GetResponse(
@@ -97,7 +95,6 @@ class Service:
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create show."""
-
         data = request.data
         include = request.include
 
@@ -118,15 +115,14 @@ class Service:
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update show."""
-
         data = request.data
-        id = request.id
+        show_id = request.id
         include = request.include
 
         req = sm.UpdateRequest(
             data=data,
             where={
-                "id": str(id),
+                "id": str(show_id),
             },
             include=include,
         )
@@ -137,7 +133,7 @@ class Service:
         show = res.show
 
         if show is None:
-            raise e.ShowNotFoundError(id)
+            raise e.ShowNotFoundError(show_id)
 
         show = m.Show.map(show)
         return m.UpdateResponse(
@@ -146,12 +142,11 @@ class Service:
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete show."""
-
-        id = request.id
+        show_id = request.id
 
         req = sm.DeleteRequest(
             where={
-                "id": str(id),
+                "id": str(show_id),
             },
             include=None,
         )
@@ -162,6 +157,6 @@ class Service:
         show = res.show
 
         if show is None:
-            raise e.ShowNotFoundError(id)
+            raise e.ShowNotFoundError(show_id)
 
         return m.DeleteResponse()

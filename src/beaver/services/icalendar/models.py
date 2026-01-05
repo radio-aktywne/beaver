@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import datetime
 from enum import StrEnum
 from uuid import UUID
@@ -57,31 +58,31 @@ class RecurrenceRule:
     interval: int | None = None
     """Interval of the recurrence."""
 
-    by_seconds: list[int] | None = None
+    by_seconds: Sequence[int] | None = None
     """Seconds of the recurrence."""
 
-    by_minutes: list[int] | None = None
+    by_minutes: Sequence[int] | None = None
     """Minutes of the recurrence."""
 
-    by_hours: list[int] | None = None
+    by_hours: Sequence[int] | None = None
     """Hours of the recurrence."""
 
-    by_weekdays: list[WeekdayRule] | None = None
+    by_weekdays: Sequence[WeekdayRule] | None = None
     """Weekdays of the recurrence."""
 
-    by_monthdays: list[int] | None = None
+    by_monthdays: Sequence[int] | None = None
     """Monthdays of the recurrence."""
 
-    by_yeardays: list[int] | None = None
+    by_yeardays: Sequence[int] | None = None
     """Yeardays of the recurrence."""
 
-    by_weeks: list[int] | None = None
+    by_weeks: Sequence[int] | None = None
     """Weeks of the recurrence."""
 
-    by_months: list[int] | None = None
+    by_months: Sequence[int] | None = None
     """Months of the recurrence."""
 
-    by_set_positions: list[int] | None = None
+    by_set_positions: Sequence[int] | None = None
     """Set positions of the recurrence."""
 
     week_start: Weekday | None = None
@@ -95,10 +96,10 @@ class Recurrence:
     rule: RecurrenceRule | None = None
     """Rule of the recurrence."""
 
-    include: list[datetime] | None = None
+    include: Sequence[datetime] | None = None
     """Included dates of the recurrence in event timezone."""
 
-    exclude: list[datetime] | None = None
+    exclude: Sequence[datetime] | None = None
     """Excluded dates of the recurrence in event timezone."""
 
 
@@ -126,7 +127,7 @@ class Event:
 class Calendar:
     """Calendar date."""
 
-    events: list[Event]
+    events: Sequence[Event]
     """Events of the calendar."""
 
 

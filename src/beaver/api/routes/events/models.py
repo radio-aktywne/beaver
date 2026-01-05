@@ -1,3 +1,6 @@
+# pyright: reportIncompatibleVariableOverride=false
+
+from collections.abc import Sequence
 from typing import Annotated, Literal, NotRequired
 from uuid import UUID
 
@@ -7,26 +10,19 @@ from beaver.models.base import SerializableModel, datamodel, serializable
 from beaver.services.mevents import models as em
 from beaver.utils.time import NaiveDatetime, Timezone
 
-Second = Annotated[int, Field(..., ge=0, le=60)]
+Second = Annotated[int, Field(ge=0, le=60)]
 
-Minute = Annotated[int, Field(..., ge=0, le=59)]
+Minute = Annotated[int, Field(ge=0, le=59)]
 
-Hour = Annotated[int, Field(..., ge=0, le=23)]
+Hour = Annotated[int, Field(ge=0, le=23)]
 
-Monthday = (
-    Annotated[int, Field(..., ge=-31, le=-1)] | Annotated[int, Field(..., ge=1, le=31)]
-)
+Monthday = Annotated[int, Field(ge=-31, le=-1)] | Annotated[int, Field(ge=1, le=31)]
 
-Yearday = (
-    Annotated[int, Field(..., ge=-366, le=-1)]
-    | Annotated[int, Field(..., ge=1, le=366)]
-)
+Yearday = Annotated[int, Field(ge=-366, le=-1)] | Annotated[int, Field(ge=1, le=366)]
 
-Week = (
-    Annotated[int, Field(..., ge=-53, le=-1)] | Annotated[int, Field(..., ge=1, le=53)]
-)
+Week = Annotated[int, Field(ge=-53, le=-1)] | Annotated[int, Field(ge=1, le=53)]
 
-Month = Annotated[int, Field(..., ge=1, le=12)]
+Month = Annotated[int, Field(ge=1, le=12)]
 
 
 class WeekdayRule(SerializableModel):
@@ -40,12 +36,14 @@ class WeekdayRule(SerializableModel):
 
     @staticmethod
     def imap(rule: em.WeekdayRule) -> "WeekdayRule":
+        """Map to internal representation."""
         return WeekdayRule(
             day=rule.day,
             occurrence=rule.occurrence,
         )
 
     def emap(self) -> em.WeekdayRule:
+        """Map to external representation."""
         return em.WeekdayRule(
             day=self.day,
             occurrence=self.occurrence,
@@ -67,31 +65,31 @@ class RecurrenceRule(SerializableModel):
     interval: int | None = None
     """Interval of the recurrence."""
 
-    by_seconds: list[Second] | None = None
+    by_seconds: Sequence[Second] | None = None
     """Seconds of the recurrence."""
 
-    by_minutes: list[Minute] | None = None
+    by_minutes: Sequence[Minute] | None = None
     """Minutes of the recurrence."""
 
-    by_hours: list[Hour] | None = None
+    by_hours: Sequence[Hour] | None = None
     """Hours of the recurrence."""
 
-    by_weekdays: list[WeekdayRule] | None = None
+    by_weekdays: Sequence[WeekdayRule] | None = None
     """Weekdays of the recurrence."""
 
-    by_monthdays: list[Monthday] | None = None
+    by_monthdays: Sequence[Monthday] | None = None
     """Monthdays of the recurrence."""
 
-    by_yeardays: list[Yearday] | None = None
+    by_yeardays: Sequence[Yearday] | None = None
     """Yeardays of the recurrence."""
 
-    by_weeks: list[Week] | None = None
+    by_weeks: Sequence[Week] | None = None
     """Weeks of the recurrence."""
 
-    by_months: list[Month] | None = None
+    by_months: Sequence[Month] | None = None
     """Months of the recurrence."""
 
-    by_set_positions: list[int] | None = None
+    by_set_positions: Sequence[int] | None = None
     """Set positions of the recurrence."""
 
     week_start: em.Weekday | None = None
@@ -99,6 +97,7 @@ class RecurrenceRule(SerializableModel):
 
     @staticmethod
     def imap(rule: em.RecurrenceRule) -> "RecurrenceRule":
+        """Map to internal representation."""
         return RecurrenceRule(
             frequency=rule.frequency,
             until=rule.until,
@@ -121,6 +120,7 @@ class RecurrenceRule(SerializableModel):
         )
 
     def emap(self) -> em.RecurrenceRule:
+        """Map to external representation."""
         return em.RecurrenceRule(
             frequency=self.frequency,
             until=self.until,
@@ -149,14 +149,15 @@ class Recurrence(SerializableModel):
     rule: RecurrenceRule | None = None
     """Rule of the recurrence."""
 
-    include: list[NaiveDatetime] | None = None
+    include: Sequence[NaiveDatetime] | None = None
     """Included dates of the recurrence in event timezone."""
 
-    exclude: list[NaiveDatetime] | None = None
+    exclude: Sequence[NaiveDatetime] | None = None
     """Excluded dates of the recurrence in event timezone."""
 
     @staticmethod
     def imap(recurrence: em.Recurrence) -> "Recurrence":
+        """Map to internal representation."""
         return Recurrence(
             rule=(
                 RecurrenceRule.imap(recurrence.rule)
@@ -168,6 +169,7 @@ class Recurrence(SerializableModel):
         )
 
     def emap(self) -> em.Recurrence:
+        """Map to external representation."""
         return em.Recurrence(
             rule=(self.rule.emap() if self.rule is not None else None),
             include=self.include,
@@ -187,11 +189,12 @@ class Show(SerializableModel):
     description: str | None
     """Description of the show."""
 
-    events: list["Event"] | None
+    events: Sequence["Event"] | None
     """Events that the show belongs to."""
 
     @staticmethod
     def map(show: em.Show) -> "Show":
+        """Map to internal representation."""
         return Show(
             id=show.id,
             title=show.title,
@@ -233,10 +236,11 @@ class Event(SerializableModel):
 
     @staticmethod
     def map(event: em.Event) -> "Event":
+        """Map to internal representation."""
         return Event(
-            id=event.id,
+            id=UUID(event.id),
             type=event.type,
-            show_id=event.show_id,
+            show_id=UUID(event.show_id),
             show=Show.map(event.show) if event.show is not None else None,
             start=event.start,
             end=event.end,
@@ -261,21 +265,25 @@ class EventList(SerializableModel):
     offset: int | None
     """Number of events skipped."""
 
-    events: list[Event]
+    events: Sequence[Event]
     """Events that matched the request."""
 
 
 @serializable
 class EventWhereInput(em.EventWhereInput):
-    pass
+    """Filter to find events."""
 
 
 @serializable
 @datamodel
 class TimeRangeQuery(em.TimeRangeQuery):
+    """Query for events in a time range."""
+
     type: Literal["time-range"] = "time-range"
+    """Type of the query."""
 
     def map(self) -> em.TimeRangeQuery:
+        """Map to internal representation."""
         return em.TimeRangeQuery(
             start=self.start,
             end=self.end,
@@ -285,20 +293,24 @@ class TimeRangeQuery(em.TimeRangeQuery):
 @serializable
 @datamodel
 class RecurringQuery(em.RecurringQuery):
+    """Query for recurring events."""
+
     type: Literal["recurring"] = "recurring"
+    """Type of the query."""
 
     def map(self) -> em.RecurringQuery:
+        """Map to internal representation."""
         return em.RecurringQuery(
             recurring=self.recurring,
         )
 
 
-Query = Annotated[TimeRangeQuery | RecurringQuery, Field(..., discriminator="type")]
+Query = Annotated[TimeRangeQuery | RecurringQuery, Field(discriminator="type")]
 
 
 @serializable
 class EventWhereUniqueIdInput(em.EventWhereUniqueIdInput):
-    pass
+    """Unique filter to find an event by ID."""
 
 
 EventWhereUniqueInput = EventWhereUniqueIdInput
@@ -306,22 +318,22 @@ EventWhereUniqueInput = EventWhereUniqueIdInput
 
 @serializable
 class EventInclude(em.EventInclude):
-    pass
+    """Relations to include in event responses."""
 
 
 @serializable
 class EventOrderByIdInput(em.EventOrderByIdInput):
-    pass
+    """Order events by ID."""
 
 
 @serializable
 class EventOrderByTypeInput(em.EventOrderByTypeInput):
-    pass
+    """Order events by type."""
 
 
 @serializable
 class EventOrderByShowIdInput(em.EventOrderByShowIdInput):
-    pass
+    """Order events by show ID."""
 
 
 EventOrderByInput = (
@@ -331,18 +343,36 @@ EventOrderByInput = (
 
 @serializable
 class EventCreateInput(em.EventCreateInput):
+    """Input data to create an event."""
+
     start: NaiveDatetime
+    """Start time of the event in event timezone."""
+
     end: NaiveDatetime
+    """End time of the event in event timezone."""
+
     timezone: Timezone
+    """Timezone of the event."""
+
     recurrence: NotRequired[Recurrence | None]
+    """Recurrence of the event."""
 
 
 @serializable
 class EventUpdateInput(em.EventUpdateInput, total=False):
+    """Input data to update an event."""
+
     start: NaiveDatetime
+    """Start time of the event in event timezone."""
+
     end: NaiveDatetime
+    """End time of the event in event timezone."""
+
     timezone: Timezone
+    """Timezone of the event."""
+
     recurrence: Recurrence | None
+    """Recurrence of the event."""
 
 
 ListRequestLimit = int | None
@@ -355,7 +385,7 @@ ListRequestQuery = Query | None
 
 ListRequestInclude = EventInclude | None
 
-ListRequestOrder = EventOrderByInput | list[EventOrderByInput] | None
+ListRequestOrder = EventOrderByInput | Sequence[EventOrderByInput] | None
 
 ListResponseResults = EventList
 
@@ -484,5 +514,3 @@ class DeleteRequest:
 @datamodel
 class DeleteResponse:
     """Response for deleting an event."""
-
-    pass

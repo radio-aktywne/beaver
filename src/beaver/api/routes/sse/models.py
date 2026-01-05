@@ -7,8 +7,6 @@ from beaver.models.base import datamodel
 class SubscribeRequest:
     """Request to subscribe."""
 
-    pass
-
 
 @datamodel
 class SubscribeResponse:

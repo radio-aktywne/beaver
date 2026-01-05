@@ -1,13 +1,9 @@
 class ServiceError(Exception):
     """Base class for service errors."""
 
-    pass
-
 
 class ValidationError(ServiceError):
     """Raised when input fails validation."""
-
-    pass
 
 
 class DifferentTimezonesError(ValidationError):

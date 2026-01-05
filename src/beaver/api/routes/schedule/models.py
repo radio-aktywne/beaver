@@ -1,3 +1,6 @@
+# pyright: reportIncompatibleVariableOverride=false
+
+from collections.abc import Sequence
 from typing import Annotated
 from uuid import UUID
 
@@ -8,26 +11,19 @@ from beaver.services.icalendar import models as im
 from beaver.services.mevents import models as em
 from beaver.utils.time import NaiveDatetime, Timezone
 
-Second = Annotated[int, Field(..., ge=0, le=60)]
+Second = Annotated[int, Field(ge=0, le=60)]
 
-Minute = Annotated[int, Field(..., ge=0, le=59)]
+Minute = Annotated[int, Field(ge=0, le=59)]
 
-Hour = Annotated[int, Field(..., ge=0, le=23)]
+Hour = Annotated[int, Field(ge=0, le=23)]
 
-Monthday = (
-    Annotated[int, Field(..., ge=-31, le=-1)] | Annotated[int, Field(..., ge=1, le=31)]
-)
+Monthday = Annotated[int, Field(ge=-31, le=-1)] | Annotated[int, Field(ge=1, le=31)]
 
-Yearday = (
-    Annotated[int, Field(..., ge=-366, le=-1)]
-    | Annotated[int, Field(..., ge=1, le=366)]
-)
+Yearday = Annotated[int, Field(ge=-366, le=-1)] | Annotated[int, Field(ge=1, le=366)]
 
-Week = (
-    Annotated[int, Field(..., ge=-53, le=-1)] | Annotated[int, Field(..., ge=1, le=53)]
-)
+Week = Annotated[int, Field(ge=-53, le=-1)] | Annotated[int, Field(ge=1, le=53)]
 
-Month = Annotated[int, Field(..., ge=1, le=12)]
+Month = Annotated[int, Field(ge=1, le=12)]
 
 
 class WeekdayRule(SerializableModel):
@@ -41,6 +37,7 @@ class WeekdayRule(SerializableModel):
 
     @staticmethod
     def map(rule: em.WeekdayRule) -> "WeekdayRule":
+        """Map to internal representation."""
         return WeekdayRule(
             day=rule.day,
             occurrence=rule.occurrence,
@@ -62,31 +59,31 @@ class RecurrenceRule(SerializableModel):
     interval: int | None = None
     """Interval of the recurrence."""
 
-    by_seconds: list[Second] | None = None
+    by_seconds: Sequence[Second] | None = None
     """Seconds of the recurrence."""
 
-    by_minutes: list[Minute] | None = None
+    by_minutes: Sequence[Minute] | None = None
     """Minutes of the recurrence."""
 
-    by_hours: list[Hour] | None = None
+    by_hours: Sequence[Hour] | None = None
     """Hours of the recurrence."""
 
-    by_weekdays: list[WeekdayRule] | None = None
+    by_weekdays: Sequence[WeekdayRule] | None = None
     """Weekdays of the recurrence."""
 
-    by_monthdays: list[Monthday] | None = None
+    by_monthdays: Sequence[Monthday] | None = None
     """Monthdays of the recurrence."""
 
-    by_yeardays: list[Yearday] | None = None
+    by_yeardays: Sequence[Yearday] | None = None
     """Yeardays of the recurrence."""
 
-    by_weeks: list[Week] | None = None
+    by_weeks: Sequence[Week] | None = None
     """Weeks of the recurrence."""
 
-    by_months: list[Month] | None = None
+    by_months: Sequence[Month] | None = None
     """Months of the recurrence."""
 
-    by_set_positions: list[int] | None = None
+    by_set_positions: Sequence[int] | None = None
     """Set positions of the recurrence."""
 
     week_start: em.Weekday | None = None
@@ -94,6 +91,7 @@ class RecurrenceRule(SerializableModel):
 
     @staticmethod
     def map(rule: em.RecurrenceRule) -> "RecurrenceRule":
+        """Map to internal representation."""
         return RecurrenceRule(
             frequency=rule.frequency,
             until=rule.until,
@@ -122,14 +120,15 @@ class Recurrence(SerializableModel):
     rule: RecurrenceRule | None = None
     """Rule of the recurrence."""
 
-    include: list[NaiveDatetime] | None = None
+    include: Sequence[NaiveDatetime] | None = None
     """Included dates of the recurrence in event timezone."""
 
-    exclude: list[NaiveDatetime] | None = None
+    exclude: Sequence[NaiveDatetime] | None = None
     """Excluded dates of the recurrence in event timezone."""
 
     @staticmethod
     def map(recurrence: em.Recurrence) -> "Recurrence":
+        """Map to internal representation."""
         return Recurrence(
             rule=(
                 RecurrenceRule.map(recurrence.rule)
@@ -144,7 +143,7 @@ class Recurrence(SerializableModel):
 class Show(SerializableModel):
     """Show data."""
 
-    id: str
+    id: UUID
     """Identifier of the show."""
 
     title: str
@@ -153,13 +152,14 @@ class Show(SerializableModel):
     description: str | None
     """Description of the show."""
 
-    events: list["Event"] | None
+    events: Sequence["Event"] | None
     """Events that the show belongs to."""
 
     @staticmethod
     def map(show: em.Show) -> "Show":
+        """Map to internal representation."""
         return Show(
-            id=show.id,
+            id=UUID(show.id),
             title=show.title,
             description=show.description,
             events=(
@@ -199,10 +199,11 @@ class Event(SerializableModel):
 
     @staticmethod
     def map(event: em.Event) -> "Event":
+        """Map to internal representation."""
         return Event(
-            id=event.id,
+            id=UUID(event.id),
             type=event.type,
-            show_id=event.show_id,
+            show_id=UUID(event.show_id),
             show=Show.map(event.show) if event.show is not None else None,
             start=event.start,
             end=event.end,
@@ -217,27 +218,27 @@ class Event(SerializableModel):
 
 @serializable
 class EventWhereInput(em.EventWhereInput):
-    pass
+    """Filter to apply to find events."""
 
 
 @serializable
 class EventInclude(em.EventInclude):
-    pass
+    """Relations to include in the response."""
 
 
 @serializable
 class EventOrderByIdInput(em.EventOrderByIdInput):
-    pass
+    """Order by event ID."""
 
 
 @serializable
 class EventOrderByTypeInput(em.EventOrderByTypeInput):
-    pass
+    """Order by event type."""
 
 
 @serializable
 class EventOrderByShowIdInput(em.EventOrderByShowIdInput):
-    pass
+    """Order by event show ID."""
 
 
 EventOrderByInput = (
@@ -248,8 +249,11 @@ EventOrderByInput = (
 @serializable
 @datamodel
 class EventInstance(im.EventInstance):
+    """Event instance data."""
+
     @staticmethod
     def map(instance: im.EventInstance) -> "EventInstance":
+        """Map to internal representation."""
         return EventInstance(**vars(instance))
 
 
@@ -259,7 +263,7 @@ class Schedule(SerializableModel):
     event: Event
     """Event data."""
 
-    instances: list[im.EventInstance]
+    instances: Sequence[im.EventInstance]
     """Event instances."""
 
 
@@ -275,7 +279,7 @@ class ScheduleList(SerializableModel):
     offset: int | None
     """Number of schedules skipped."""
 
-    schedules: list[Schedule]
+    schedules: Sequence[Schedule]
     """Schedules that matched the request."""
 
 
@@ -291,7 +295,7 @@ ListRequestWhere = EventWhereInput | None
 
 ListRequestInclude = EventInclude | None
 
-ListRequestOrder = EventOrderByInput | list[EventOrderByInput] | None
+ListRequestOrder = EventOrderByInput | Sequence[EventOrderByInput] | None
 
 ListResponseResults = ScheduleList
 

@@ -30,7 +30,6 @@ class Service:
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List events."""
-
         limit = request.limit
         offset = request.offset
         where = request.where
@@ -75,13 +74,12 @@ class Service:
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get event."""
-
-        id = request.id
+        event_id = request.id
         include = request.include
 
         req = em.GetRequest(
             where={
-                "id": str(id),
+                "id": str(event_id),
             },
             include=include,
         )
@@ -92,7 +90,7 @@ class Service:
         event = res.event
 
         if event is None:
-            raise e.EventNotFoundError(id)
+            raise e.EventNotFoundError(event_id)
 
         event = m.Event.map(event)
         return m.GetResponse(
@@ -101,11 +99,10 @@ class Service:
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create event."""
-
         data = request.data
         include = request.include
 
-        d = {
+        d: em.EventCreateInput = {
             "type": data["type"],
             "start": data["start"],
             "end": data["end"],
@@ -137,12 +134,11 @@ class Service:
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update event."""
-
         data = request.data
-        id = request.id
+        event_id = request.id
         include = request.include
 
-        d = {}
+        d: em.EventUpdateInput = {}
         if "id" in data:
             d["id"] = data["id"]
         if "type" in data:
@@ -161,7 +157,7 @@ class Service:
         req = em.UpdateRequest(
             data=d,
             where={
-                "id": str(id),
+                "id": str(event_id),
             },
             include=include,
         )
@@ -172,7 +168,7 @@ class Service:
         event = res.event
 
         if event is None:
-            raise e.EventNotFoundError(id)
+            raise e.EventNotFoundError(event_id)
 
         event = m.Event.map(event)
         return m.UpdateResponse(
@@ -181,12 +177,11 @@ class Service:
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete event."""
-
-        id = request.id
+        event_id = request.id
 
         req = em.DeleteRequest(
             where={
-                "id": str(id),
+                "id": str(event_id),
             },
             include=None,
         )
@@ -197,6 +192,6 @@ class Service:
         event = res.event
 
         if event is None:
-            raise e.EventNotFoundError(id)
+            raise e.EventNotFoundError(event_id)
 
         return m.DeleteResponse()

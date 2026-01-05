@@ -1,3 +1,6 @@
+# pyright: reportIncompatibleVariableOverride=false
+
+from collections.abc import Sequence
 from typing import Annotated
 from uuid import UUID
 
@@ -7,26 +10,19 @@ from beaver.models.base import SerializableModel, datamodel, serializable
 from beaver.services.shows import models as sm
 from beaver.utils.time import NaiveDatetime, Timezone
 
-Second = Annotated[int, Field(..., ge=0, le=60)]
+Second = Annotated[int, Field(ge=0, le=60)]
 
-Minute = Annotated[int, Field(..., ge=0, le=59)]
+Minute = Annotated[int, Field(ge=0, le=59)]
 
-Hour = Annotated[int, Field(..., ge=0, le=23)]
+Hour = Annotated[int, Field(ge=0, le=23)]
 
-Monthday = (
-    Annotated[int, Field(..., ge=-31, le=-1)] | Annotated[int, Field(..., ge=1, le=31)]
-)
+Monthday = Annotated[int, Field(ge=-31, le=-1)] | Annotated[int, Field(ge=1, le=31)]
 
-Yearday = (
-    Annotated[int, Field(..., ge=-366, le=-1)]
-    | Annotated[int, Field(..., ge=1, le=366)]
-)
+Yearday = Annotated[int, Field(ge=-366, le=-1)] | Annotated[int, Field(ge=1, le=366)]
 
-Week = (
-    Annotated[int, Field(..., ge=-53, le=-1)] | Annotated[int, Field(..., ge=1, le=53)]
-)
+Week = Annotated[int, Field(ge=-53, le=-1)] | Annotated[int, Field(ge=1, le=53)]
 
-Month = Annotated[int, Field(..., ge=1, le=12)]
+Month = Annotated[int, Field(ge=1, le=12)]
 
 
 class WeekdayRule(SerializableModel):
@@ -40,6 +36,7 @@ class WeekdayRule(SerializableModel):
 
     @staticmethod
     def map(rule: sm.WeekdayRule) -> "WeekdayRule":
+        """Map to internal representation."""
         return WeekdayRule(
             day=rule.day,
             occurrence=rule.occurrence,
@@ -61,31 +58,31 @@ class RecurrenceRule(SerializableModel):
     interval: int | None = None
     """Interval of the recurrence."""
 
-    by_seconds: list[Second] | None = None
+    by_seconds: Sequence[Second] | None = None
     """Seconds of the recurrence."""
 
-    by_minutes: list[Minute] | None = None
+    by_minutes: Sequence[Minute] | None = None
     """Minutes of the recurrence."""
 
-    by_hours: list[Hour] | None = None
+    by_hours: Sequence[Hour] | None = None
     """Hours of the recurrence."""
 
-    by_weekdays: list[WeekdayRule] | None = None
+    by_weekdays: Sequence[WeekdayRule] | None = None
     """Weekdays of the recurrence."""
 
-    by_monthdays: list[Monthday] | None = None
+    by_monthdays: Sequence[Monthday] | None = None
     """Monthdays of the recurrence."""
 
-    by_yeardays: list[Yearday] | None = None
+    by_yeardays: Sequence[Yearday] | None = None
     """Yeardays of the recurrence."""
 
-    by_weeks: list[Week] | None = None
+    by_weeks: Sequence[Week] | None = None
     """Weeks of the recurrence."""
 
-    by_months: list[Month] | None = None
+    by_months: Sequence[Month] | None = None
     """Months of the recurrence."""
 
-    by_set_positions: list[int] | None = None
+    by_set_positions: Sequence[int] | None = None
     """Set positions of the recurrence."""
 
     week_start: sm.Weekday | None = None
@@ -93,6 +90,7 @@ class RecurrenceRule(SerializableModel):
 
     @staticmethod
     def map(rule: sm.RecurrenceRule) -> "RecurrenceRule":
+        """Map to internal representation."""
         return RecurrenceRule(
             frequency=rule.frequency,
             until=rule.until,
@@ -121,14 +119,15 @@ class Recurrence(SerializableModel):
     rule: RecurrenceRule | None = None
     """Rule of the recurrence."""
 
-    include: list[NaiveDatetime] | None = None
+    include: Sequence[NaiveDatetime] | None = None
     """Included dates of the recurrence in event timezone."""
 
-    exclude: list[NaiveDatetime] | None = None
+    exclude: Sequence[NaiveDatetime] | None = None
     """Excluded dates of the recurrence in event timezone."""
 
     @staticmethod
     def map(recurrence: sm.Recurrence) -> "Recurrence":
+        """Map to internal representation."""
         return Recurrence(
             rule=(
                 RecurrenceRule.map(recurrence.rule)
@@ -169,10 +168,11 @@ class Event(SerializableModel):
 
     @staticmethod
     def map(event: sm.Event) -> "Event":
+        """Map to internal representation."""
         return Event(
-            id=event.id,
+            id=UUID(event.id),
             type=event.type,
-            show_id=event.show_id,
+            show_id=UUID(event.show_id),
             show=Show.map(event.show) if event.show is not None else None,
             start=event.start,
             end=event.end,
@@ -188,7 +188,7 @@ class Event(SerializableModel):
 class Show(SerializableModel):
     """Show data."""
 
-    id: str
+    id: UUID
     """Identifier of the show."""
 
     title: str
@@ -197,13 +197,14 @@ class Show(SerializableModel):
     description: str | None
     """Description of the show."""
 
-    events: list[Event] | None
+    events: Sequence[Event] | None
     """Events that the show belongs to."""
 
     @staticmethod
     def map(show: sm.Show) -> "Show":
+        """Map to internal representation."""
         return Show(
-            id=show.id,
+            id=UUID(show.id),
             title=show.title,
             description=show.description,
             events=(
@@ -226,23 +227,23 @@ class ShowList(SerializableModel):
     offset: int | None
     """Number of shows skipped."""
 
-    shows: list[Show]
+    shows: Sequence[Show]
     """Shows that matched the request."""
 
 
 @serializable
 class ShowWhereInput(sm.ShowWhereInput):
-    pass
+    """Filter to apply to find shows."""
 
 
 @serializable
 class ShowWhereUniqueIdInput(sm.ShowWhereUniqueIdInput):
-    pass
+    """Filter to apply to find a show by unique ID."""
 
 
 @serializable
 class ShowWhereUniqueTitleInput(sm.ShowWhereUniqueTitleInput):
-    pass
+    """Filter to apply to find a show by unique title."""
 
 
 ShowWhereUniqueInput = ShowWhereUniqueIdInput | ShowWhereUniqueTitleInput
@@ -250,22 +251,22 @@ ShowWhereUniqueInput = ShowWhereUniqueIdInput | ShowWhereUniqueTitleInput
 
 @serializable
 class ShowInclude(sm.ShowInclude):
-    pass
+    """Relations to include in the response."""
 
 
 @serializable
 class ShowOrderByIdInput(sm.ShowOrderByIdInput):
-    pass
+    """Order by show ID."""
 
 
 @serializable
 class ShowOrderByTitleInput(sm.ShowOrderByTitleInput):
-    pass
+    """Order by show title."""
 
 
 @serializable
 class ShowOrderByDescriptionInput(sm.ShowOrderByDescriptionInput):
-    pass
+    """Order by show description."""
 
 
 ShowOrderByInput = (
@@ -275,12 +276,12 @@ ShowOrderByInput = (
 
 @serializable
 class ShowCreateInput(sm.ShowCreateInput):
-    pass
+    """Data to create a show."""
 
 
 @serializable
 class ShowUpdateInput(sm.ShowUpdateInput):
-    pass
+    """Data to update a show."""
 
 
 ListRequestLimit = int | None
@@ -291,7 +292,7 @@ ListRequestWhere = ShowWhereInput | None
 
 ListRequestInclude = ShowInclude | None
 
-ListRequestOrder = ShowOrderByInput | list[ShowOrderByInput] | None
+ListRequestOrder = ShowOrderByInput | Sequence[ShowOrderByInput] | None
 
 ListResponseResults = ShowList
 
@@ -417,5 +418,3 @@ class DeleteRequest:
 @datamodel
 class DeleteResponse:
     """Response for deleting a show."""
-
-    pass

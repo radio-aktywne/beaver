@@ -1,5 +1,6 @@
 import os
 import subprocess
+from collections.abc import Mapping, Sequence
 
 from beaver.config.models import Config
 
@@ -10,13 +11,13 @@ class SapphireMigrator:
     def __init__(self, config: Config) -> None:
         self._config = config
 
-    def _get_command(self) -> list[str]:
+    def _get_command(self) -> Sequence[str]:
         return ["prisma", "migrate", "deploy"]
 
     def _get_connection_string(self) -> str:
         return self._config.sapphire.sql.url
 
-    def _get_env(self) -> dict[str, str]:
+    def _get_env(self) -> Mapping[str, str]:
         env = os.environ.copy()
 
         return env | {
@@ -25,9 +26,8 @@ class SapphireMigrator:
 
     def migrate(self) -> None:
         """Apply migrations."""
-
         try:
-            subprocess.run(
+            subprocess.run(  # noqa: S603
                 self._get_command(),
                 env=self._get_env(),
                 capture_output=True,

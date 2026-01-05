@@ -1,3 +1,6 @@
+# ruff: noqa: SLF001
+
+from collections.abc import Sequence
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -22,6 +25,8 @@ EventType = spe.EventType
 
 @datamodel
 class Event:
+    """Event data."""
+
     id: str
     """Identifier of the event."""
 
@@ -48,6 +53,7 @@ class Event:
 
     @classmethod
     def merge(cls, ds: spm.Event, dt: hlm.Event, show: "Show | None") -> "Event":
+        """Map to internal representation."""
         return Event(
             id=ds.id,
             type=ds.type,
@@ -73,11 +79,12 @@ class Show:
     description: str | None
     """Description of the show."""
 
-    events: list[Event] | None
+    events: Sequence[Event] | None
     """Events belonging to the show."""
 
     @staticmethod
-    def map(show: spm.Show, events: list[Event] | None) -> "Show":
+    def map(show: spm.Show, events: Sequence[Event] | None) -> "Show":
+        """Map to internal representation."""
         return Show(
             id=show.id,
             title=show.title,
@@ -143,7 +150,7 @@ class ListRequest:
     include: ShowInclude | None
     """Relations to include in the response."""
 
-    order: ShowOrderByInput | list[ShowOrderByInput] | None
+    order: ShowOrderByInput | Sequence[ShowOrderByInput] | None
     """Order to apply to the results."""
 
 
@@ -151,7 +158,7 @@ class ListRequest:
 class ListResponse:
     """Response for listing shows."""
 
-    shows: list[Show]
+    shows: Sequence[Show]
     """List of shows that match the filter."""
 
 

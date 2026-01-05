@@ -2,7 +2,7 @@
 
 <div align="center">
 
-Broadcast shows 🎭
+Broadcast shows service 🎭
 
 [![Lint](https://github.com/radio-aktywne/beaver/actions/workflows/lint.yaml/badge.svg)](https://github.com/radio-aktywne/beaver/actions/workflows/lint.yaml)
 [![Test](https://github.com/radio-aktywne/beaver/actions/workflows/test.yaml/badge.svg)](https://github.com/radio-aktywne/beaver/actions/workflows/test.yaml)
@@ -16,7 +16,8 @@ Broadcast shows 🎭
 
 ## 💡 About
 
-`beaver` is a service for managing shows and events.
+`beaver` is a [`Litestar`](https://litestar.dev) service
+for managing shows and events.
 
 ## 📄 Further Reading
 

@@ -1,5 +1,6 @@
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from contextlib import contextmanager
+from typing import cast
 from uuid import UUID
 
 from litestar.channels import ChannelsPlugin
@@ -13,8 +14,8 @@ from beaver.services.mevents import errors as e
 from beaver.services.mevents import models as m
 from beaver.services.sapphire import errors as spe
 from beaver.services.sapphire import models as spm
+from beaver.services.sapphire import types as spt
 from beaver.services.sapphire.service import SapphireService
-from beaver.services.shows import models as sm
 
 
 class EventsService:
@@ -35,34 +36,34 @@ class EventsService:
         self._channels.publish(data, "events")
 
     def _emit_event_created_event(self, event: m.Event) -> None:
-        event = ev.Event.map(event)
-        data = ev.EventCreatedEventData(
-            event=event,
+        mapped_event = ev.Event.map(event)
+        created_event_data = ev.EventCreatedEventData(
+            event=mapped_event,
         )
-        event = ev.EventCreatedEvent(
-            data=data,
+        created_event = ev.EventCreatedEvent(
+            data=created_event_data,
         )
-        self._emit_event(event)
+        self._emit_event(created_event)
 
     def _emit_event_updated_event(self, event: m.Event) -> None:
-        event = ev.Event.map(event)
-        data = ev.EventUpdatedEventData(
-            event=event,
+        mapped_event = ev.Event.map(event)
+        updated_event_data = ev.EventUpdatedEventData(
+            event=mapped_event,
         )
-        event = ev.EventUpdatedEvent(
-            data=data,
+        updated_event = ev.EventUpdatedEvent(
+            data=updated_event_data,
         )
-        self._emit_event(event)
+        self._emit_event(updated_event)
 
     def _emit_event_deleted_event(self, event: m.Event) -> None:
-        event = ev.Event.map(event)
-        data = ev.EventDeletedEventData(
-            event=event,
+        mapped_event = ev.Event.map(event)
+        deleted_event_data = ev.EventDeletedEventData(
+            event=mapped_event,
         )
-        event = ev.EventDeletedEvent(
-            data=data,
+        deleted_event = ev.EventDeletedEvent(
+            data=deleted_event_data,
         )
-        self._emit_event(event)
+        self._emit_event(deleted_event)
 
     @contextmanager
     def _handle_errors(self) -> Generator[None]:
@@ -91,16 +92,16 @@ class EventsService:
         events = res.events
 
         where = where.copy() if where is not None else {}
-        filter = {
+        extra_where: m.EventWhereInput = {
             "id": {
                 "in": [str(event.id) for event in events],
             },
         }
 
         if "AND" in where:
-            where["AND"].append(filter)
+            where["AND"].append(extra_where)
         else:
-            where["AND"] = [filter]
+            where["AND"] = [extra_where]
 
         return where
 
@@ -119,13 +120,13 @@ class EventsService:
 
         return m.Event.merge(dsevent, res.event, show)
 
-    async def _map_show(self, dsshow: spm.Show) -> sm.Show:
+    async def _map_show(self, dsshow: spm.Show) -> m.Show:
         if dsshow.events is not None:
             events = [await self._map_event(event) for event in dsshow.events]
         else:
             events = None
 
-        return sm.Show.map(dsshow, events)
+        return m.Show.map(dsshow, events)
 
     async def _merge_event(self, dsevent: spm.Event, dtevent: hlm.Event) -> m.Event:
         if dsevent.show is not None:
@@ -137,7 +138,6 @@ class EventsService:
 
     async def count(self, request: m.CountRequest) -> m.CountResponse:
         """Count events."""
-
         where = request.where
         query = request.query
 
@@ -158,18 +158,22 @@ class EventsService:
         offset: int | None,
         where: m.EventWhereInput | None,
         include: m.EventInclude | None,
-        order: m.EventOrderByInput | list[m.EventOrderByInput] | None,
-    ) -> list[spm.Event]:
+        order: m.EventOrderByInput | Sequence[m.EventOrderByInput] | None,
+    ) -> Sequence[spm.Event]:
         with self._handle_errors():
             return await self._sapphire.event.find_many(
                 take=limit,
                 skip=offset,
                 where=where,
                 include=include,
-                order=order,
+                order=cast("list[spt.EventOrderByInput]", list(order))
+                if isinstance(order, Sequence)
+                else cast("spt.EventOrderByInput | None", order),
             )
 
-    async def _list_howlite_events(self, dsevents: list[spm.Event]) -> list[hlm.Event]:
+    async def _list_howlite_events(
+        self, dsevents: Sequence[spm.Event]
+    ) -> Sequence[hlm.Event]:
         dtevents = []
 
         for dsevent in dsevents:
@@ -187,13 +191,13 @@ class EventsService:
 
     async def _list_sort_events(
         self,
-        events: list[m.Event],
-        order: m.EventOrderByInput | list[m.EventOrderByInput] | None,
-    ) -> list[m.Event]:
+        events: Sequence[m.Event],
+        order: m.EventOrderByInput | Sequence[m.EventOrderByInput] | None,
+    ) -> Sequence[m.Event]:
         if order is None:
-            return events
+            return list(events)
 
-        if not isinstance(order, list):
+        if not isinstance(order, Sequence):
             order = [order]
 
         for key, direction in reversed(order):
@@ -203,11 +207,10 @@ class EventsService:
                 reverse=direction == "desc",
             )
 
-        return events
+        return list(events)
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List all events."""
-
         limit = request.limit
         offset = request.offset
         where = request.where
@@ -224,7 +227,7 @@ class EventsService:
 
         events = [
             await self._merge_event(dsevent, dtevent)
-            for dsevent, dtevent in zip(dsevents, dtevents)
+            for dsevent, dtevent in zip(dsevents, dtevents, strict=False)
         ]
         events = await self._list_sort_events(events, order)
 
@@ -253,7 +256,6 @@ class EventsService:
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get event."""
-
         where = request.where
         include = request.include
 
@@ -278,7 +280,7 @@ class EventsService:
         include: m.EventInclude | None,
         transaction: SapphireService,
     ) -> spm.Event:
-        d = {"type": data["type"]}
+        d: spt.EventCreateInput = {"type": data["type"]}
         if "id" in data:
             d["id"] = data["id"]
         if "showId" in data:
@@ -311,7 +313,6 @@ class EventsService:
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create event."""
-
         data = request.data
         include = request.include
 
@@ -334,7 +335,7 @@ class EventsService:
         include: m.EventInclude | None,
         transaction: SapphireService,
     ) -> spm.Event | None:
-        d = {}
+        d: spt.EventUpdateInput = {}
         if "id" in data:
             d["id"] = data["id"]
         if "type" in data:
@@ -386,7 +387,6 @@ class EventsService:
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update event."""
-
         data = request.data
         where = request.where
         include = request.include
@@ -398,7 +398,7 @@ class EventsService:
                 data, where, include, transaction
             )
 
-            if ndsevent is None:
+            if odsevent is None or ndsevent is None:
                 return m.UpdateResponse(
                     event=None,
                 )
@@ -446,7 +446,6 @@ class EventsService:
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete event."""
-
         where = request.where
         include = request.include
 

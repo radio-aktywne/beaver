@@ -1,4 +1,4 @@
-from collections.abc import Generator
+from collections.abc import Generator, Sequence
 from contextlib import contextmanager
 from datetime import datetime
 from uuid import UUID
@@ -44,7 +44,7 @@ class Service:
 
         return res.count
 
-    async def _get_events(
+    async def _get_events(  # noqa: PLR0913
         self,
         limit: m.ListRequestLimit,
         offset: m.ListRequestOffset,
@@ -52,7 +52,7 @@ class Service:
         query: em.Query,
         include: m.ListRequestInclude,
         order: m.ListRequestOrder,
-    ) -> list[em.Event]:
+    ) -> Sequence[em.Event]:
         req = em.ListRequest(
             limit=limit,
             offset=offset,
@@ -80,16 +80,15 @@ class Service:
 
         instances = self._icalendar.expander.expand(ievent, start, end)
 
-        event = m.Event.map(event)
-        instances = [m.EventInstance.map(instance) for instance in instances]
+        mapped_event = m.Event.map(event)
+        mapped_instances = [m.EventInstance.map(instance) for instance in instances]
         return m.Schedule(
-            event=event,
-            instances=instances,
+            event=mapped_event,
+            instances=mapped_instances,
         )
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List schedules."""
-
         start = request.start
         end = request.end
         limit = request.limit
