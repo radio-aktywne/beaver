@@ -1,6 +1,7 @@
 from collections import OrderedDict
-from collections.abc import Iterable
+from collections.abc import Sequence
 from datetime import UTC, datetime
+from typing import cast
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
@@ -17,34 +18,28 @@ class ICalendarParser:
 
     def string_to_ical(self, value: str) -> icalendar.vText:
         """Convert a string to an icalendar.vText object."""
-
         return icalendar.vText.from_ical(value)
 
     def ical_to_string(self, vtext: icalendar.vText) -> str:
         """Convert an icalendar.vText object to a string."""
-
         return str(vtext)
 
     def int_to_ical(self, value: int) -> icalendar.vInt:
         """Convert an int to an icalendar.vInt object."""
-
         return icalendar.vInt.from_ical(str(value))
 
     def ical_to_int(self, vint: icalendar.vInt) -> int:
         """Convert an icalendar.vInt object to an int."""
-
         return int(vint)
 
-    def ints_to_ical(self, values: list[int]) -> Iterable[icalendar.vInt]:
-        """Convert a list of ints to a list of icalendar.vInt objects."""
-
+    def ints_to_ical(self, values: Sequence[int]) -> Sequence[icalendar.vInt]:
+        """Convert a sequence of ints to a sequence of icalendar.vInt objects."""
         return [self.int_to_ical(value) for value in values]
 
     def ical_to_ints(
-        self, vints: icalendar.vInt | Iterable[icalendar.vInt]
-    ) -> list[int]:
-        """Convert a list of icalendar.vInt objects to a list of ints."""
-
+        self, vints: icalendar.vInt | Sequence[icalendar.vInt]
+    ) -> Sequence[int]:
+        """Convert a sequence of icalendar.vInt objects to a sequence of ints."""
         if isinstance(vints, icalendar.vInt):
             vints = [vints]
 
@@ -52,7 +47,6 @@ class ICalendarParser:
 
     def datetime_to_ical(self, dt: datetime) -> icalendar.vDatetime:
         """Convert a datetime to an icalendar.vDatetime object."""
-
         tz = tzid_from_dt(dt)
 
         if tz == "Etc/UTC":
@@ -64,16 +58,14 @@ class ICalendarParser:
 
     def ical_to_datetime(self, vdt: icalendar.vDatetime) -> datetime:
         """Convert an icalendar.vDatetime object to a datetime."""
-
         return vdt.dt
 
-    def datetimes_to_ical(self, dts: list[datetime]) -> vDDDLists:
-        """Convert a list of datetimes to a vDDDLists object."""
-
-        tzs = set([tzid_from_dt(dt) for dt in dts])
+    def datetimes_to_ical(self, dts: Sequence[datetime]) -> vDDDLists:
+        """Convert a sequence of datetimes to a vDDDLists object."""
+        tzs = {tzid_from_dt(dt) for dt in dts}
 
         if len(tzs) > 1:
-            raise e.DifferentTimezonesError()
+            raise e.DifferentTimezonesError
 
         tz = tzs.pop()
 
@@ -85,9 +77,8 @@ class ICalendarParser:
         icaldts = vDDDLists.from_ical(icaldts, tz)
         return vDDDLists(icaldts)
 
-    def ical_to_datetimes(self, vdts: vDDDLists) -> list[datetime]:
-        """Convert a vDDDLists object to a list of datetimes."""
-
+    def ical_to_datetimes(self, vdts: vDDDLists) -> Sequence[datetime]:
+        """Convert a vDDDLists object to a sequence of datetimes."""
         tz = vdts.params.get("TZID")
 
         icaldts = vdts.to_ical().decode("utf-8")
@@ -100,7 +91,6 @@ class ICalendarParser:
 
     def frequency_to_ical(self, frequency: m.Frequency) -> icalendar.vFrequency:
         """Convert a Frequency to an icalendar.vFrequency object."""
-
         frequency_map = {
             m.Frequency.SECONDLY: "SECONDLY",
             m.Frequency.MINUTELY: "MINUTELY",
@@ -115,7 +105,6 @@ class ICalendarParser:
 
     def ical_to_frequency(self, vfrequency: icalendar.vFrequency) -> m.Frequency:
         """Convert an icalendar.vFrequency object to a Frequency."""
-
         frequency_map = {
             "SECONDLY": m.Frequency.SECONDLY,
             "MINUTELY": m.Frequency.MINUTELY,
@@ -130,7 +119,6 @@ class ICalendarParser:
 
     def weekday_to_ical(self, weekday: m.Weekday) -> icalendar.vWeekday:
         """Convert a Weekday to an icalendar.vWeekday object."""
-
         weekdays_map = {
             m.Weekday.MONDAY: "MO",
             m.Weekday.TUESDAY: "TU",
@@ -145,7 +133,6 @@ class ICalendarParser:
 
     def ical_to_weekday(self, vweekday: icalendar.vWeekday) -> m.Weekday:
         """Convert an icalendar.vWeekday object to a Weekday."""
-
         weekdays_map = {
             "MO": m.Weekday.MONDAY,
             "TU": m.Weekday.TUESDAY,
@@ -156,16 +143,18 @@ class ICalendarParser:
             "SU": m.Weekday.SUNDAY,
         }
 
-        match = WEEKDAY_RULE.match(str(vweekday)).groupdict()
-        day = match["weekday"]
+        match = WEEKDAY_RULE.match(str(vweekday))
+        if match is None:
+            raise e.ValidationError
+
+        day = match.groupdict()["weekday"]
 
         return weekdays_map[day]
 
     def weekday_rules_to_ical(
-        self, rules: list[m.WeekdayRule]
-    ) -> Iterable[icalendar.vWeekday]:
-        """Convert a list of WeekdayRule objects to a list of icalendar.vWeekday objects."""
-
+        self, rules: Sequence[m.WeekdayRule]
+    ) -> Sequence[icalendar.vWeekday]:
+        """Convert a sequence of WeekdayRule objects to a sequence of icalendar.vWeekday objects."""
         results = []
 
         for rule in rules:
@@ -181,10 +170,9 @@ class ICalendarParser:
         return results
 
     def ical_to_weekday_rules(
-        self, vweekdays: icalendar.vWeekday | Iterable[icalendar.vWeekday]
-    ) -> list[m.WeekdayRule]:
-        """Convert a list of icalendar.vWeekday objects to a list of WeekdayRule objects."""
-
+        self, vweekdays: icalendar.vWeekday | Sequence[icalendar.vWeekday]
+    ) -> Sequence[m.WeekdayRule]:
+        """Convert a sequence of icalendar.vWeekday objects to a sequence of WeekdayRule objects."""
         if isinstance(vweekdays, icalendar.vWeekday):
             vweekdays = [vweekdays]
 
@@ -193,11 +181,14 @@ class ICalendarParser:
         for weekday in vweekdays:
             day = self.ical_to_weekday(weekday)
 
-            match = WEEKDAY_RULE.match(str(weekday)).groupdict()
-            occurrence = match.get("relative") or None
+            match = WEEKDAY_RULE.match(str(weekday))
+            if match is None:
+                raise e.ValidationError
+
+            occurrence = match.groupdict().get("relative") or None
             if occurrence is not None:
                 occurrence = int(occurrence)
-                if match.get("signal") == "-":
+                if match.groupdict().get("signal") == "-":
                     occurrence = -occurrence
 
             rule = m.WeekdayRule(day=day, occurrence=occurrence)
@@ -205,9 +196,8 @@ class ICalendarParser:
 
         return results
 
-    def recurrence_rule_to_ical(self, rule: m.RecurrenceRule) -> icalendar.vRecur:
+    def recurrence_rule_to_ical(self, rule: m.RecurrenceRule) -> icalendar.vRecur:  # noqa: PLR0912, C901
         """Convert a RecurrenceRule object to an icalendar.vRecur object."""
-
         parts = OrderedDict()
         parts["FREQ"] = self.frequency_to_ical(rule.frequency).to_ical().decode("utf-8")
 
@@ -304,24 +294,24 @@ class ICalendarParser:
 
         return icalendar.vRecur.from_ical(ical)
 
-    def ical_to_recurrence_rule(self, vrecur: icalendar.vRecur) -> m.RecurrenceRule:
+    def ical_to_recurrence_rule(self, vrecur: icalendar.vRecur) -> m.RecurrenceRule:  # noqa: PLR0912, PLR0915, C901
         """Convert an icalendar.vRecur object to a RecurrenceRule object."""
-
-        frequency = self.ical_to_frequency(icalendar.vFrequency(vrecur.get("freq")[0]))
+        frequency = self.ical_to_frequency(
+            icalendar.vFrequency(next(iter(vrecur.get("freq"))))
+        )
 
         until = vrecur.get("until")
         if until is not None:
-            until = self.ical_to_datetime(icalendar.vDatetime(until[0]))
+            until = self.ical_to_datetime(icalendar.vDatetime(next(iter(until))))
             until = until.astimezone(UTC).replace(tzinfo=None)
 
         count = vrecur.get("count")
         if count is not None:
-            count = self.ical_to_int(icalendar.vInt(count[0]))
+            count = self.ical_to_int(icalendar.vInt(next(iter(count))))
 
         interval = vrecur.get("interval")
         if interval is not None:
-            interval = self.ical_to_int(icalendar.vInt(interval[0]))
-
+            interval = self.ical_to_int(icalendar.vInt(next(iter(interval))))
         by_seconds = vrecur.get("bysecond")
         if by_seconds is not None:
             by_seconds = [icalendar.vInt(second) for second in by_seconds]
@@ -371,7 +361,9 @@ class ICalendarParser:
 
         week_start = vrecur.get("wkst")
         if week_start is not None:
-            week_start = self.ical_to_weekday(icalendar.vWeekday(week_start[0]))
+            week_start = self.ical_to_weekday(
+                icalendar.vWeekday(next(iter(week_start)))
+            )
 
         return m.RecurrenceRule(
             frequency=frequency,
@@ -392,7 +384,6 @@ class ICalendarParser:
 
     def event_to_ical(self, event: m.Event) -> icalendar.Event:
         """Convert an Event object to an icalendar.Event object."""
-
         ical = icalendar.Event()
         ical.add("uid", self.string_to_ical(str(event.id)))
 
@@ -419,13 +410,15 @@ class ICalendarParser:
 
     def ical_to_event(self, event: icalendar.Event) -> m.Event:
         """Convert an icalendar.Event object to an Event object."""
-
-        id = UUID(self.ical_to_string(event.get("uid")))
+        event_id = UUID(self.ical_to_string(event.get("uid")))
 
         start = event.get("dtstart")
         end = event.get("dtend")
 
         tz = tzid_from_dt(start.dt)
+        if tz is None:
+            raise e.ValidationError
+
         tz = ZoneInfo(tz)
 
         start = self.ical_to_datetime(start)
@@ -464,7 +457,7 @@ class ICalendarParser:
             )
 
         return m.Event(
-            id=id,
+            id=event_id,
             start=start,
             end=end,
             timezone=tz,
@@ -473,7 +466,6 @@ class ICalendarParser:
 
     def calendar_to_ical(self, calendar: m.Calendar) -> icalendar.Calendar:
         """Convert a Calendar object to an icalendar.Calendar object."""
-
         ical = icalendar.Calendar()
 
         for event in calendar.events:
@@ -484,20 +476,18 @@ class ICalendarParser:
 
     def ical_to_calendar(self, calendar: icalendar.Calendar) -> m.Calendar:
         """Convert an icalendar.Calendar object to a Calendar object."""
-
         events = [
-            self.ical_to_event(event) for event in calendar.walk(icalendar.Event.name)
+            self.ical_to_event(cast("icalendar.Event", event))
+            for event in calendar.walk(icalendar.Event.name)
         ]
         return m.Calendar(events=events)
 
     def string_to_calendar(self, value: str) -> m.Calendar:
         """Convert a string to a Calendar object."""
-
-        calendar = icalendar.Calendar.from_ical(value)
+        calendar = cast("icalendar.Calendar", icalendar.Calendar.from_ical(value))
         return self.ical_to_calendar(calendar)
 
     def calendar_to_string(self, calendar: m.Calendar) -> str:
         """Convert a Calendar object to a string."""
-
         ical = self.calendar_to_ical(calendar)
         return ical.to_ical().decode("utf-8")

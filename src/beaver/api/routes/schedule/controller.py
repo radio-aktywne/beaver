@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from typing import Annotated
 
 from litestar import Controller as BaseController
@@ -32,7 +33,8 @@ class DependenciesBuilder:
             )
         )
 
-    def build(self) -> dict[str, Provide]:
+    def build(self) -> Mapping[str, Provide]:
+        """Build the dependencies."""
         return {
             "service": Provide(self._build_service),
         }
@@ -46,7 +48,7 @@ class Controller(BaseController):
     @handlers.get(
         summary="List schedules",
     )
-    async def list(
+    async def list(  # noqa: PLR0913
         self,
         service: Service,
         start: Annotated[
@@ -89,27 +91,34 @@ class Controller(BaseController):
         ] = None,
     ) -> Response[m.ListResponseResults]:
         """List event schedules with instances between two dates."""
-
-        start = Validator(m.ListRequestStart).object(start) if start else None
-        end = Validator(m.ListRequestEnd).object(end) if end else None
-        where = Validator(m.ListRequestWhere).json(where) if where else None
-        include = Validator(m.ListRequestInclude).json(include) if include else None
-        order = Validator(m.ListRequestOrder).json(order) if order else None
+        parsed_start = (
+            Validator[m.ListRequestStart].validate_object(start) if start else None
+        )
+        parsed_end = Validator[m.ListRequestEnd].validate_object(end) if end else None
+        parsed_where = (
+            Validator[m.ListRequestWhere].validate_json(where) if where else None
+        )
+        parsed_include = (
+            Validator[m.ListRequestInclude].validate_json(include) if include else None
+        )
+        parsed_order = (
+            Validator[m.ListRequestOrder].validate_json(order) if order else None
+        )
 
         req = m.ListRequest(
-            start=start,
-            end=end,
+            start=parsed_start,
+            end=parsed_end,
             limit=limit,
             offset=offset,
-            where=where,
-            include=include,
-            order=order,
+            where=parsed_where,
+            include=parsed_include,
+            order=parsed_order,
         )
 
         try:
             res = await service.list(req)
         except e.ValidationError as ex:
-            raise BadRequestException(extra=str(ex)) from ex
+            raise BadRequestException from ex
 
         results = res.results
 

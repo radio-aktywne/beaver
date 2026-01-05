@@ -18,21 +18,19 @@ from tests.utils.waiting.waiter import Waiter
 
 @pytest.fixture(scope="session")
 def config() -> Config:
-    """Loaded configuration."""
-
+    """Build configuration."""
     return ConfigBuilder().build()
 
 
 @pytest.fixture(scope="session")
 def app(config: Config) -> Litestar:
-    """Reusable application."""
-
+    """Build application."""
     return AppBuilder(config).build()
 
 
 @pytest_asyncio.fixture(loop_scope="session", scope="session")
 async def howlite() -> AsyncGenerator[AsyncDockerContainer]:
-    """Howlite container."""
+    """Build howlite container."""
 
     async def _check() -> None:
         auth = BasicAuth(username="user", password="password")
@@ -44,10 +42,8 @@ async def howlite() -> AsyncGenerator[AsyncDockerContainer]:
             response = await client.get("/user/calendar")
             response.raise_for_status()
 
-    container = AsyncDockerContainer(
-        "ghcr.io/radio-aktywne/databases/howlite:latest",
-        network="host",
-    )
+    container = AsyncDockerContainer("ghcr.io/radio-aktywne/databases/howlite:latest")
+    container = container.with_kwargs(network="host")
 
     waiter = Waiter(
         condition=CallableCondition(_check),
@@ -61,7 +57,7 @@ async def howlite() -> AsyncGenerator[AsyncDockerContainer]:
 
 @pytest_asyncio.fixture(loop_scope="session", scope="session")
 async def sapphire() -> AsyncGenerator[AsyncDockerContainer]:
-    """Sapphire container."""
+    """Build sapphire container."""
 
     async def _check() -> None:
         async with Prisma(
@@ -71,11 +67,8 @@ async def sapphire() -> AsyncGenerator[AsyncDockerContainer]:
         ):
             return
 
-    container = AsyncDockerContainer(
-        "ghcr.io/radio-aktywne/databases/sapphire:latest",
-        network="host",
-        privileged=True,
-    )
+    container = AsyncDockerContainer("ghcr.io/radio-aktywne/databases/sapphire:latest")
+    container = container.with_kwargs(network="host", privileged=True)
 
     waiter = Waiter(
         condition=CallableCondition(_check),
@@ -91,7 +84,6 @@ async def sapphire() -> AsyncGenerator[AsyncDockerContainer]:
 async def client(
     app: Litestar, howlite: AsyncDockerContainer, sapphire: AsyncDockerContainer
 ) -> AsyncGenerator[AsyncTestClient]:
-    """Reusable test client."""
-
+    """Build test client."""
     async with AsyncTestClient(app=app) as client:
         yield client

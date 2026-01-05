@@ -1,7 +1,9 @@
-from xml.etree import ElementTree
+from collections.abc import Mapping, Sequence
+from typing import Any, cast
+from xml.etree import ElementTree as ET
 
 from gracy import BaseEndpoint, GracefulRetry, Gracy, GracyConfig
-from httpx import BasicAuth
+from httpx import BasicAuth, Response
 
 from beaver.config.models import HowliteConfig
 from beaver.services.howlite import models as m
@@ -19,28 +21,23 @@ class Endpoint(BaseEndpoint):
 class BaseService(Gracy[Endpoint]):
     """Base class for howlite database service."""
 
-    def __init__(self, config: HowliteConfig, *args, **kwargs) -> None:
-        class Config:
-            BASE_URL = config.caldav.url
-            SETTINGS = GracyConfig(
-                retry=GracefulRetry(
-                    delay=1,
-                    max_attempts=3,
-                    delay_modifier=2,
-                ),
-            )
-
-        self.Config = Config
-
+    def __init__(self, config: HowliteConfig, *args: Any, **kwargs: Any) -> None:
+        self.Config.BASE_URL = config.caldav.url
+        self.Config.SETTINGS = GracyConfig(
+            retry=GracefulRetry(
+                delay=1,
+                max_attempts=3,
+                delay_modifier=2,
+            ),
+        )
         super().__init__(*args, **kwargs)
-
         self._config = config
 
 
 class HowliteService(BaseService):
     """Service for howlite database."""
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         self._icalendar = ICalendarService()
         self._query_builder_factory = QueryBuilderFactory()
@@ -51,19 +48,20 @@ class HowliteService(BaseService):
             password=self._config.caldav.password,
         )
 
-    def _build_query_payload(self, query: ElementTree.Element) -> str:
-        return ElementTree.tostring(query).decode("utf-8")
+    def _build_query_payload(self, query: ET.Element) -> str:
+        return ET.tostring(query).decode("utf-8")
 
     def _retrieve_calendars_data_from_query_response(
-        self, response: str, namespaces: dict[str, str]
-    ) -> list[str]:
-        root = ElementTree.fromstring(response)
-        calendars = root.findall(".//C:calendar-data", namespaces=namespaces)
-        return [calendar.text for calendar in calendars]
+        self, response: str, namespaces: Mapping[str, str]
+    ) -> Sequence[str]:
+        root = ET.fromstring(response)  # noqa: S314
+        calendars = root.findall(".//C:calendar-data", namespaces=dict(namespaces))
+        return [calendar.text for calendar in calendars if calendar.text is not None]
 
     async def get_calendar(
         self, request: m.GetCalendarRequest
     ) -> m.GetCalendarResponse:
+        """Get a calendar."""
         res = await self.get(
             Endpoint.CALENDAR,
             auth=self._build_auth(),
@@ -76,15 +74,18 @@ class HowliteService(BaseService):
         )
 
     async def get_event(self, request: m.GetEventRequest) -> m.GetEventResponse:
-        id = request.id
+        """Get an event."""
+        event_id = request.id
 
-        res = await self.get(
+        response = await self._request(
+            "GET",
             Endpoint.EVENT,
-            {"EVENT": id},
+            {"EVENT": str(event_id)},
             auth=self._build_auth(),
         )
+        response = cast("Response", response)
 
-        calendar = self._icalendar.parser.string_to_calendar(res.text)
+        calendar = self._icalendar.parser.string_to_calendar(response.text)
         event = calendar.events[0]
 
         return m.GetEventResponse(
@@ -94,6 +95,7 @@ class HowliteService(BaseService):
     async def query_events(
         self, request: m.QueryEventsRequest
     ) -> m.QueryEventsResponse:
+        """Query events."""
         query = request.query
 
         builder = self._query_builder_factory.get(query)
@@ -109,6 +111,7 @@ class HowliteService(BaseService):
             content=payload,
             headers={"Content-Type": "application/xml"},
         )
+        response = cast("Response", response)
 
         data = self._retrieve_calendars_data_from_query_response(
             response.text, namespaces
@@ -124,6 +127,7 @@ class HowliteService(BaseService):
     async def upsert_event(
         self, request: m.UpsertEventRequest
     ) -> m.UpsertEventResponse:
+        """Upsert an event."""
         event = request.event
 
         calendar = m.Calendar(
@@ -131,9 +135,10 @@ class HowliteService(BaseService):
         )
         payload = self._icalendar.parser.calendar_to_string(calendar)
 
-        await self.put(
+        await self._request(
+            "PUT",
             Endpoint.EVENT,
-            {"EVENT": event.id},
+            {"EVENT": str(event.id)},
             auth=self._build_auth(),
             content=payload,
             headers={"Content-Type": "text/calendar"},
@@ -154,11 +159,13 @@ class HowliteService(BaseService):
     async def delete_event(
         self, request: m.DeleteEventRequest
     ) -> m.DeleteEventResponse:
-        id = request.id
+        """Delete an event."""
+        event_id = request.id
 
-        await self.delete(
+        await self._request(
+            "DELETE",
             Endpoint.EVENT,
-            {"EVENT": id},
+            {"EVENT": str(event_id)},
             auth=self._build_auth(),
         )
 

@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import datetime
 from uuid import UUID
 
@@ -15,8 +16,6 @@ from beaver.services.icalendar.models import (  # noqa: F401
 
 class Query:
     """Base class for queries."""
-
-    pass
 
 
 @datamodel
@@ -41,8 +40,6 @@ class RecurringQuery(Query):
 @datamodel
 class GetCalendarRequest:
     """Request to get a calendar."""
-
-    pass
 
 
 @datamodel
@@ -81,7 +78,7 @@ class QueryEventsRequest:
 class QueryEventsResponse:
     """Response for querying events."""
 
-    events: list[Event]
+    events: Sequence[Event]
     """Events data."""
 
 
@@ -112,5 +109,3 @@ class DeleteEventRequest:
 @datamodel
 class DeleteEventResponse:
     """Response for deleting an event."""
-
-    pass

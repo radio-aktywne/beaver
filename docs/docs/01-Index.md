@@ -5,8 +5,9 @@ title: Index
 
 # beaver
 
-Broadcast shows 🎭
+Broadcast shows service 🎭
 
 ## 💡 About
 
-`beaver` is a service for managing shows and events.
+`beaver` is a [`Litestar`](https://litestar.dev) service
+for managing shows and events.

@@ -1,13 +1,11 @@
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-_commit: 0.18.0
+_commit: 0.19.0
 _src_path: gh:radio-aktywne/template-service-litestar
 accountname: radio-aktywne
-description: Broadcast shows 🎭
+description: Broadcast shows service 🎭
 docs: true
 docsurl: https://radio-aktywne.github.io/beaver
-email: it@radioaktywne.pl
 envprefix: BEAVER
-events: true
 imagename: services/beaver
 importname: beaver
 port: 10500
@@ -16,4 +14,3 @@ releases: true
 reponame: beaver
 repourl: https://github.com/radio-aktywne/beaver
 servicename: beaver
-sse: true

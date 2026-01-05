@@ -12,11 +12,9 @@ class ICalendarService:
     @property
     def parser(self) -> ICalendarParser:
         """Parser for iCalendar objects."""
-
         return self._parser
 
     @property
     def expander(self) -> EventExpander:
         """Expander for recurring iCalendar events."""
-
         return self._expander

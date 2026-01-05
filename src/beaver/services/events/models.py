@@ -8,8 +8,6 @@ from beaver.models.events.event import Event
 class SubscribeRequest:
     """Request to subscribe."""
 
-    pass
-
 
 @datamodel
 class SubscribeResponse:

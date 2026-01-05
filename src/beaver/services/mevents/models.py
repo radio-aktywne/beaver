@@ -1,3 +1,6 @@
+# ruff: noqa: SLF001
+
+from collections.abc import Sequence
 from datetime import datetime
 from typing import NotRequired, TypedDict
 from zoneinfo import ZoneInfo
@@ -34,11 +37,12 @@ class Show:
     description: str | None
     """Description of the show."""
 
-    events: list["Event"] | None
+    events: Sequence["Event"] | None
     """Events belonging to the show."""
 
     @staticmethod
-    def map(show: spm.Show, events: list["Event"] | None) -> "Show":
+    def map(show: spm.Show, events: Sequence["Event"] | None) -> "Show":
+        """Map to internal representation."""
         return Show(
             id=show.id,
             title=show.title,
@@ -49,6 +53,8 @@ class Show:
 
 @datamodel
 class Event:
+    """Event data."""
+
     id: str
     """Identifier of the event."""
 
@@ -75,6 +81,7 @@ class Event:
 
     @classmethod
     def merge(cls, ds: spm.Event, dt: hlm.Event, show: Show | None) -> "Event":
+        """Map to internal representation."""
         return Event(
             id=ds.id,
             type=ds.type,
@@ -131,6 +138,8 @@ EventOrderByInput = (
 
 
 class EventCreateInput(spt.EventCreateWithoutRelationsInput):
+    """Input data to create an event."""
+
     start: datetime
     """Start time of the event in event timezone."""
 
@@ -145,6 +154,8 @@ class EventCreateInput(spt.EventCreateWithoutRelationsInput):
 
 
 class EventUpdateInput(spt.EventUpdateManyMutationInput, total=False):
+    """Input data to update an event."""
+
     start: datetime
     """Start time of the event in event timezone."""
 
@@ -196,7 +207,7 @@ class ListRequest:
     include: EventInclude | None
     """Relations to include in the response."""
 
-    order: EventOrderByInput | list[EventOrderByInput] | None
+    order: EventOrderByInput | Sequence[EventOrderByInput] | None
     """Order to apply to the results."""
 
 
@@ -204,7 +215,7 @@ class ListRequest:
 class ListResponse:
     """Response for listing events."""
 
-    events: list[Event]
+    events: Sequence[Event]
     """List of events that match the filter."""
 
 

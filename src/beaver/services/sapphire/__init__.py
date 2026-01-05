@@ -1,3 +1,6 @@
+# ruff: noqa: D101, SLF001
+
+from collections.abc import Sequence
 from typing import TypedDict
 
 from prisma import enums, fields, models, types  # noqa: F401
@@ -51,8 +54,8 @@ BytesFilter = TypedDict(
     "BytesFilter",
     {
         "equals": fields.Base64,
-        "in": list[fields.Base64],
-        "not_in": list[fields.Base64],
+        "in": Sequence[fields.Base64],
+        "not_in": Sequence[fields.Base64],
         "not": fields.Base64 | types.BytesFilter,
     },
     total=False,
@@ -109,7 +112,7 @@ types.DecimalWithAggregatesFilter = DecimalWithAggregatesFilter
 
 
 class _BytesListFilterEqualsInput(TypedDict):
-    equals: list[fields.Base64] | None
+    equals: Sequence[fields.Base64] | None
 
 
 types._BytesListFilterEqualsInput = _BytesListFilterEqualsInput
@@ -123,34 +126,34 @@ types._BytesListFilterHasInput = _BytesListFilterHasInput
 
 
 class _BytesListFilterHasEveryInput(TypedDict):
-    has_every: list[fields.Base64]
+    has_every: Sequence[fields.Base64]
 
 
 types._BytesListFilterHasEveryInput = _BytesListFilterHasEveryInput
 
 
 class _BytesListFilterHasSomeInput(TypedDict):
-    has_some: list[fields.Base64]
+    has_some: Sequence[fields.Base64]
 
 
 types._BytesListFilterHasSomeInput = _BytesListFilterHasSomeInput
 
 
 class _BytesListUpdateSet(TypedDict):
-    set: list[fields.Base64]
+    set: Sequence[fields.Base64]
 
 
 types._BytesListUpdateSet = _BytesListUpdateSet
 
 
-BytesListUpdate = list[fields.Base64] | types._BytesListUpdateSet
+BytesListUpdate = Sequence[fields.Base64] | types._BytesListUpdateSet
 
 
 types.BytesListUpdate = BytesListUpdate
 
 
 class _JsonListFilterEqualsInput(TypedDict):
-    equals: list[fields.Json] | None
+    equals: Sequence[fields.Json] | None
 
 
 types._JsonListFilterEqualsInput = _JsonListFilterEqualsInput
@@ -164,31 +167,31 @@ types._JsonListFilterHasInput = _JsonListFilterHasInput
 
 
 class _JsonListFilterHasEveryInput(TypedDict):
-    has_every: list[fields.Json]
+    has_every: Sequence[fields.Json]
 
 
 types._JsonListFilterHasEveryInput = _JsonListFilterHasEveryInput
 
 
 class _JsonListFilterHasSomeInput(TypedDict):
-    has_some: list[fields.Json]
+    has_some: Sequence[fields.Json]
 
 
 types._JsonListFilterHasSomeInput = _JsonListFilterHasSomeInput
 
 
 class _JsonListUpdateSet(TypedDict):
-    set: list[fields.Json]
+    set: Sequence[fields.Json]
 
 
 types._JsonListUpdateSet = _JsonListUpdateSet
 
 
-JsonListUpdate = list[fields.Json] | types._JsonListUpdateSet
+JsonListUpdate = Sequence[fields.Json] | types._JsonListUpdateSet
 
 
 class _EventTypeListFilterEqualsInput(TypedDict):
-    equals: list[enums.EventType] | None
+    equals: Sequence[enums.EventType] | None
 
 
 types._EventTypeListFilterEqualsInput = _EventTypeListFilterEqualsInput
@@ -202,27 +205,27 @@ types._EventTypeListFilterHasInput = _EventTypeListFilterHasInput
 
 
 class _EventTypeListFilterHasEveryInput(TypedDict):
-    has_every: list[enums.EventType]
+    has_every: Sequence[enums.EventType]
 
 
 types._EventTypeListFilterHasEveryInput = _EventTypeListFilterHasEveryInput
 
 
 class _EventTypeListFilterHasSomeInput(TypedDict):
-    has_some: list[enums.EventType]
+    has_some: Sequence[enums.EventType]
 
 
 types._EventTypeListFilterHasSomeInput = _EventTypeListFilterHasSomeInput
 
 
 class _EventTypeListUpdateSet(TypedDict):
-    set: list[enums.EventType]
+    set: Sequence[enums.EventType]
 
 
 types._EventTypeListUpdateSet = _EventTypeListUpdateSet
 
 
-EventTypeListUpdate = list[enums.EventType] | types._EventTypeListUpdateSet
+EventTypeListUpdate = Sequence[enums.EventType] | types._EventTypeListUpdateSet
 
 
 class ShowOptionalCreateInput(TypedDict, total=False):
@@ -245,9 +248,9 @@ types.ShowCreateNestedWithoutRelationsInput = ShowCreateNestedWithoutRelationsIn
 class ShowCreateManyNestedWithoutRelationsInput(TypedDict, total=False):
     create: (
         types.ShowCreateWithoutRelationsInput
-        | list[types.ShowCreateWithoutRelationsInput]
+        | Sequence[types.ShowCreateWithoutRelationsInput]
     )
-    connect: types.ShowWhereUniqueInput | list[types.ShowWhereUniqueInput]
+    connect: types.ShowWhereUniqueInput | Sequence[types.ShowWhereUniqueInput]
 
 
 types.ShowCreateManyNestedWithoutRelationsInput = (
@@ -266,11 +269,11 @@ types.ShowUpdateInput = ShowUpdateInput
 
 
 class ShowUpdateManyWithoutRelationsInput(TypedDict, total=False):
-    create: list[types.ShowCreateWithoutRelationsInput]
-    connect: list[types.ShowWhereUniqueInput]
-    set: list[types.ShowWhereUniqueInput]
-    disconnect: list[types.ShowWhereUniqueInput]
-    delete: list[types.ShowWhereUniqueInput]
+    create: Sequence[types.ShowCreateWithoutRelationsInput]
+    connect: Sequence[types.ShowWhereUniqueInput]
+    set: Sequence[types.ShowWhereUniqueInput]
+    disconnect: Sequence[types.ShowWhereUniqueInput]
+    delete: Sequence[types.ShowWhereUniqueInput]
 
 
 types.ShowUpdateManyWithoutRelationsInput = ShowUpdateManyWithoutRelationsInput
@@ -368,10 +371,10 @@ types.ShowArgsFromShow = ShowArgsFromShow
 class FindManyShowArgsFromShow(TypedDict, total=False):
     take: int
     skip: int
-    order_by: types.ShowOrderByInput | list[types.ShowOrderByInput]
+    order_by: types.ShowOrderByInput | Sequence[types.ShowOrderByInput]
     where: types.ShowWhereInput
     cursor: types.ShowWhereUniqueInput
-    distinct: list[types.ShowScalarFieldKeys]
+    distinct: Sequence[types.ShowScalarFieldKeys]
     include: types.ShowIncludeFromShow
 
 
@@ -395,10 +398,10 @@ types.EventArgsFromShow = EventArgsFromShow
 class FindManyEventArgsFromShow(TypedDict, total=False):
     take: int
     skip: int
-    order_by: types.EventOrderByInput | list[types.EventOrderByInput]
+    order_by: types.EventOrderByInput | Sequence[types.EventOrderByInput]
     where: types.EventWhereInput
     cursor: types.EventWhereUniqueInput
-    distinct: list[types.EventScalarFieldKeys]
+    distinct: Sequence[types.EventScalarFieldKeys]
     include: types.EventIncludeFromEvent
 
 
@@ -410,9 +413,9 @@ class ShowWhereInput(TypedDict, total=False):
     title: str | types.StringFilter
     description: None | str | types.StringFilter
     events: types.EventListRelationFilter
-    AND: list[types.ShowWhereInput]
-    OR: list[types.ShowWhereInput]
-    NOT: list[types.ShowWhereInput]
+    AND: Sequence[types.ShowWhereInput]
+    OR: Sequence[types.ShowWhereInput]
+    NOT: Sequence[types.ShowWhereInput]
 
 
 types.ShowWhereInput = ShowWhereInput
@@ -422,9 +425,9 @@ class ShowScalarWhereWithAggregatesInput(TypedDict, total=False):
     id: str | types.StringWithAggregatesFilter
     title: str | types.StringWithAggregatesFilter
     description: str | types.StringWithAggregatesFilter
-    AND: list[types.ShowScalarWhereWithAggregatesInput]
-    OR: list[types.ShowScalarWhereWithAggregatesInput]
-    NOT: list[types.ShowScalarWhereWithAggregatesInput]
+    AND: Sequence[types.ShowScalarWhereWithAggregatesInput]
+    OR: Sequence[types.ShowScalarWhereWithAggregatesInput]
+    NOT: Sequence[types.ShowScalarWhereWithAggregatesInput]
 
 
 types.ShowScalarWhereWithAggregatesInput = ShowScalarWhereWithAggregatesInput
@@ -478,9 +481,9 @@ types.EventCreateNestedWithoutRelationsInput = EventCreateNestedWithoutRelations
 class EventCreateManyNestedWithoutRelationsInput(TypedDict, total=False):
     create: (
         types.EventCreateWithoutRelationsInput
-        | list[types.EventCreateWithoutRelationsInput]
+        | Sequence[types.EventCreateWithoutRelationsInput]
     )
-    connect: types.EventWhereUniqueInput | list[types.EventWhereUniqueInput]
+    connect: types.EventWhereUniqueInput | Sequence[types.EventWhereUniqueInput]
 
 
 types.EventCreateManyNestedWithoutRelationsInput = (
@@ -506,11 +509,11 @@ types.EventUpdateManyMutationInput = EventUpdateManyMutationInput
 
 
 class EventUpdateManyWithoutRelationsInput(TypedDict, total=False):
-    create: list[types.EventCreateWithoutRelationsInput]
-    connect: list[types.EventWhereUniqueInput]
-    set: list[types.EventWhereUniqueInput]
-    disconnect: list[types.EventWhereUniqueInput]
-    delete: list[types.EventWhereUniqueInput]
+    create: Sequence[types.EventCreateWithoutRelationsInput]
+    connect: Sequence[types.EventWhereUniqueInput]
+    set: Sequence[types.EventWhereUniqueInput]
+    disconnect: Sequence[types.EventWhereUniqueInput]
+    delete: Sequence[types.EventWhereUniqueInput]
 
 
 types.EventUpdateManyWithoutRelationsInput = EventUpdateManyWithoutRelationsInput
@@ -608,10 +611,10 @@ types.ShowArgsFromEvent = ShowArgsFromEvent
 class FindManyShowArgsFromEvent(TypedDict, total=False):
     take: int
     skip: int
-    order_by: types.ShowOrderByInput | list[types.ShowOrderByInput]
+    order_by: types.ShowOrderByInput | Sequence[types.ShowOrderByInput]
     where: types.ShowWhereInput
     cursor: types.ShowWhereUniqueInput
-    distinct: list[types.ShowScalarFieldKeys]
+    distinct: Sequence[types.ShowScalarFieldKeys]
     include: types.ShowIncludeFromShow
 
 
@@ -635,10 +638,10 @@ types.EventArgsFromEvent = EventArgsFromEvent
 class FindManyEventArgsFromEvent(TypedDict, total=False):
     take: int
     skip: int
-    order_by: types.EventOrderByInput | list[types.EventOrderByInput]
+    order_by: types.EventOrderByInput | Sequence[types.EventOrderByInput]
     where: types.EventWhereInput
     cursor: types.EventWhereUniqueInput
-    distinct: list[types.EventScalarFieldKeys]
+    distinct: Sequence[types.EventScalarFieldKeys]
     include: types.EventIncludeFromEvent
 
 
@@ -650,9 +653,9 @@ class EventWhereInput(TypedDict, total=False):
     type: enums.EventType
     showId: str | types.StringFilter
     show: types.ShowRelationFilter
-    AND: list[types.EventWhereInput]
-    OR: list[types.EventWhereInput]
-    NOT: list[types.EventWhereInput]
+    AND: Sequence[types.EventWhereInput]
+    OR: Sequence[types.EventWhereInput]
+    NOT: Sequence[types.EventWhereInput]
 
 
 types.EventWhereInput = EventWhereInput
@@ -662,9 +665,9 @@ class EventScalarWhereWithAggregatesInput(TypedDict, total=False):
     id: str | types.StringWithAggregatesFilter
     type: enums.EventType
     showId: str | types.StringWithAggregatesFilter
-    AND: list[types.EventScalarWhereWithAggregatesInput]
-    OR: list[types.EventScalarWhereWithAggregatesInput]
-    NOT: list[types.EventScalarWhereWithAggregatesInput]
+    AND: Sequence[types.EventScalarWhereWithAggregatesInput]
+    OR: Sequence[types.EventScalarWhereWithAggregatesInput]
+    NOT: Sequence[types.EventScalarWhereWithAggregatesInput]
 
 
 types.EventScalarWhereWithAggregatesInput = EventScalarWhereWithAggregatesInput

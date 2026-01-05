@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from typing import Annotated, Literal
 from uuid import UUID
 
@@ -7,28 +8,24 @@ from beaver.models.base import SerializableModel
 from beaver.models.events import types as t
 from beaver.services.mevents import models as em
 from beaver.services.shows import models as sm
-from beaver.utils.time import NaiveDatetime, Timezone
+from beaver.utils.time import NaiveDatetime, Timezone, naiveutcnow
 
-Second = Annotated[int, Field(..., ge=0, le=60)]
+type Second = Annotated[int, Field(ge=0, le=60)]
 
-Minute = Annotated[int, Field(..., ge=0, le=59)]
+type Minute = Annotated[int, Field(ge=0, le=59)]
 
-Hour = Annotated[int, Field(..., ge=0, le=23)]
-
-Monthday = (
-    Annotated[int, Field(..., ge=-31, le=-1)] | Annotated[int, Field(..., ge=1, le=31)]
+type Hour = Annotated[int, Field(ge=0, le=23)]
+type Monthday = (
+    Annotated[int, Field(ge=-31, le=-1)] | Annotated[int, Field(ge=1, le=31)]
 )
 
-Yearday = (
-    Annotated[int, Field(..., ge=-366, le=-1)]
-    | Annotated[int, Field(..., ge=1, le=366)]
+type Yearday = (
+    Annotated[int, Field(ge=-366, le=-1)] | Annotated[int, Field(ge=1, le=366)]
 )
 
-Week = (
-    Annotated[int, Field(..., ge=-53, le=-1)] | Annotated[int, Field(..., ge=1, le=53)]
-)
+type Week = Annotated[int, Field(ge=-53, le=-1)] | Annotated[int, Field(ge=1, le=53)]
 
-Month = Annotated[int, Field(..., ge=1, le=12)]
+type Month = Annotated[int, Field(ge=1, le=12)]
 
 
 class WeekdayRule(SerializableModel):
@@ -42,6 +39,7 @@ class WeekdayRule(SerializableModel):
 
     @staticmethod
     def map(rule: em.WeekdayRule) -> "WeekdayRule":
+        """Map to internal representation."""
         return WeekdayRule(
             day=rule.day,
             occurrence=rule.occurrence,
@@ -63,31 +61,31 @@ class RecurrenceRule(SerializableModel):
     interval: int | None = None
     """Interval of the recurrence."""
 
-    by_seconds: list[Second] | None = None
+    by_seconds: Sequence[Second] | None = None
     """Seconds of the recurrence."""
 
-    by_minutes: list[Minute] | None = None
+    by_minutes: Sequence[Minute] | None = None
     """Minutes of the recurrence."""
 
-    by_hours: list[Hour] | None = None
+    by_hours: Sequence[Hour] | None = None
     """Hours of the recurrence."""
 
-    by_weekdays: list[WeekdayRule] | None = None
+    by_weekdays: Sequence[WeekdayRule] | None = None
     """Weekdays of the recurrence."""
 
-    by_monthdays: list[Monthday] | None = None
+    by_monthdays: Sequence[Monthday] | None = None
     """Monthdays of the recurrence."""
 
-    by_yeardays: list[Yearday] | None = None
+    by_yeardays: Sequence[Yearday] | None = None
     """Yeardays of the recurrence."""
 
-    by_weeks: list[Week] | None = None
+    by_weeks: Sequence[Week] | None = None
     """Weeks of the recurrence."""
 
-    by_months: list[Month] | None = None
+    by_months: Sequence[Month] | None = None
     """Months of the recurrence."""
 
-    by_set_positions: list[int] | None = None
+    by_set_positions: Sequence[int] | None = None
     """Set positions of the recurrence."""
 
     week_start: em.Weekday | None = None
@@ -95,6 +93,7 @@ class RecurrenceRule(SerializableModel):
 
     @staticmethod
     def map(rule: em.RecurrenceRule) -> "RecurrenceRule":
+        """Map to internal representation."""
         return RecurrenceRule(
             frequency=rule.frequency,
             until=rule.until,
@@ -123,14 +122,15 @@ class Recurrence(SerializableModel):
     rule: RecurrenceRule | None = None
     """Rule of the recurrence."""
 
-    include: list[NaiveDatetime] | None = None
+    include: Sequence[NaiveDatetime] | None = None
     """Included dates of the recurrence in event timezone."""
 
-    exclude: list[NaiveDatetime] | None = None
+    exclude: Sequence[NaiveDatetime] | None = None
     """Excluded dates of the recurrence in event timezone."""
 
     @staticmethod
     def map(recurrence: em.Recurrence) -> "Recurrence":
+        """Map to internal representation."""
         return Recurrence(
             rule=(
                 RecurrenceRule.map(recurrence.rule)
@@ -145,7 +145,7 @@ class Recurrence(SerializableModel):
 class Event(SerializableModel):
     """Event data."""
 
-    id: str
+    id: UUID
     """Identifier of the event."""
 
     type: em.EventType
@@ -168,10 +168,11 @@ class Event(SerializableModel):
 
     @staticmethod
     def map(event: em.Event | sm.Event) -> "Event":
+        """Map to internal representation."""
         return Event(
-            id=event.id,
+            id=UUID(event.id),
             type=event.type,
-            show_id=event.show_id,
+            show_id=UUID(event.show_id),
             start=event.start,
             end=event.end,
             timezone=str(event.timezone),
@@ -193,9 +194,9 @@ class EventCreatedEventData(SerializableModel):
 class EventCreatedEvent(SerializableModel):
     """Event that is emitted when event is created."""
 
-    type: t.TypeFieldType[Literal["event-created"]] = "event-created"
-    created_at: t.CreatedAtFieldType
-    data: t.DataFieldType[EventCreatedEventData]
+    type: t.TypeField[Literal["event-created"]] = "event-created"
+    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
+    data: t.DataField[EventCreatedEventData]
 
 
 class EventUpdatedEventData(SerializableModel):
@@ -208,9 +209,9 @@ class EventUpdatedEventData(SerializableModel):
 class EventUpdatedEvent(SerializableModel):
     """Event that is emitted when event is updated."""
 
-    type: t.TypeFieldType[Literal["event-updated"]] = "event-updated"
-    created_at: t.CreatedAtFieldType
-    data: t.DataFieldType[EventUpdatedEventData]
+    type: t.TypeField[Literal["event-updated"]] = "event-updated"
+    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
+    data: t.DataField[EventUpdatedEventData]
 
 
 class EventDeletedEventData(SerializableModel):
@@ -223,6 +224,6 @@ class EventDeletedEventData(SerializableModel):
 class EventDeletedEvent(SerializableModel):
     """Event that is emitted when event is deleted."""
 
-    type: t.TypeFieldType[Literal["event-deleted"]] = "event-deleted"
-    created_at: t.CreatedAtFieldType
-    data: t.DataFieldType[EventDeletedEventData]
+    type: t.TypeField[Literal["event-deleted"]] = "event-deleted"
+    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
+    data: t.DataField[EventDeletedEventData]

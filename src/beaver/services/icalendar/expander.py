@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
@@ -15,8 +16,8 @@ class EventExpander:
     def __init__(self, parser: ICalendarParser) -> None:
         self._parser = parser
 
-    def _normalize_datetime(self, dt: vDatetime, tz: ZoneInfo) -> datetime:
-        dt = self._parser.ical_to_datetime(dt)
+    def _normalize_datetime(self, vdt: vDatetime, tz: ZoneInfo) -> datetime:
+        dt = self._parser.ical_to_datetime(vdt)
         dt = dt.astimezone(tz)
         return dt.replace(tzinfo=None)
 
@@ -31,9 +32,8 @@ class EventExpander:
 
     def expand(
         self, event: m.Event, start: datetime, end: datetime
-    ) -> list[m.EventInstance]:
+    ) -> Sequence[m.EventInstance]:
         """Expand the event into instances between start and end."""
-
         tz = event.timezone
 
         start = start.replace(tzinfo=UTC)

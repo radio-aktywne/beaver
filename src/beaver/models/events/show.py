@@ -1,14 +1,18 @@
 from typing import Literal
+from uuid import UUID
+
+from pydantic import Field
 
 from beaver.models.base import SerializableModel
 from beaver.models.events import types as t
 from beaver.services.shows import models as sm
+from beaver.utils.time import naiveutcnow
 
 
 class Show(SerializableModel):
     """Show data."""
 
-    id: str
+    id: UUID
     """Identifier of the show."""
 
     title: str
@@ -19,8 +23,9 @@ class Show(SerializableModel):
 
     @staticmethod
     def map(show: sm.Show) -> "Show":
+        """Map to internal representation."""
         return Show(
-            id=show.id,
+            id=UUID(show.id),
             title=show.title,
             description=show.description,
         )
@@ -36,9 +41,9 @@ class ShowCreatedEventData(SerializableModel):
 class ShowCreatedEvent(SerializableModel):
     """Event that is emitted when show is created."""
 
-    type: t.TypeFieldType[Literal["show-created"]] = "show-created"
-    created_at: t.CreatedAtFieldType
-    data: t.DataFieldType[ShowCreatedEventData]
+    type: t.TypeField[Literal["show-created"]] = "show-created"
+    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
+    data: t.DataField[ShowCreatedEventData]
 
 
 class ShowUpdatedEventData(SerializableModel):
@@ -51,9 +56,9 @@ class ShowUpdatedEventData(SerializableModel):
 class ShowUpdatedEvent(SerializableModel):
     """Event that is emitted when show is updated."""
 
-    type: t.TypeFieldType[Literal["show-updated"]] = "show-updated"
-    created_at: t.CreatedAtFieldType
-    data: t.DataFieldType[ShowUpdatedEventData]
+    type: t.TypeField[Literal["show-updated"]] = "show-updated"
+    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
+    data: t.DataField[ShowUpdatedEventData]
 
 
 class ShowDeletedEventData(SerializableModel):
@@ -66,6 +71,6 @@ class ShowDeletedEventData(SerializableModel):
 class ShowDeletedEvent(SerializableModel):
     """Event that is emitted when show is deleted."""
 
-    type: t.TypeFieldType[Literal["show-deleted"]] = "show-deleted"
-    created_at: t.CreatedAtFieldType
-    data: t.DataFieldType[ShowDeletedEventData]
+    type: t.TypeField[Literal["show-deleted"]] = "show-deleted"
+    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
+    data: t.DataField[ShowDeletedEventData]
