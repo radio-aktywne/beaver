@@ -53,11 +53,11 @@ class Controller(BaseController):
         service: Service,
         start: Annotated[
             str | None,
-            Parameter(description="Start time in UTC to filter events instances."),
+            Parameter(description="Start datetime in UTC to filter events instances."),
         ] = None,
         end: Annotated[
             str | None,
-            Parameter(description="End time in UTC to filter events instances."),
+            Parameter(description="End datetime in UTC to filter events instances."),
         ] = None,
         limit: Annotated[
             m.ListRequestLimit,
