@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-from datetime import datetime
 from uuid import UUID
 
 from beaver.models.base import datamodel
@@ -12,6 +11,7 @@ from beaver.services.icalendar.models import (  # noqa: F401
     Weekday,
     WeekdayRule,
 )
+from beaver.utils.time import NaiveDatetime
 
 
 class Query:
@@ -22,10 +22,10 @@ class Query:
 class TimeRangeQuery(Query):
     """Time range query data."""
 
-    start: datetime | None = None
+    start: NaiveDatetime | None = None
     """Beginning of the time range in UTC."""
 
-    end: datetime | None = None
+    end: NaiveDatetime | None = None
     """End of the time range in UTC."""
 
 

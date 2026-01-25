@@ -1,6 +1,5 @@
 from collections.abc import Generator, Sequence
 from contextlib import contextmanager
-from datetime import datetime
 from uuid import UUID
 
 from beaver.api.routes.schedule import errors as e
@@ -10,7 +9,7 @@ from beaver.services.icalendar.service import ICalendarService
 from beaver.services.mevents import errors as ee
 from beaver.services.mevents import models as em
 from beaver.services.mevents.service import EventsService
-from beaver.utils.time import naiveutcnow
+from beaver.utils.time import NaiveDatetime, naiveutcnow
 
 
 class Service:
@@ -68,7 +67,7 @@ class Service:
         return res.events
 
     def _get_schedule(
-        self, event: em.Event, start: datetime, end: datetime
+        self, event: em.Event, start: NaiveDatetime, end: NaiveDatetime
     ) -> m.Schedule:
         ievent = im.Event(
             id=UUID(event.id),

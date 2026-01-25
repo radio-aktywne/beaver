@@ -53,7 +53,7 @@ class RecurrenceRule(SerializableModel):
     """Frequency of the recurrence."""
 
     until: NaiveDatetime | None = None
-    """End date of the recurrence in UTC."""
+    """End datetime of the recurrence in UTC."""
 
     count: int | None = None
     """Number of occurrences of the recurrence."""
@@ -123,10 +123,10 @@ class Recurrence(SerializableModel):
     """Rule of the recurrence."""
 
     include: Sequence[NaiveDatetime] | None = None
-    """Included dates of the recurrence in event timezone."""
+    """Included datetimes of the recurrence in event timezone."""
 
     exclude: Sequence[NaiveDatetime] | None = None
-    """Excluded dates of the recurrence in event timezone."""
+    """Excluded datetimes of the recurrence in event timezone."""
 
     @staticmethod
     def map(recurrence: em.Recurrence) -> "Recurrence":
@@ -155,10 +155,10 @@ class Event(SerializableModel):
     """Identifier of the show the event belongs to."""
 
     start: NaiveDatetime
-    """Start time of the event in event timezone."""
+    """Start datetime of the event in event timezone."""
 
     end: NaiveDatetime
-    """End time of the event in event timezone."""
+    """End datetime of the event in event timezone."""
 
     timezone: Timezone
     """Timezone of the event."""
