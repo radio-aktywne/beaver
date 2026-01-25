@@ -1,7 +1,6 @@
 # ruff: noqa: SLF001
 
 from collections.abc import Sequence
-from datetime import datetime
 from typing import NotRequired, TypedDict
 from zoneinfo import ZoneInfo
 
@@ -20,6 +19,7 @@ from beaver.services.howlite.models import (  # noqa: F401
 from beaver.services.sapphire import enums as spe
 from beaver.services.sapphire import models as spm
 from beaver.services.sapphire import types as spt
+from beaver.utils.time import NaiveDatetime
 
 EventType = spe.EventType
 
@@ -67,11 +67,11 @@ class Event:
     show: Show | None
     """Show the event belongs to."""
 
-    start: datetime
-    """Start time of the event in event timezone."""
+    start: NaiveDatetime
+    """Start datetime of the event in event timezone."""
 
-    end: datetime
-    """End time of the event in event timezone."""
+    end: NaiveDatetime
+    """End datetime of the event in event timezone."""
 
     timezone: ZoneInfo
     """Timezone of the event."""
@@ -140,11 +140,11 @@ EventOrderByInput = (
 class EventCreateInput(spt.EventCreateWithoutRelationsInput):
     """Input data to create an event."""
 
-    start: datetime
-    """Start time of the event in event timezone."""
+    start: NaiveDatetime
+    """Start datetime of the event in event timezone."""
 
-    end: datetime
-    """End time of the event in event timezone."""
+    end: NaiveDatetime
+    """End datetime of the event in event timezone."""
 
     timezone: ZoneInfo
     """Timezone of the event."""
@@ -156,11 +156,11 @@ class EventCreateInput(spt.EventCreateWithoutRelationsInput):
 class EventUpdateInput(spt.EventUpdateManyMutationInput, total=False):
     """Input data to update an event."""
 
-    start: datetime
-    """Start time of the event in event timezone."""
+    start: NaiveDatetime
+    """Start datetime of the event in event timezone."""
 
-    end: datetime
-    """End time of the event in event timezone."""
+    end: NaiveDatetime
+    """End datetime of the event in event timezone."""
 
     timezone: ZoneInfo
     """Timezone of the event."""

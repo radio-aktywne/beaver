@@ -1,10 +1,10 @@
 from collections.abc import Sequence
-from datetime import datetime
 from enum import StrEnum
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from beaver.models.base import datamodel
+from beaver.utils.time import NaiveDatetime
 
 
 class Frequency(StrEnum):
@@ -49,8 +49,8 @@ class RecurrenceRule:
     frequency: Frequency
     """Frequency of the recurrence."""
 
-    until: datetime | None = None
-    """End date of the recurrence in UTC."""
+    until: NaiveDatetime | None = None
+    """End datetime of the recurrence in UTC."""
 
     count: int | None = None
     """Number of occurrences of the recurrence."""
@@ -96,11 +96,11 @@ class Recurrence:
     rule: RecurrenceRule | None = None
     """Rule of the recurrence."""
 
-    include: Sequence[datetime] | None = None
-    """Included dates of the recurrence in event timezone."""
+    include: Sequence[NaiveDatetime] | None = None
+    """Included datetimes of the recurrence in event timezone."""
 
-    exclude: Sequence[datetime] | None = None
-    """Excluded dates of the recurrence in event timezone."""
+    exclude: Sequence[NaiveDatetime] | None = None
+    """Excluded datetimes of the recurrence in event timezone."""
 
 
 @datamodel
@@ -110,11 +110,11 @@ class Event:
     id: UUID
     """Identifier of the event."""
 
-    start: datetime
-    """Start time of the event in event timezone."""
+    start: NaiveDatetime
+    """Start datetime of the event in event timezone."""
 
-    end: datetime
-    """End time of the event in event timezone."""
+    end: NaiveDatetime
+    """End datetime of the event in event timezone."""
 
     timezone: ZoneInfo
     """Timezone of the event."""
@@ -135,8 +135,8 @@ class Calendar:
 class EventInstance:
     """Event instance data."""
 
-    start: datetime
-    """Start time of the event instance in event timezone."""
+    start: NaiveDatetime
+    """Start datetime of the event instance in event timezone."""
 
-    end: datetime
-    """End time of the event instance in event timezone."""
+    end: NaiveDatetime
+    """End datetime of the event instance in event timezone."""

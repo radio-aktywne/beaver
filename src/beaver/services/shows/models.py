@@ -1,7 +1,6 @@
 # ruff: noqa: SLF001
 
 from collections.abc import Sequence
-from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from beaver.models.base import datamodel
@@ -19,6 +18,7 @@ from beaver.services.howlite.models import (  # noqa: F401
 from beaver.services.sapphire import enums as spe
 from beaver.services.sapphire import models as spm
 from beaver.services.sapphire import types as spt
+from beaver.utils.time import NaiveDatetime
 
 EventType = spe.EventType
 
@@ -39,11 +39,11 @@ class Event:
     show: "Show | None"
     """Show the event belongs to."""
 
-    start: datetime
-    """Start time of the event in event timezone."""
+    start: NaiveDatetime
+    """Start datetime of the event in event timezone."""
 
-    end: datetime
-    """End time of the event in event timezone."""
+    end: NaiveDatetime
+    """End datetime of the event in event timezone."""
 
     timezone: ZoneInfo
     """Timezone of the event."""
