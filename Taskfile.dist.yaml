@@ -8,7 +8,13 @@ tasks:
       GIT_CONFIG_GLOBAL: ""
       GIT_CONFIG_SYSTEM: ""
     cmds:
+      - task: install-internal
+        vars:
+          CLI_ARGS: ""
       - >-
+        uv
+        run
+        --
         copier
         update
         --answers-file
@@ -45,10 +51,6 @@ tasks:
       - task: install-docs-internal
         vars:
           CLI_ARGS: ""
-      - task: prisma
-        vars:
-          CLI_ARGS: >-
-            generate
       - >-
         trunk
         check
@@ -106,7 +108,7 @@ tasks:
         docusaurus
         {{ .CLI_ARGS | default "start --host 0.0.0.0" }}
   clean:
-    desc: Clean virtualenv
+    desc: Clean virtualenv and generated files
     cmds:
       - >-
         rm
@@ -114,15 +116,11 @@ tasks:
         --force
         {{ .CLI_ARGS }}
         .venv/
-    status:
-      - >-
-        test
-        '!'
-        -d
-        .venv/
+        prisma/bin/
   install:
     desc: Install dependencies
     sources:
+      - prisma/schema.prisma
       - flake.lock
       - "*.nix"
       - pyproject.toml
@@ -131,11 +129,18 @@ tasks:
       - uv.lock
     generates:
       - .venv/**/*
+      - prisma/bin/**/*
     cmds:
       - >-
         uv
         sync
         {{ .CLI_ARGS }}
+      - >-
+        uv
+        run
+        --
+        prisma
+        generate
   install-internal:
     desc: Install dependencies quietly
     internal: true
@@ -160,25 +165,12 @@ tasks:
         version
         --bump
         {{ .CLI_ARGS | default "minor" }}
-  prisma:
-    desc: Run Prisma
+  test:
+    desc: Run tests
     cmds:
       - task: install-internal
         vars:
           CLI_ARGS: ""
-      - >-
-        uv
-        run
-        --
-        prisma
-        {{ .CLI_ARGS | default "generate" }}
-  test:
-    desc: Run tests
-    cmds:
-      - task: prisma
-        vars:
-          CLI_ARGS: >-
-            generate
       - >-
         uv
         run
@@ -189,10 +181,9 @@ tasks:
     desc: Run the service
     interactive: true
     cmds:
-      - task: prisma
+      - task: install-internal
         vars:
-          CLI_ARGS: >-
-            generate
+          CLI_ARGS: ""
       - >-
         uv
         run

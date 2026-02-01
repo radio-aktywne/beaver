@@ -1,8 +1,9 @@
 from collections.abc import Sequence
+from datetime import datetime
 from uuid import UUID
 
 from beaver.models.base import datamodel
-from beaver.services.icalendar.models import (  # noqa: F401
+from beaver.services.icalendar.models import (
     Calendar,
     Event,
     Frequency,
@@ -11,7 +12,6 @@ from beaver.services.icalendar.models import (  # noqa: F401
     Weekday,
     WeekdayRule,
 )
-from beaver.utils.time import NaiveDatetime
 
 
 class Query:
@@ -22,10 +22,10 @@ class Query:
 class TimeRangeQuery(Query):
     """Time range query data."""
 
-    start: NaiveDatetime | None = None
+    start: datetime | None = None
     """Beginning of the time range in UTC."""
 
-    end: NaiveDatetime | None = None
+    end: datetime | None = None
     """End of the time range in UTC."""
 
 
@@ -109,3 +109,27 @@ class DeleteEventRequest:
 @datamodel
 class DeleteEventResponse:
     """Response for deleting an event."""
+
+
+__all__ = [
+    "Calendar",
+    "DeleteEventRequest",
+    "DeleteEventResponse",
+    "Event",
+    "Frequency",
+    "GetCalendarRequest",
+    "GetCalendarResponse",
+    "GetEventRequest",
+    "GetEventResponse",
+    "Query",
+    "QueryEventsRequest",
+    "QueryEventsResponse",
+    "Recurrence",
+    "RecurrenceRule",
+    "RecurringQuery",
+    "TimeRangeQuery",
+    "UpsertEventRequest",
+    "UpsertEventResponse",
+    "Weekday",
+    "WeekdayRule",
+]

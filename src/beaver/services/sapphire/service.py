@@ -1,1 +1,5 @@
-from prisma import Prisma as SapphireService  # noqa: F401
+from prisma import Prisma as SapphireService
+
+__all__ = [
+    "SapphireService",
+]

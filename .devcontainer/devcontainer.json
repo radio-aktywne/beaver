@@ -1,7 +1,7 @@
 {
   "customizations": {
     "vscode": {
-      "extensions": ["prisma.prisma"]
+      "extensions": ["prisma.prisma@5.17.0"]
     }
   },
   "image": "ghcr.io/radio-aktywne/devcontainers/service-litestar:latest",

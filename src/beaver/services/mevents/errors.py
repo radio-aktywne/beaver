@@ -3,7 +3,7 @@ class ServiceError(Exception):
 
 
 class ValidationError(ServiceError):
-    """Raised when a request fails validation."""
+    """Raised when a validation error occurs."""
 
 
 class HowliteError(ServiceError):

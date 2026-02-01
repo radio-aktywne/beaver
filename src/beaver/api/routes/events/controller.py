@@ -14,7 +14,7 @@ from beaver.api.exceptions import BadRequestException, NotFoundException
 from beaver.api.routes.events import errors as e
 from beaver.api.routes.events import models as m
 from beaver.api.routes.events.service import Service
-from beaver.api.validator import Validator
+from beaver.models.base import Jsonable, Serializable
 from beaver.services.mevents.service import EventsService
 from beaver.state import State
 
@@ -29,9 +29,7 @@ class DependenciesBuilder:
     ) -> Service:
         return Service(
             events=EventsService(
-                howlite=state.howlite,
-                sapphire=state.sapphire,
-                channels=channels,
+                howlite=state.howlite, sapphire=state.sapphire, channels=channels
             )
         )
 
@@ -54,113 +52,94 @@ class Controller(BaseController):
         self,
         service: Service,
         limit: Annotated[
-            m.ListRequestLimit,
+            Jsonable[m.ListRequestLimit] | None,
             Parameter(
-                description="Maximum number of events to return.",
+                description="Maximum number of events to return. Default is 10.",
             ),
-        ] = 10,
+        ] = None,
         offset: Annotated[
-            m.ListRequestOffset,
+            Jsonable[m.ListRequestOffset] | None,
             Parameter(
                 description="Number of events to skip.",
             ),
         ] = None,
         where: Annotated[
-            str | None,
+            Jsonable[m.ListRequestWhere] | None,
             Parameter(
                 description="Filter to apply to find events.",
             ),
         ] = None,
         q: Annotated[
-            str | None,
+            Jsonable[m.ListRequestQuery] | None,
             Parameter(
                 description="Advanced query to apply to find events.",
                 query="query",
             ),
         ] = None,
         include: Annotated[
-            str | None,
+            Jsonable[m.ListRequestInclude] | None,
             Parameter(
                 description="Relations to include in the response.",
             ),
         ] = None,
         order: Annotated[
-            str | None,
+            Jsonable[m.ListRequestOrder] | None,
             Parameter(
                 description="Order to apply to the results.",
             ),
         ] = None,
-    ) -> Response[m.ListResponseResults]:
+    ) -> Response[Serializable[m.ListResponseResults]]:
         """List events that match the request."""
-        parsed_where = (
-            Validator[m.ListRequestWhere].validate_json(where) if where else None
-        )
-        parsed_query = Validator[m.Query].validate_json(q) if q else None
-        parsed_include = (
-            Validator[m.ListRequestInclude].validate_json(include) if include else None
-        )
-        parsed_order = (
-            Validator[m.ListRequestOrder].validate_json(order) if order else None
-        )
-
-        req = m.ListRequest(
-            limit=limit,
-            offset=offset,
-            where=parsed_where,
-            query=parsed_query,
-            include=parsed_include,
-            order=parsed_order,
+        request = m.ListRequest(
+            limit=limit.root if limit else 10,
+            offset=offset.root if offset else None,
+            where=where.root if where else None,
+            query=q.root if q else None,
+            include=include.root if include else None,
+            order=order.root if order else None,
         )
 
         try:
-            res = await service.list(req)
+            response = await service.list(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
 
-        results = res.results
-
-        return Response(results)
+        return Response(Serializable(response.results))
 
     @handlers.get(
-        "/{id:uuid}",
+        "/{event_id:str}",
         summary="Get event",
     )
     async def get(
         self,
         service: Service,
-        id: Annotated[  # noqa: A002
-            m.GetRequestId,
+        event_id: Annotated[
+            Serializable[m.GetRequestId],
             Parameter(
                 description="Identifier of the event to get.",
             ),
         ],
         include: Annotated[
-            str | None,
+            Jsonable[m.GetRequestInclude] | None,
             Parameter(
                 description="Relations to include in the response.",
             ),
         ] = None,
-    ) -> Response[m.GetResponseEvent]:
+    ) -> Response[Serializable[m.GetResponseEvent]]:
         """Get an event by ID."""
-        parsed_include = (
-            Validator[m.GetRequestInclude].validate_json(include) if include else None
-        )
-
-        req = m.GetRequest(
-            id=id,
-            include=parsed_include,
+        request = m.GetRequest(
+            id=event_id.root,
+            include=include.root if include else None,
         )
 
         try:
-            res = await service.get(req)
+            response = await service.get(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
         except e.EventNotFoundError as ex:
             raise NotFoundException from ex
 
-        event = res.event
-
-        return Response(event)
+        return Response(Serializable(response.event))
 
     @handlers.post(
         summary="Create event",
@@ -169,93 +148,75 @@ class Controller(BaseController):
         self,
         service: Service,
         data: Annotated[
-            m.CreateRequestData,
+            Serializable[m.CreateRequestData],
             Body(
                 description="Data to create an event.",
             ),
         ],
         include: Annotated[
-            str | None,
+            Jsonable[m.CreateRequestInclude] | None,
             Parameter(
                 description="Relations to include in the response.",
             ),
         ] = None,
-    ) -> Response[m.CreateResponseEvent]:
+    ) -> Response[Serializable[m.CreateResponseEvent]]:
         """Create a new event."""
-        parsed_data = Validator[m.CreateRequestData].validate_object(data)
-        parsed_include = (
-            Validator[m.CreateRequestInclude].validate_json(include)
-            if include
-            else None
-        )
-
-        req = m.CreateRequest(
-            data=parsed_data,
-            include=parsed_include,
+        request = m.CreateRequest(
+            data=data.root,
+            include=include.root if include else None,
         )
 
         try:
-            res = await service.create(req)
+            response = await service.create(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
 
-        event = res.event
-
-        return Response(event)
+        return Response(Serializable(response.event))
 
     @handlers.patch(
-        "/{id:uuid}",
+        "/{event_id:str}",
         summary="Update event",
     )
     async def update(
         self,
         service: Service,
-        id: Annotated[  # noqa: A002
-            m.UpdateRequestId,
+        event_id: Annotated[
+            Serializable[m.UpdateRequestId],
             Parameter(
                 description="Identifier of the event to update.",
             ),
         ],
         data: Annotated[
-            m.UpdateRequestData,
+            Serializable[m.UpdateRequestData],
             Body(
                 description="Data to update an event.",
             ),
         ],
         include: Annotated[
-            str | None,
+            Jsonable[m.UpdateRequestInclude] | None,
             Parameter(
                 description="Relations to include in the response.",
             ),
         ] = None,
-    ) -> Response[m.UpdateResponseEvent]:
+    ) -> Response[Serializable[m.UpdateResponseEvent]]:
         """Update an event by ID."""
-        parsed_data = Validator[m.UpdateRequestData].validate_object(data)
-        parsed_include = (
-            Validator[m.UpdateRequestInclude].validate_json(include)
-            if include
-            else None
-        )
-
-        req = m.UpdateRequest(
-            data=parsed_data,
-            id=id,
-            include=parsed_include,
+        request = m.UpdateRequest(
+            data=data.root,
+            id=event_id.root,
+            include=include.root if include else None,
         )
 
         try:
-            res = await service.update(req)
+            response = await service.update(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
         except e.EventNotFoundError as ex:
             raise NotFoundException from ex
 
-        event = res.event
-
-        return Response(event)
+        return Response(Serializable(response.event))
 
     @handlers.delete(
-        "/{id:uuid}",
+        "/{event_id:str}",
         summary="Delete event",
         responses={
             HTTP_204_NO_CONTENT: ResponseSpec(
@@ -266,20 +227,18 @@ class Controller(BaseController):
     async def delete(
         self,
         service: Service,
-        id: Annotated[  # noqa: A002
-            m.DeleteRequestId,
+        event_id: Annotated[
+            Serializable[m.DeleteRequestId],
             Parameter(
                 description="Identifier of the event to delete.",
             ),
         ],
     ) -> Response[None]:
         """Delete an event by ID."""
-        req = m.DeleteRequest(
-            id=id,
-        )
+        request = m.DeleteRequest(id=event_id.root)
 
         try:
-            await service.delete(req)
+            await service.delete(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
         except e.EventNotFoundError as ex:

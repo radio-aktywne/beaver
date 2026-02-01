@@ -38,73 +38,50 @@ class ShowsService:
         self._channels.publish(data, "events")
 
     def _emit_show_created_event(self, show: m.Show) -> None:
-        mapped_show = sev.Show.map(show)
-        created_event_data = sev.ShowCreatedEventData(
-            show=mapped_show,
+        self._emit_event(
+            sev.ShowCreatedEvent(data=sev.ShowCreatedEventData(show=sev.Show.map(show)))
         )
-        created_event = sev.ShowCreatedEvent(
-            data=created_event_data,
-        )
-        self._emit_event(created_event)
 
     def _emit_show_updated_event(self, show: m.Show) -> None:
-        mapped_show = sev.Show.map(show)
-        updated_event_data = sev.ShowUpdatedEventData(
-            show=mapped_show,
+        self._emit_event(
+            sev.ShowUpdatedEvent(data=sev.ShowUpdatedEventData(show=sev.Show.map(show)))
         )
-        updated_event = sev.ShowUpdatedEvent(
-            data=updated_event_data,
-        )
-        self._emit_event(updated_event)
 
     def _emit_show_deleted_event(self, show: m.Show) -> None:
-        mapped_show = sev.Show.map(show)
-        deleted_event_data = sev.ShowDeletedEventData(
-            show=mapped_show,
+        self._emit_event(
+            sev.ShowDeletedEvent(data=sev.ShowDeletedEventData(show=sev.Show.map(show)))
         )
-        deleted_event = sev.ShowDeletedEvent(
-            data=deleted_event_data,
-        )
-        self._emit_event(deleted_event)
 
     def _emit_event_updated_event(self, event: m.Event) -> None:
-        mapped_event = eev.Event.map(event)
-        updated_event_data = eev.EventUpdatedEventData(
-            event=mapped_event,
+        self._emit_event(
+            eev.EventUpdatedEvent(
+                data=eev.EventUpdatedEventData(event=eev.Event.map(event))
+            )
         )
-        updated_event = eev.EventUpdatedEvent(
-            data=updated_event_data,
-        )
-        self._emit_event(updated_event)
 
     def _emit_event_deleted_event(self, event: m.Event) -> None:
-        mapped_event = eev.Event.map(event)
-        deleted_event_data = eev.EventDeletedEventData(
-            event=mapped_event,
+        self._emit_event(
+            eev.EventDeletedEvent(
+                data=eev.EventDeletedEventData(event=eev.Event.map(event))
+            )
         )
-        deleted_event = eev.EventDeletedEvent(
-            data=deleted_event_data,
-        )
-        self._emit_event(deleted_event)
 
     @contextmanager
     def _handle_errors(self) -> Generator[None]:
         try:
             yield
         except hle.ServiceError as ex:
-            raise e.HowliteError(str(ex)) from ex
+            raise e.HowliteError from ex
         except spe.DataError as ex:
-            raise e.ValidationError(str(ex)) from ex
+            raise e.ValidationError from ex
         except spe.ServiceError as ex:
-            raise e.SapphireError(str(ex)) from ex
+            raise e.SapphireError from ex
 
     async def _map_event(self, dsevent: spm.Event) -> m.Event:
-        req = hlm.GetEventRequest(
-            id=UUID(dsevent.id),
-        )
+        request = hlm.GetEventRequest(id=UUID(dsevent.id))
 
         with self._handle_errors():
-            res = await self._howlite.get_event(req)
+            res = await self._howlite.get_event(request)
 
         if dsevent.show is not None:
             show = await self._map_show(dsevent.show)
@@ -123,80 +100,49 @@ class ShowsService:
 
     async def count(self, request: m.CountRequest) -> m.CountResponse:
         """Count shows."""
-        where = request.where
-
         with self._handle_errors():
-            count = await self._sapphire.show.count(
-                where=where,
-            )
+            count = await self._sapphire.show.count(where=request.where)
 
-        return m.CountResponse(
-            count=count,
-        )
+        return m.CountResponse(count=count)
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List all shows."""
-        limit = request.limit
-        offset = request.offset
-        where = request.where
-        include = request.include
-        order = request.order
-
         with self._handle_errors():
             shows = await self._sapphire.show.find_many(
-                take=limit,
-                skip=offset,
-                where=where,
-                include=include,
-                order=builtins.list(order) if isinstance(order, Sequence) else order,
+                take=request.limit,
+                skip=request.offset,
+                where=request.where,
+                include=request.include,
+                order=builtins.list(request.order)
+                if isinstance(request.order, Sequence)
+                else request.order,
             )
 
-        shows = [await self._map_show(show) for show in shows]
-
-        return m.ListResponse(
-            shows=shows,
-        )
+        return m.ListResponse(shows=[await self._map_show(show) for show in shows])
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get show."""
-        where = request.where
-        include = request.include
-
         with self._handle_errors():
             show = await self._sapphire.show.find_unique(
-                where=where,
-                include=include,
+                where=request.where, include=request.include
             )
 
         if show is None:
-            return m.GetResponse(
-                show=None,
-            )
+            return m.GetResponse(show=None)
 
-        show = await self._map_show(show)
-
-        return m.GetResponse(
-            show=show,
-        )
+        return m.GetResponse(show=await self._map_show(show))
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create show."""
-        data = request.data
-        include = request.include
-
         with self._handle_errors():
             show = await self._sapphire.show.create(
-                data=cast("spt.ShowCreateInput", data),
-                include=include,
+                data=cast("spt.ShowCreateInput", request.data), include=request.include
             )
 
         show = await self._map_show(show)
-
         self._emit_show_created_event(show)
 
-        return m.CreateResponse(
-            show=show,
-        )
+        return m.CreateResponse(show=show)
 
     async def _update_handle_events(
         self, transaction: SapphireService, old: spm.Show, new: spm.Show
@@ -204,21 +150,11 @@ class ShowsService:
         events = []
 
         if new.id != old.id:
-            events = await transaction.event.find_many(
-                where={
-                    "showId": old.id,
-                },
-            )
+            events = await transaction.event.find_many(where={"showId": old.id})
 
             ids = [event.id for event in events]
 
-            await transaction.event.delete_many(
-                where={
-                    "id": {
-                        "in": ids,
-                    },
-                },
-            )
+            await transaction.event.delete_many(where={"id": {"in": ids}})
 
             await transaction.event.create_many(
                 data=[
@@ -228,46 +164,30 @@ class ShowsService:
                         "type": event.type,
                     }
                     for event in events
-                ],
+                ]
             )
 
-            events = await transaction.event.find_many(
-                where={
-                    "id": {
-                        "in": ids,
-                    },
-                },
-            )
+            events = await transaction.event.find_many(where={"id": {"in": ids}})
 
         return events
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update show."""
-        data = request.data
-        where = request.where
-        include = request.include
-
         async with self._sapphire.tx() as transaction:
             with self._handle_errors():
-                old = await transaction.show.find_unique(
-                    where=where,
-                )
+                old = await transaction.show.find_unique(where=request.where)
 
                 if old is None:
-                    return m.UpdateResponse(
-                        show=None,
-                    )
+                    return m.UpdateResponse(show=None)
 
                 new = await transaction.show.update(
-                    data=cast("spt.ShowUpdateInput", data),
-                    where=where,
-                    include=include,
+                    data=cast("spt.ShowUpdateInput", request.data),
+                    where=request.where,
+                    include=request.include,
                 )
 
                 if new is None:
-                    return m.UpdateResponse(
-                        show=None,
-                    )
+                    return m.UpdateResponse(show=None)
 
                 events = await self._update_handle_events(transaction, old, new)
 
@@ -278,31 +198,19 @@ class ShowsService:
         for event in events:
             self._emit_event_updated_event(event)
 
-        return m.UpdateResponse(
-            show=new,
-        )
+        return m.UpdateResponse(show=new)
 
     async def _delete_handle_events(
         self, transaction: SapphireService, show: spm.Show
     ) -> Sequence[spm.Event]:
-        events = await transaction.event.find_many(
-            where={
-                "showId": show.id,
-            },
-        )
+        events = await transaction.event.find_many(where={"showId": show.id})
 
         await transaction.event.delete_many(
-            where={
-                "id": {
-                    "in": [event.id for event in events],
-                },
-            },
+            where={"id": {"in": [event.id for event in events]}}
         )
 
         for event in events:
-            req = hlm.DeleteEventRequest(
-                id=UUID(event.id),
-            )
+            req = hlm.DeleteEventRequest(id=UUID(event.id))
 
             await self._howlite.delete_event(req)
 
@@ -310,20 +218,14 @@ class ShowsService:
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete show."""
-        where = request.where
-        include = request.include
-
         async with self._sapphire.tx() as transaction:
             with self._handle_errors():
                 show = await transaction.show.delete(
-                    where=where,
-                    include=include,
+                    where=request.where, include=request.include
                 )
 
                 if show is None:
-                    return m.DeleteResponse(
-                        show=None,
-                    )
+                    return m.DeleteResponse(show=None)
 
                 events = await self._delete_handle_events(transaction, show)
 
@@ -334,6 +236,4 @@ class ShowsService:
         for event in events:
             self._emit_event_deleted_event(event)
 
-        return m.DeleteResponse(
-            show=show,
-        )
+        return m.DeleteResponse(show=show)

@@ -1,29 +1,31 @@
-# pyright: reportIncompatibleVariableOverride=false
-
 from collections.abc import Sequence
 from typing import Annotated
 from uuid import UUID
 
 from pydantic import Field
 
-from beaver.models.base import SerializableModel, datamodel, serializable
+from beaver.models.base import SerializableModel, datamodel
 from beaver.services.icalendar import models as im
 from beaver.services.mevents import models as em
 from beaver.utils.time import NaiveDatetime, Timezone
 
-Second = Annotated[int, Field(ge=0, le=60)]
+type Second = Annotated[int, Field(ge=0, le=60)]
 
-Minute = Annotated[int, Field(ge=0, le=59)]
+type Minute = Annotated[int, Field(ge=0, le=59)]
 
-Hour = Annotated[int, Field(ge=0, le=23)]
+type Hour = Annotated[int, Field(ge=0, le=23)]
 
-Monthday = Annotated[int, Field(ge=-31, le=-1)] | Annotated[int, Field(ge=1, le=31)]
+type Monthday = (
+    Annotated[int, Field(ge=-31, le=-1)] | Annotated[int, Field(ge=1, le=31)]
+)
 
-Yearday = Annotated[int, Field(ge=-366, le=-1)] | Annotated[int, Field(ge=1, le=366)]
+type Yearday = (
+    Annotated[int, Field(ge=-366, le=-1)] | Annotated[int, Field(ge=1, le=366)]
+)
 
-Week = Annotated[int, Field(ge=-53, le=-1)] | Annotated[int, Field(ge=1, le=53)]
+type Week = Annotated[int, Field(ge=-53, le=-1)] | Annotated[int, Field(ge=1, le=53)]
 
-Month = Annotated[int, Field(ge=1, le=12)]
+type Month = Annotated[int, Field(ge=1, le=12)]
 
 
 class WeekdayRule(SerializableModel):
@@ -207,7 +209,7 @@ class Event(SerializableModel):
             show=Show.map(event.show) if event.show is not None else None,
             start=event.start,
             end=event.end,
-            timezone=str(event.timezone),
+            timezone=event.timezone,
             recurrence=(
                 Recurrence.map(event.recurrence)
                 if event.recurrence is not None
@@ -216,45 +218,34 @@ class Event(SerializableModel):
         )
 
 
-@serializable
-class EventWhereInput(em.EventWhereInput):
-    """Filter to apply to find events."""
+EventWhereInput = em.EventWhereInput
 
+EventInclude = em.EventInclude
 
-@serializable
-class EventInclude(em.EventInclude):
-    """Relations to include in the response."""
+EventOrderByIdInput = em.EventOrderByIdInput
 
+EventOrderByTypeInput = em.EventOrderByTypeInput
 
-@serializable
-class EventOrderByIdInput(em.EventOrderByIdInput):
-    """Order by event ID."""
+EventOrderByShowIdInput = em.EventOrderByShowIdInput
 
-
-@serializable
-class EventOrderByTypeInput(em.EventOrderByTypeInput):
-    """Order by event type."""
-
-
-@serializable
-class EventOrderByShowIdInput(em.EventOrderByShowIdInput):
-    """Order by event show ID."""
-
-
-EventOrderByInput = (
+type EventOrderByInput = (
     EventOrderByIdInput | EventOrderByTypeInput | EventOrderByShowIdInput
 )
 
 
-@serializable
-@datamodel
-class EventInstance(im.EventInstance):
+class EventInstance(SerializableModel):
     """Event instance data."""
+
+    start: NaiveDatetime
+    """Start datetime of the event instance in event timezone."""
+
+    end: NaiveDatetime
+    """End datetime of the event instance in event timezone."""
 
     @staticmethod
     def map(instance: im.EventInstance) -> "EventInstance":
         """Map to internal representation."""
-        return EventInstance(**vars(instance))
+        return EventInstance(start=instance.start, end=instance.end)
 
 
 class Schedule(SerializableModel):
@@ -263,7 +254,7 @@ class Schedule(SerializableModel):
     event: Event
     """Event data."""
 
-    instances: Sequence[im.EventInstance]
+    instances: Sequence[EventInstance]
     """Event instances."""
 
 
@@ -283,21 +274,21 @@ class ScheduleList(SerializableModel):
     """Schedules that matched the request."""
 
 
-ListRequestStart = NaiveDatetime | None
+type ListRequestStart = NaiveDatetime | None
 
-ListRequestEnd = NaiveDatetime | None
+type ListRequestEnd = NaiveDatetime | None
 
-ListRequestLimit = int | None
+type ListRequestLimit = int | None
 
-ListRequestOffset = int | None
+type ListRequestOffset = int | None
 
-ListRequestWhere = EventWhereInput | None
+type ListRequestWhere = EventWhereInput | None
 
-ListRequestInclude = EventInclude | None
+type ListRequestInclude = EventInclude | None
 
-ListRequestOrder = EventOrderByInput | Sequence[EventOrderByInput] | None
+type ListRequestOrder = EventOrderByInput | Sequence[EventOrderByInput] | None
 
-ListResponseResults = ScheduleList
+type ListResponseResults = ScheduleList
 
 
 @datamodel
