@@ -19,144 +19,103 @@ class Service:
         try:
             yield
         except se.ValidationError as ex:
-            raise e.ValidationError(str(ex)) from ex
+            raise e.ValidationError from ex
         except se.HowliteError as ex:
-            raise e.HowliteError(str(ex)) from ex
+            raise e.HowliteError from ex
         except se.SapphireError as ex:
-            raise e.SapphireError(str(ex)) from ex
+            raise e.SapphireError from ex
         except se.ServiceError as ex:
-            raise e.ServiceError(str(ex)) from ex
+            raise e.ServiceError from ex
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List shows."""
-        limit = request.limit
-        offset = request.offset
-        where = request.where
-        include = request.include
-        order = request.order
-
-        req = sm.CountRequest(
-            where=where,
+        count_request = sm.CountRequest(
+            where=request.where,
         )
 
         with self._handle_errors():
-            res = await self._shows.count(req)
+            count_response = await self._shows.count(count_request)
 
-        count = res.count
-
-        req = sm.ListRequest(
-            limit=limit,
-            offset=offset,
-            where=where,
-            include=include,
-            order=order,
+        list_request = sm.ListRequest(
+            limit=request.limit,
+            offset=request.offset,
+            where=request.where,
+            include=request.include,
+            order=request.order,
         )
 
         with self._handle_errors():
-            res = await self._shows.list(req)
+            list_response = await self._shows.list(list_request)
 
-        shows = res.shows
-
-        shows = [m.Show.map(show) for show in shows]
-        results = m.ShowList(
-            count=count,
-            limit=limit,
-            offset=offset,
-            shows=shows,
-        )
         return m.ListResponse(
-            results=results,
+            results=m.ShowList(
+                count=count_response.count,
+                limit=request.limit,
+                offset=request.offset,
+                shows=[m.Show.map(show) for show in list_response.shows],
+            )
         )
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get show."""
-        show_id = request.id
-        include = request.include
-
-        req = sm.GetRequest(
+        get_request = sm.GetRequest(
             where={
-                "id": str(show_id),
+                "id": str(request.id),
             },
-            include=include,
+            include=request.include,
         )
 
         with self._handle_errors():
-            res = await self._shows.get(req)
+            get_response = await self._shows.get(get_request)
 
-        show = res.show
+        if get_response.show is None:
+            raise e.ShowNotFoundError(request.id)
 
-        if show is None:
-            raise e.ShowNotFoundError(show_id)
-
-        show = m.Show.map(show)
-        return m.GetResponse(
-            show=show,
-        )
+        return m.GetResponse(show=m.Show.map(get_response.show))
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create show."""
-        data = request.data
-        include = request.include
-
-        req = sm.CreateRequest(
-            data=data,
-            include=include,
+        create_request = sm.CreateRequest(
+            data=request.data,
+            include=request.include,
         )
 
         with self._handle_errors():
-            res = await self._shows.create(req)
+            create_response = await self._shows.create(create_request)
 
-        show = res.show
-
-        show = m.Show.map(show)
-        return m.CreateResponse(
-            show=show,
-        )
+        return m.CreateResponse(show=m.Show.map(create_response.show))
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update show."""
-        data = request.data
-        show_id = request.id
-        include = request.include
-
-        req = sm.UpdateRequest(
-            data=data,
+        update_request = sm.UpdateRequest(
+            data=request.data,
             where={
-                "id": str(show_id),
+                "id": str(request.id),
             },
-            include=include,
+            include=request.include,
         )
 
         with self._handle_errors():
-            res = await self._shows.update(req)
+            update_response = await self._shows.update(update_request)
 
-        show = res.show
+        if update_response.show is None:
+            raise e.ShowNotFoundError(request.id)
 
-        if show is None:
-            raise e.ShowNotFoundError(show_id)
-
-        show = m.Show.map(show)
-        return m.UpdateResponse(
-            show=show,
-        )
+        return m.UpdateResponse(show=m.Show.map(update_response.show))
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete show."""
-        show_id = request.id
-
-        req = sm.DeleteRequest(
+        delete_request = sm.DeleteRequest(
             where={
-                "id": str(show_id),
+                "id": str(request.id),
             },
             include=None,
         )
 
         with self._handle_errors():
-            res = await self._shows.delete(req)
+            delete_response = await self._shows.delete(delete_request)
 
-        show = res.show
-
-        if show is None:
-            raise e.ShowNotFoundError(show_id)
+        if delete_response.show is None:
+            raise e.ShowNotFoundError(request.id)
 
         return m.DeleteResponse()

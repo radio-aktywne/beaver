@@ -175,7 +175,7 @@ class Event(SerializableModel):
             show_id=UUID(event.show_id),
             start=event.start,
             end=event.end,
-            timezone=str(event.timezone),
+            timezone=event.timezone,
             recurrence=(
                 Recurrence.map(event.recurrence)
                 if event.recurrence is not None
@@ -185,7 +185,7 @@ class Event(SerializableModel):
 
 
 class EventCreatedEventData(SerializableModel):
-    """Data of a event created event."""
+    """Data of an event created event."""
 
     event: Event
     """Event that was created."""
@@ -200,7 +200,7 @@ class EventCreatedEvent(SerializableModel):
 
 
 class EventUpdatedEventData(SerializableModel):
-    """Data of a event updated event."""
+    """Data of an event updated event."""
 
     event: Event
     """Event that was updated."""
@@ -215,7 +215,7 @@ class EventUpdatedEvent(SerializableModel):
 
 
 class EventDeletedEventData(SerializableModel):
-    """Data of a event deleted event."""
+    """Data of an event deleted event."""
 
     event: Event
     """Event that was deleted."""

@@ -14,7 +14,7 @@ from beaver.api.exceptions import BadRequestException, NotFoundException
 from beaver.api.routes.shows import errors as e
 from beaver.api.routes.shows import models as m
 from beaver.api.routes.shows.service import Service
-from beaver.api.validator import Validator
+from beaver.models.base import Jsonable, Serializable
 from beaver.services.shows.service import ShowsService
 from beaver.state import State
 
@@ -29,9 +29,7 @@ class DependenciesBuilder:
     ) -> Service:
         return Service(
             shows=ShowsService(
-                howlite=state.howlite,
-                sapphire=state.sapphire,
-                channels=channels,
+                howlite=state.howlite, sapphire=state.sapphire, channels=channels
             )
         )
 
@@ -54,104 +52,86 @@ class Controller(BaseController):
         self,
         service: Service,
         limit: Annotated[
-            m.ListRequestLimit,
+            Jsonable[m.ListRequestLimit] | None,
             Parameter(
-                description="Maximum number of shows to return.",
+                description="Maximum number of shows to return. Default is 10.",
             ),
-        ] = 10,
+        ] = None,
         offset: Annotated[
-            m.ListRequestOffset,
+            Jsonable[m.ListRequestOffset] | None,
             Parameter(
                 description="Number of shows to skip.",
             ),
         ] = None,
         where: Annotated[
-            str | None,
+            Jsonable[m.ListRequestWhere] | None,
             Parameter(
                 description="Filter to apply to find shows.",
             ),
         ] = None,
         include: Annotated[
-            str | None,
+            Jsonable[m.ListRequestInclude] | None,
             Parameter(
                 description="Relations to include in the response.",
             ),
         ] = None,
         order: Annotated[
-            str | None,
+            Jsonable[m.ListRequestOrder] | None,
             Parameter(
                 description="Order to apply to the results.",
             ),
         ] = None,
-    ) -> Response[m.ListResponseResults]:
+    ) -> Response[Serializable[m.ListResponseResults]]:
         """List shows that match the request."""
-        parsed_where = (
-            Validator[m.ListRequestWhere].validate_json(where) if where else None
-        )
-        parsed_include = (
-            Validator[m.ListRequestInclude].validate_json(include) if include else None
-        )
-        parsed_order = (
-            Validator[m.ListRequestOrder].validate_json(order) if order else None
-        )
-
-        req = m.ListRequest(
-            limit=limit,
-            offset=offset,
-            where=parsed_where,
-            include=parsed_include,
-            order=parsed_order,
+        request = m.ListRequest(
+            limit=limit.root if limit else 10,
+            offset=offset.root if offset else None,
+            where=where.root if where else None,
+            include=include.root if include else None,
+            order=order.root if order else None,
         )
 
         try:
-            res = await service.list(req)
+            response = await service.list(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
 
-        results = res.results
-
-        return Response(results)
+        return Response(Serializable(response.results))
 
     @handlers.get(
-        "/{id:uuid}",
+        "/{show_id:str}",
         summary="Get show",
     )
     async def get(
         self,
         service: Service,
-        id: Annotated[  # noqa: A002
-            m.GetRequestId,
+        show_id: Annotated[
+            Serializable[m.GetRequestId],
             Parameter(
                 description="Identifier of the show to get.",
             ),
         ],
         include: Annotated[
-            str | None,
+            Jsonable[m.GetRequestInclude] | None,
             Parameter(
                 description="Relations to include in the response.",
             ),
         ] = None,
-    ) -> Response[m.GetResponseShow]:
+    ) -> Response[Serializable[m.GetResponseShow]]:
         """Get a show by ID."""
-        parsed_include = (
-            Validator[m.GetRequestInclude].validate_json(include) if include else None
-        )
-
-        req = m.GetRequest(
-            id=id,
-            include=parsed_include,
+        request = m.GetRequest(
+            id=show_id.root,
+            include=include.root if include else None,
         )
 
         try:
-            res = await service.get(req)
+            response = await service.get(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
         except e.ShowNotFoundError as ex:
             raise NotFoundException from ex
 
-        show = res.show
-
-        return Response(show)
+        return Response(Serializable(response.show))
 
     @handlers.post(
         summary="Create show",
@@ -160,93 +140,75 @@ class Controller(BaseController):
         self,
         service: Service,
         data: Annotated[
-            m.CreateRequestData,
+            Serializable[m.CreateRequestData],
             Body(
                 description="Data to create a show.",
             ),
         ],
         include: Annotated[
-            str | None,
+            Jsonable[m.CreateRequestInclude] | None,
             Parameter(
                 description="Relations to include in the response.",
             ),
         ] = None,
-    ) -> Response[m.CreateResponseShow]:
+    ) -> Response[Serializable[m.CreateResponseShow]]:
         """Create a new show."""
-        parsed_data = Validator[m.CreateRequestData].validate_object(data)
-        parsed_include = (
-            Validator[m.CreateRequestInclude].validate_json(include)
-            if include
-            else None
-        )
-
-        req = m.CreateRequest(
-            data=parsed_data,
-            include=parsed_include,
+        request = m.CreateRequest(
+            data=data.root,
+            include=include.root if include else None,
         )
 
         try:
-            res = await service.create(req)
+            response = await service.create(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
 
-        show = res.show
-
-        return Response(show)
+        return Response(Serializable(response.show))
 
     @handlers.patch(
-        "/{id:uuid}",
+        "/{show_id:str}",
         summary="Update show",
     )
     async def update(
         self,
         service: Service,
-        id: Annotated[  # noqa: A002
-            m.UpdateRequestId,
+        show_id: Annotated[
+            Serializable[m.UpdateRequestId],
             Parameter(
                 description="Identifier of the show to update.",
             ),
         ],
         data: Annotated[
-            m.UpdateRequestData,
+            Serializable[m.UpdateRequestData],
             Body(
-                description="Data to update a show.",
+                description="Data to update the show.",
             ),
         ],
         include: Annotated[
-            str | None,
+            Jsonable[m.UpdateRequestInclude] | None,
             Parameter(
                 description="Relations to include in the response.",
             ),
         ] = None,
-    ) -> Response[m.UpdateResponseShow]:
+    ) -> Response[Serializable[m.UpdateResponseShow]]:
         """Update a show by ID."""
-        parsed_data = Validator[m.UpdateRequestData].validate_object(data)
-        parsed_include = (
-            Validator[m.UpdateRequestInclude].validate_json(include)
-            if include
-            else None
-        )
-
-        req = m.UpdateRequest(
-            data=parsed_data,
-            id=id,
-            include=parsed_include,
+        request = m.UpdateRequest(
+            data=data.root,
+            id=show_id.root,
+            include=include.root if include else None,
         )
 
         try:
-            res = await service.update(req)
+            response = await service.update(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
         except e.ShowNotFoundError as ex:
             raise NotFoundException from ex
 
-        show = res.show
-
-        return Response(show)
+        return Response(Serializable(response.show))
 
     @handlers.delete(
-        "/{id:uuid}",
+        "/{show_id:str}",
         summary="Delete show",
         responses={
             HTTP_204_NO_CONTENT: ResponseSpec(
@@ -257,20 +219,18 @@ class Controller(BaseController):
     async def delete(
         self,
         service: Service,
-        id: Annotated[  # noqa: A002
-            m.DeleteRequestId,
+        show_id: Annotated[
+            Serializable[m.DeleteRequestId],
             Parameter(
                 description="Identifier of the show to delete.",
             ),
         ],
     ) -> Response[None]:
         """Delete a show by ID."""
-        req = m.DeleteRequest(
-            id=id,
-        )
+        request = m.DeleteRequest(id=show_id.root)
 
         try:
-            await service.delete(req)
+            await service.delete(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
         except e.ShowNotFoundError as ex:

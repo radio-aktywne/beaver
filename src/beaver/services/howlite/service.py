@@ -62,43 +62,33 @@ class HowliteService(BaseService):
         self, request: m.GetCalendarRequest
     ) -> m.GetCalendarResponse:
         """Get a calendar."""
-        res = await self.get(
+        response = await self.get(
             Endpoint.CALENDAR,
             auth=self._build_auth(),
         )
 
-        calendar = self._icalendar.parser.string_to_calendar(res.text)
+        calendar = self._icalendar.parser.string_to_calendar(response.text)
 
-        return m.GetCalendarResponse(
-            calendar=calendar,
-        )
+        return m.GetCalendarResponse(calendar=calendar)
 
     async def get_event(self, request: m.GetEventRequest) -> m.GetEventResponse:
         """Get an event."""
-        event_id = request.id
-
-        response = await self._request(
-            "GET",
+        response = await self.get(
             Endpoint.EVENT,
-            {"EVENT": str(event_id)},
+            {"EVENT": str(request.id)},
             auth=self._build_auth(),
         )
-        response = cast("Response", response)
 
         calendar = self._icalendar.parser.string_to_calendar(response.text)
         event = calendar.events[0]
 
-        return m.GetEventResponse(
-            event=event,
-        )
+        return m.GetEventResponse(event=event)
 
     async def query_events(
         self, request: m.QueryEventsRequest
     ) -> m.QueryEventsResponse:
         """Query events."""
-        query = request.query
-
-        builder = self._query_builder_factory.get(query)
+        builder = self._query_builder_factory.get(request.query)
 
         namespaces = builder.namespaces
         query = builder.build()
@@ -120,52 +110,35 @@ class HowliteService(BaseService):
         calendars = [self._icalendar.parser.string_to_calendar(d) for d in data]
         events = [event for calendar in calendars for event in calendar.events]
 
-        return m.QueryEventsResponse(
-            events=events,
-        )
+        return m.QueryEventsResponse(events=events)
 
     async def upsert_event(
         self, request: m.UpsertEventRequest
     ) -> m.UpsertEventResponse:
         """Upsert an event."""
-        event = request.event
-
-        calendar = m.Calendar(
-            events=[event],
-        )
+        calendar = m.Calendar(events=[request.event])
         payload = self._icalendar.parser.calendar_to_string(calendar)
 
-        await self._request(
-            "PUT",
+        await self.put(
             Endpoint.EVENT,
-            {"EVENT": str(event.id)},
+            {"EVENT": str(request.event.id)},
             auth=self._build_auth(),
             content=payload,
             headers={"Content-Type": "text/calendar"},
         )
 
-        req = m.GetEventRequest(
-            id=event.id,
-        )
+        get_event_request = m.GetEventRequest(id=request.event.id)
+        get_event_response = await self.get_event(get_event_request)
 
-        res = await self.get_event(req)
-
-        event = res.event
-
-        return m.UpsertEventResponse(
-            event=event,
-        )
+        return m.UpsertEventResponse(event=get_event_response.event)
 
     async def delete_event(
         self, request: m.DeleteEventRequest
     ) -> m.DeleteEventResponse:
         """Delete an event."""
-        event_id = request.id
-
-        await self._request(
-            "DELETE",
+        await self.delete(
             Endpoint.EVENT,
-            {"EVENT": str(event_id)},
+            {"EVENT": str(request.id)},
             auth=self._build_auth(),
         )
 

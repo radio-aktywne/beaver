@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from datetime import UTC
+from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
 import recurring_ical_events
@@ -8,7 +8,6 @@ from icalendar import vDatetime
 
 from beaver.services.icalendar import models as m
 from beaver.services.icalendar.parser import ICalendarParser
-from beaver.utils.time import NaiveDatetime
 
 
 class EventExpander:
@@ -17,7 +16,7 @@ class EventExpander:
     def __init__(self, parser: ICalendarParser) -> None:
         self._parser = parser
 
-    def _normalize_datetime(self, vdt: vDatetime, tz: ZoneInfo) -> NaiveDatetime:
+    def _normalize_datetime(self, vdt: vDatetime, tz: ZoneInfo) -> datetime:
         dt = self._parser.ical_to_datetime(vdt)
         dt = dt.astimezone(tz)
         return dt.replace(tzinfo=None)
@@ -32,7 +31,7 @@ class EventExpander:
         )
 
     def expand(
-        self, event: m.Event, start: NaiveDatetime, end: NaiveDatetime
+        self, event: m.Event, start: datetime, end: datetime
     ) -> Sequence[m.EventInstance]:
         """Expand the event into instances between start and end."""
         tz = event.timezone

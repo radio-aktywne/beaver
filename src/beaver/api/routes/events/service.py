@@ -1,6 +1,5 @@
 from collections.abc import Generator
 from contextlib import contextmanager
-from zoneinfo import ZoneInfo
 
 from beaver.api.routes.events import errors as e
 from beaver.api.routes.events import models as m
@@ -20,178 +19,140 @@ class Service:
         try:
             yield
         except ee.ValidationError as ex:
-            raise e.ValidationError(str(ex)) from ex
+            raise e.ValidationError from ex
         except ee.HowliteError as ex:
-            raise e.HowliteError(str(ex)) from ex
+            raise e.HowliteError from ex
         except ee.SapphireError as ex:
-            raise e.SapphireError(str(ex)) from ex
+            raise e.SapphireError from ex
         except ee.ServiceError as ex:
-            raise e.ServiceError(str(ex)) from ex
+            raise e.ServiceError from ex
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List events."""
-        limit = request.limit
-        offset = request.offset
-        where = request.where
-        query = request.query
-        include = request.include
-        order = request.order
-
-        req = em.CountRequest(
-            where=where,
-            query=query.map() if query is not None else None,
+        count_request = em.CountRequest(
+            where=request.where,
+            query=request.query.map() if request.query is not None else None,
         )
 
         with self._handle_errors():
-            res = await self._events.count(req)
+            count_response = await self._events.count(count_request)
 
-        count = res.count
-
-        req = em.ListRequest(
-            limit=limit,
-            offset=offset,
-            where=where,
-            query=query.map() if query is not None else None,
-            include=include,
-            order=order,
+        list_request = em.ListRequest(
+            limit=request.limit,
+            offset=request.offset,
+            where=request.where,
+            query=request.query.map() if request.query is not None else None,
+            include=request.include,
+            order=request.order,
         )
 
         with self._handle_errors():
-            res = await self._events.list(req)
+            list_response = await self._events.list(list_request)
 
-        events = res.events
-
-        events = [m.Event.map(event) for event in events]
-        results = m.EventList(
-            count=count,
-            limit=limit,
-            offset=offset,
-            events=events,
-        )
         return m.ListResponse(
-            results=results,
+            results=m.EventList(
+                count=count_response.count,
+                limit=request.limit,
+                offset=request.offset,
+                events=[m.Event.map(event) for event in list_response.events],
+            )
         )
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get event."""
-        event_id = request.id
-        include = request.include
-
-        req = em.GetRequest(
+        get_request = em.GetRequest(
             where={
-                "id": str(event_id),
+                "id": str(request.id),
             },
-            include=include,
+            include=request.include,
         )
 
         with self._handle_errors():
-            res = await self._events.get(req)
+            get_response = await self._events.get(get_request)
 
-        event = res.event
+        if get_response.event is None:
+            raise e.EventNotFoundError(request.id)
 
-        if event is None:
-            raise e.EventNotFoundError(event_id)
-
-        event = m.Event.map(event)
-        return m.GetResponse(
-            event=event,
-        )
+        return m.GetResponse(event=m.Event.map(get_response.event))
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create event."""
-        data = request.data
-        include = request.include
-
-        d: em.EventCreateInput = {
-            "type": data["type"],
-            "start": data["start"],
-            "end": data["end"],
-            "timezone": ZoneInfo(data["timezone"]),
+        create_request_data: em.EventCreateInput = {
+            "type": request.data["type"],
+            "start": request.data["start"],
+            "end": request.data["end"],
+            "timezone": request.data["timezone"],
         }
-        if "id" in data:
-            d["id"] = data["id"]
-        if "showId" in data:
-            d["showId"] = data["showId"]
-        if "recurrence" in data:
-            d["recurrence"] = (
-                data["recurrence"].emap() if data["recurrence"] is not None else None
+        if "id" in request.data:
+            create_request_data["id"] = request.data["id"]
+        if "showId" in request.data:
+            create_request_data["showId"] = request.data["showId"]
+        if "recurrence" in request.data:
+            create_request_data["recurrence"] = (
+                request.data["recurrence"].emap()
+                if request.data["recurrence"] is not None
+                else None
             )
 
-        req = em.CreateRequest(
-            data=d,
-            include=include,
+        create_request = em.CreateRequest(
+            data=create_request_data,
+            include=request.include,
         )
 
         with self._handle_errors():
-            res = await self._events.create(req)
+            create_response = await self._events.create(create_request)
 
-        event = res.event
-
-        event = m.Event.map(event)
-        return m.CreateResponse(
-            event=event,
-        )
+        return m.CreateResponse(event=m.Event.map(create_response.event))
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update event."""
-        data = request.data
-        event_id = request.id
-        include = request.include
-
-        d: em.EventUpdateInput = {}
-        if "id" in data:
-            d["id"] = data["id"]
-        if "type" in data:
-            d["type"] = data["type"]
-        if "start" in data:
-            d["start"] = data["start"]
-        if "end" in data:
-            d["end"] = data["end"]
-        if "timezone" in data:
-            d["timezone"] = ZoneInfo(data["timezone"])
-        if "recurrence" in data:
-            d["recurrence"] = (
-                data["recurrence"].emap() if data["recurrence"] is not None else None
+        update_request_data: em.EventUpdateInput = {}
+        if "id" in request.data:
+            update_request_data["id"] = request.data["id"]
+        if "type" in request.data:
+            update_request_data["type"] = request.data["type"]
+        if "start" in request.data:
+            update_request_data["start"] = request.data["start"]
+        if "end" in request.data:
+            update_request_data["end"] = request.data["end"]
+        if "timezone" in request.data:
+            update_request_data["timezone"] = request.data["timezone"]
+        if "recurrence" in request.data:
+            update_request_data["recurrence"] = (
+                request.data["recurrence"].emap()
+                if request.data["recurrence"] is not None
+                else None
             )
 
-        req = em.UpdateRequest(
-            data=d,
+        update_request = em.UpdateRequest(
+            data=update_request_data,
             where={
-                "id": str(event_id),
+                "id": str(request.id),
             },
-            include=include,
+            include=request.include,
         )
 
         with self._handle_errors():
-            res = await self._events.update(req)
+            update_response = await self._events.update(update_request)
 
-        event = res.event
+        if update_response.event is None:
+            raise e.EventNotFoundError(request.id)
 
-        if event is None:
-            raise e.EventNotFoundError(event_id)
-
-        event = m.Event.map(event)
-        return m.UpdateResponse(
-            event=event,
-        )
+        return m.UpdateResponse(event=m.Event.map(update_response.event))
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete event."""
-        event_id = request.id
-
-        req = em.DeleteRequest(
+        delete_request = em.DeleteRequest(
             where={
-                "id": str(event_id),
+                "id": str(request.id),
             },
             include=None,
         )
 
         with self._handle_errors():
-            res = await self._events.delete(req)
+            delete_response = await self._events.delete(delete_request)
 
-        event = res.event
-
-        if event is None:
-            raise e.EventNotFoundError(event_id)
+        if delete_response.event is None:
+            raise e.EventNotFoundError(request.id)
 
         return m.DeleteResponse()

@@ -1,5 +1,6 @@
 from collections.abc import Generator, Sequence
 from contextlib import contextmanager
+from datetime import datetime
 from uuid import UUID
 
 from beaver.api.routes.schedule import errors as e
@@ -9,7 +10,7 @@ from beaver.services.icalendar.service import ICalendarService
 from beaver.services.mevents import errors as ee
 from beaver.services.mevents import models as em
 from beaver.services.mevents.service import EventsService
-from beaver.utils.time import NaiveDatetime, naiveutcnow
+from beaver.utils.time import naiveutcnow
 
 
 class Service:
@@ -24,24 +25,24 @@ class Service:
         try:
             yield
         except ee.ValidationError as ex:
-            raise e.ValidationError(str(ex)) from ex
+            raise e.ValidationError from ex
         except ee.HowliteError as ex:
-            raise e.HowliteError(str(ex)) from ex
+            raise e.HowliteError from ex
         except ee.SapphireError as ex:
-            raise e.SapphireError(str(ex)) from ex
+            raise e.SapphireError from ex
         except ee.ServiceError as ex:
-            raise e.ServiceError(str(ex)) from ex
+            raise e.ServiceError from ex
 
     async def _count_events(self, where: m.ListRequestWhere, query: em.Query) -> int:
-        req = em.CountRequest(
+        count_request = em.CountRequest(
             where=where,
             query=query,
         )
 
         with self._handle_errors():
-            res = await self._events.count(req)
+            count_response = await self._events.count(count_request)
 
-        return res.count
+        return count_response.count
 
     async def _get_events(  # noqa: PLR0913
         self,
@@ -52,7 +53,7 @@ class Service:
         include: m.ListRequestInclude,
         order: m.ListRequestOrder,
     ) -> Sequence[em.Event]:
-        req = em.ListRequest(
+        list_request = em.ListRequest(
             limit=limit,
             offset=offset,
             where=where,
@@ -62,12 +63,12 @@ class Service:
         )
 
         with self._handle_errors():
-            res = await self._events.list(req)
+            list_response = await self._events.list(list_request)
 
-        return res.events
+        return list_response.events
 
     def _get_schedule(
-        self, event: em.Event, start: NaiveDatetime, end: NaiveDatetime
+        self, event: em.Event, start: datetime, end: datetime
     ) -> m.Schedule:
         ievent = im.Event(
             id=UUID(event.id),
@@ -79,43 +80,38 @@ class Service:
 
         instances = self._icalendar.expander.expand(ievent, start, end)
 
-        mapped_event = m.Event.map(event)
-        mapped_instances = [m.EventInstance.map(instance) for instance in instances]
         return m.Schedule(
-            event=mapped_event,
-            instances=mapped_instances,
+            event=m.Event.map(event),
+            instances=[m.EventInstance.map(instance) for instance in instances],
         )
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List schedules."""
-        start = request.start
-        end = request.end
-        limit = request.limit
-        offset = request.offset
-        where = request.where
-        include = request.include
-        order = request.order
-
         now = naiveutcnow()
-        start = start if start is not None else now
-        end = end if end is not None else now
+        start = request.start if request.start is not None else now
+        end = request.end if request.end is not None else now
 
         query = em.TimeRangeQuery(
             start=start,
             end=end,
         )
 
-        count = await self._count_events(where, query)
-        events = await self._get_events(limit, offset, where, query, include, order)
-
+        count = await self._count_events(request.where, query)
+        events = await self._get_events(
+            request.limit,
+            request.offset,
+            request.where,
+            query,
+            request.include,
+            request.order,
+        )
         schedules = [self._get_schedule(event, start, end) for event in events]
 
-        results = m.ScheduleList(
-            count=count,
-            limit=limit,
-            offset=offset,
-            schedules=schedules,
-        )
         return m.ListResponse(
-            results=results,
+            results=m.ScheduleList(
+                count=count,
+                limit=request.limit,
+                offset=request.offset,
+                schedules=schedules,
+            )
         )

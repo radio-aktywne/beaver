@@ -1,28 +1,30 @@
-# pyright: reportIncompatibleVariableOverride=false
-
 from collections.abc import Sequence
 from typing import Annotated
 from uuid import UUID
 
 from pydantic import Field
 
-from beaver.models.base import SerializableModel, datamodel, serializable
+from beaver.models.base import SerializableModel, datamodel
 from beaver.services.shows import models as sm
 from beaver.utils.time import NaiveDatetime, Timezone
 
-Second = Annotated[int, Field(ge=0, le=60)]
+type Second = Annotated[int, Field(ge=0, le=60)]
 
-Minute = Annotated[int, Field(ge=0, le=59)]
+type Minute = Annotated[int, Field(ge=0, le=59)]
 
-Hour = Annotated[int, Field(ge=0, le=23)]
+type Hour = Annotated[int, Field(ge=0, le=23)]
 
-Monthday = Annotated[int, Field(ge=-31, le=-1)] | Annotated[int, Field(ge=1, le=31)]
+type Monthday = (
+    Annotated[int, Field(ge=-31, le=-1)] | Annotated[int, Field(ge=1, le=31)]
+)
 
-Yearday = Annotated[int, Field(ge=-366, le=-1)] | Annotated[int, Field(ge=1, le=366)]
+type Yearday = (
+    Annotated[int, Field(ge=-366, le=-1)] | Annotated[int, Field(ge=1, le=366)]
+)
 
-Week = Annotated[int, Field(ge=-53, le=-1)] | Annotated[int, Field(ge=1, le=53)]
+type Week = Annotated[int, Field(ge=-53, le=-1)] | Annotated[int, Field(ge=1, le=53)]
 
-Month = Annotated[int, Field(ge=1, le=12)]
+type Month = Annotated[int, Field(ge=1, le=12)]
 
 
 class WeekdayRule(SerializableModel):
@@ -176,7 +178,7 @@ class Event(SerializableModel):
             show=Show.map(event.show) if event.show is not None else None,
             start=event.start,
             end=event.end,
-            timezone=str(event.timezone),
+            timezone=event.timezone,
             recurrence=(
                 Recurrence.map(event.recurrence)
                 if event.recurrence is not None
@@ -231,92 +233,57 @@ class ShowList(SerializableModel):
     """Shows that matched the request."""
 
 
-@serializable
-class ShowWhereInput(sm.ShowWhereInput):
-    """Filter to apply to find shows."""
+ShowWhereInput = sm.ShowWhereInput
 
+ShowInclude = sm.ShowInclude
 
-@serializable
-class ShowWhereUniqueIdInput(sm.ShowWhereUniqueIdInput):
-    """Filter to apply to find a show by unique ID."""
+ShowOrderByIdInput = sm.ShowOrderByIdInput
 
+ShowOrderByTitleInput = sm.ShowOrderByTitleInput
 
-@serializable
-class ShowWhereUniqueTitleInput(sm.ShowWhereUniqueTitleInput):
-    """Filter to apply to find a show by unique title."""
+ShowOrderByDescriptionInput = sm.ShowOrderByDescriptionInput
 
-
-ShowWhereUniqueInput = ShowWhereUniqueIdInput | ShowWhereUniqueTitleInput
-
-
-@serializable
-class ShowInclude(sm.ShowInclude):
-    """Relations to include in the response."""
-
-
-@serializable
-class ShowOrderByIdInput(sm.ShowOrderByIdInput):
-    """Order by show ID."""
-
-
-@serializable
-class ShowOrderByTitleInput(sm.ShowOrderByTitleInput):
-    """Order by show title."""
-
-
-@serializable
-class ShowOrderByDescriptionInput(sm.ShowOrderByDescriptionInput):
-    """Order by show description."""
-
-
-ShowOrderByInput = (
+type ShowOrderByInput = (
     ShowOrderByIdInput | ShowOrderByTitleInput | ShowOrderByDescriptionInput
 )
 
+ShowCreateInput = sm.ShowCreateInput
 
-@serializable
-class ShowCreateInput(sm.ShowCreateInput):
-    """Data to create a show."""
+ShowUpdateInput = sm.ShowUpdateInput
 
+type ListRequestLimit = int | None
 
-@serializable
-class ShowUpdateInput(sm.ShowUpdateInput):
-    """Data to update a show."""
+type ListRequestOffset = int | None
 
+type ListRequestWhere = ShowWhereInput | None
 
-ListRequestLimit = int | None
+type ListRequestInclude = ShowInclude | None
 
-ListRequestOffset = int | None
+type ListRequestOrder = ShowOrderByInput | Sequence[ShowOrderByInput] | None
 
-ListRequestWhere = ShowWhereInput | None
+type ListResponseResults = ShowList
 
-ListRequestInclude = ShowInclude | None
+type GetRequestId = UUID
 
-ListRequestOrder = ShowOrderByInput | Sequence[ShowOrderByInput] | None
+type GetRequestInclude = ShowInclude | None
 
-ListResponseResults = ShowList
+type GetResponseShow = Show
 
-GetRequestId = UUID
+type CreateRequestData = ShowCreateInput
 
-GetRequestInclude = ShowInclude | None
+type CreateRequestInclude = ShowInclude | None
 
-GetResponseShow = Show
+type CreateResponseShow = Show
 
-CreateRequestData = ShowCreateInput
+type UpdateRequestData = ShowUpdateInput
 
-CreateRequestInclude = ShowInclude | None
+type UpdateRequestId = UUID
 
-CreateResponseShow = Show
+type UpdateRequestInclude = ShowInclude | None
 
-UpdateRequestData = ShowUpdateInput
+type UpdateResponseShow = Show
 
-UpdateRequestId = UUID
-
-UpdateRequestInclude = ShowInclude | None
-
-UpdateResponseShow = Show
-
-DeleteRequestId = UUID
+type DeleteRequestId = UUID
 
 
 @datamodel

@@ -1,12 +1,11 @@
-# ruff: noqa: SLF001
-
 from collections.abc import Sequence
+from datetime import datetime
 from typing import NotRequired, TypedDict
 from zoneinfo import ZoneInfo
 
 from beaver.models.base import datamodel
 from beaver.services.howlite import models as hlm
-from beaver.services.howlite.models import (  # noqa: F401
+from beaver.services.howlite.models import (
     Frequency,
     Query,
     Recurrence,
@@ -19,7 +18,6 @@ from beaver.services.howlite.models import (  # noqa: F401
 from beaver.services.sapphire import enums as spe
 from beaver.services.sapphire import models as spm
 from beaver.services.sapphire import types as spt
-from beaver.utils.time import NaiveDatetime
 
 EventType = spe.EventType
 
@@ -67,10 +65,10 @@ class Event:
     show: Show | None
     """Show the event belongs to."""
 
-    start: NaiveDatetime
+    start: datetime
     """Start datetime of the event in event timezone."""
 
-    end: NaiveDatetime
+    end: datetime
     """End datetime of the event in event timezone."""
 
     timezone: ZoneInfo
@@ -98,15 +96,15 @@ EventWhereInput = spt.EventWhereInput
 
 EventInclude = spt.EventInclude
 
-EventWhereUniqueIdInput = spt._EventWhereUnique_id_Input
+EventWhereUniqueIdInput = spt._EventWhereUnique_id_Input  # noqa: SLF001
 
-EventWhereUniqueInput = EventWhereUniqueIdInput
+type EventWhereUniqueInput = EventWhereUniqueIdInput
 
-EventOrderByIdInput = spt._Event_id_OrderByInput
+EventOrderByIdInput = spt._Event_id_OrderByInput  # noqa: SLF001
 
-EventOrderByTypeInput = spt._Event_type_OrderByInput
+EventOrderByTypeInput = spt._Event_type_OrderByInput  # noqa: SLF001
 
-EventOrderByShowIdInput = spt._Event_showId_OrderByInput
+EventOrderByShowIdInput = spt._Event_showId_OrderByInput  # noqa: SLF001
 
 
 class EventOrderByStartInput(TypedDict, total=True):
@@ -127,7 +125,7 @@ class EventOrderByTimezoneInput(TypedDict, total=True):
     timezone: spt.SortOrder
 
 
-EventOrderByInput = (
+type EventOrderByInput = (
     EventOrderByIdInput
     | EventOrderByTypeInput
     | EventOrderByShowIdInput
@@ -140,10 +138,10 @@ EventOrderByInput = (
 class EventCreateInput(spt.EventCreateWithoutRelationsInput):
     """Input data to create an event."""
 
-    start: NaiveDatetime
+    start: datetime
     """Start datetime of the event in event timezone."""
 
-    end: NaiveDatetime
+    end: datetime
     """End datetime of the event in event timezone."""
 
     timezone: ZoneInfo
@@ -156,10 +154,10 @@ class EventCreateInput(spt.EventCreateWithoutRelationsInput):
 class EventUpdateInput(spt.EventUpdateManyMutationInput, total=False):
     """Input data to update an event."""
 
-    start: NaiveDatetime
+    start: datetime
     """Start datetime of the event in event timezone."""
 
-    end: NaiveDatetime
+    end: datetime
     """End datetime of the event in event timezone."""
 
     timezone: ZoneInfo
@@ -221,10 +219,10 @@ class ListResponse:
 
 @datamodel
 class GetRequest:
-    """Request to get a event."""
+    """Request to get an event."""
 
     where: EventWhereUniqueInput
-    """Unique filter to apply to find a event."""
+    """Unique filter to apply to find an event."""
 
     include: EventInclude | None
     """Relations to include in the response."""
@@ -232,7 +230,7 @@ class GetRequest:
 
 @datamodel
 class GetResponse:
-    """Response for getting a event."""
+    """Response for getting an event."""
 
     event: Event | None
     """Event that matches the filter."""
@@ -240,10 +238,10 @@ class GetResponse:
 
 @datamodel
 class CreateRequest:
-    """Request to create a event."""
+    """Request to create an event."""
 
     data: EventCreateInput
-    """Data to create a event."""
+    """Data to create an event."""
 
     include: EventInclude | None
     """Relations to include in the response."""
@@ -251,7 +249,7 @@ class CreateRequest:
 
 @datamodel
 class CreateResponse:
-    """Response for creating a event."""
+    """Response for creating an event."""
 
     event: Event
     """Created event."""
@@ -259,13 +257,13 @@ class CreateResponse:
 
 @datamodel
 class UpdateRequest:
-    """Request to update a event."""
+    """Request to update an event."""
 
     data: EventUpdateInput
-    """Data to update a event."""
+    """Data to update an event."""
 
     where: EventWhereUniqueInput
-    """Unique filter to apply to find a event."""
+    """Unique filter to apply to find an event."""
 
     include: EventInclude | None
     """Relations to include in the response."""
@@ -273,7 +271,7 @@ class UpdateRequest:
 
 @datamodel
 class UpdateResponse:
-    """Response for updating a event."""
+    """Response for updating an event."""
 
     event: Event | None
     """Event that was updated."""
@@ -281,10 +279,10 @@ class UpdateResponse:
 
 @datamodel
 class DeleteRequest:
-    """Request to delete a event."""
+    """Request to delete an event."""
 
     where: EventWhereUniqueInput
-    """Unique filter to apply to find a event."""
+    """Unique filter to apply to find an event."""
 
     include: EventInclude | None
     """Relations to include in the response."""
@@ -292,7 +290,47 @@ class DeleteRequest:
 
 @datamodel
 class DeleteResponse:
-    """Response for deleting a event."""
+    """Response for deleting an event."""
 
     event: Event | None
     """Event that was deleted."""
+
+
+__all__ = [
+    "CountRequest",
+    "CountResponse",
+    "CreateRequest",
+    "CreateResponse",
+    "DeleteRequest",
+    "DeleteResponse",
+    "Event",
+    "EventCreateInput",
+    "EventInclude",
+    "EventOrderByEndInput",
+    "EventOrderByIdInput",
+    "EventOrderByInput",
+    "EventOrderByShowIdInput",
+    "EventOrderByStartInput",
+    "EventOrderByTimezoneInput",
+    "EventOrderByTypeInput",
+    "EventType",
+    "EventUpdateInput",
+    "EventWhereInput",
+    "EventWhereUniqueIdInput",
+    "EventWhereUniqueInput",
+    "Frequency",
+    "GetRequest",
+    "GetResponse",
+    "ListRequest",
+    "ListResponse",
+    "Query",
+    "Recurrence",
+    "RecurrenceRule",
+    "RecurringQuery",
+    "Show",
+    "TimeRangeQuery",
+    "UpdateRequest",
+    "UpdateResponse",
+    "Weekday",
+    "WeekdayRule",
+]

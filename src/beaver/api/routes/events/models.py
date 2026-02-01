@@ -1,28 +1,30 @@
-# pyright: reportIncompatibleVariableOverride=false
-
 from collections.abc import Sequence
 from typing import Annotated, Literal, NotRequired
 from uuid import UUID
 
 from pydantic import Field
 
-from beaver.models.base import SerializableModel, datamodel, serializable
+from beaver.models.base import SerializableModel, datamodel
 from beaver.services.mevents import models as em
 from beaver.utils.time import NaiveDatetime, Timezone
 
-Second = Annotated[int, Field(ge=0, le=60)]
+type Second = Annotated[int, Field(ge=0, le=60)]
 
-Minute = Annotated[int, Field(ge=0, le=59)]
+type Minute = Annotated[int, Field(ge=0, le=59)]
 
-Hour = Annotated[int, Field(ge=0, le=23)]
+type Hour = Annotated[int, Field(ge=0, le=23)]
 
-Monthday = Annotated[int, Field(ge=-31, le=-1)] | Annotated[int, Field(ge=1, le=31)]
+type Monthday = (
+    Annotated[int, Field(ge=-31, le=-1)] | Annotated[int, Field(ge=1, le=31)]
+)
 
-Yearday = Annotated[int, Field(ge=-366, le=-1)] | Annotated[int, Field(ge=1, le=366)]
+type Yearday = (
+    Annotated[int, Field(ge=-366, le=-1)] | Annotated[int, Field(ge=1, le=366)]
+)
 
-Week = Annotated[int, Field(ge=-53, le=-1)] | Annotated[int, Field(ge=1, le=53)]
+type Week = Annotated[int, Field(ge=-53, le=-1)] | Annotated[int, Field(ge=1, le=53)]
 
-Month = Annotated[int, Field(ge=1, le=12)]
+type Month = Annotated[int, Field(ge=1, le=12)]
 
 
 class WeekdayRule(SerializableModel):
@@ -244,7 +246,7 @@ class Event(SerializableModel):
             show=Show.map(event.show) if event.show is not None else None,
             start=event.start,
             end=event.end,
-            timezone=str(event.timezone),
+            timezone=event.timezone,
             recurrence=(
                 Recurrence.imap(event.recurrence)
                 if event.recurrence is not None
@@ -269,18 +271,20 @@ class EventList(SerializableModel):
     """Events that matched the request."""
 
 
-@serializable
-class EventWhereInput(em.EventWhereInput):
-    """Filter to find events."""
+EventWhereInput = em.EventWhereInput
 
 
-@serializable
-@datamodel
-class TimeRangeQuery(em.TimeRangeQuery):
+class TimeRangeQuery(SerializableModel):
     """Query for events in a time range."""
 
     type: Literal["time-range"] = "time-range"
     """Type of the query."""
+
+    start: NaiveDatetime | None = None
+    """Beginning of the time range in UTC."""
+
+    end: NaiveDatetime | None = None
+    """End of the time range in UTC."""
 
     def map(self) -> em.TimeRangeQuery:
         """Map to internal representation."""
@@ -290,13 +294,14 @@ class TimeRangeQuery(em.TimeRangeQuery):
         )
 
 
-@serializable
-@datamodel
-class RecurringQuery(em.RecurringQuery):
+class RecurringQuery(SerializableModel):
     """Query for recurring events."""
 
     type: Literal["recurring"] = "recurring"
     """Type of the query."""
+
+    recurring: bool
+    """Whether to search for recurring or non-recurring events."""
 
     def map(self) -> em.RecurringQuery:
         """Map to internal representation."""
@@ -305,43 +310,26 @@ class RecurringQuery(em.RecurringQuery):
         )
 
 
-Query = Annotated[TimeRangeQuery | RecurringQuery, Field(discriminator="type")]
+type Query = Annotated[TimeRangeQuery | RecurringQuery, Field(discriminator="type")]
 
 
-@serializable
-class EventWhereUniqueIdInput(em.EventWhereUniqueIdInput):
-    """Unique filter to find an event by ID."""
+EventInclude = em.EventInclude
 
 
-EventWhereUniqueInput = EventWhereUniqueIdInput
+EventOrderByIdInput = em.EventOrderByIdInput
 
 
-@serializable
-class EventInclude(em.EventInclude):
-    """Relations to include in event responses."""
+EventOrderByTypeInput = em.EventOrderByTypeInput
 
 
-@serializable
-class EventOrderByIdInput(em.EventOrderByIdInput):
-    """Order events by ID."""
+EventOrderByShowIdInput = em.EventOrderByShowIdInput
 
 
-@serializable
-class EventOrderByTypeInput(em.EventOrderByTypeInput):
-    """Order events by type."""
-
-
-@serializable
-class EventOrderByShowIdInput(em.EventOrderByShowIdInput):
-    """Order events by show ID."""
-
-
-EventOrderByInput = (
+type EventOrderByInput = (
     EventOrderByIdInput | EventOrderByTypeInput | EventOrderByShowIdInput
 )
 
 
-@serializable
 class EventCreateInput(em.EventCreateInput):
     """Input data to create an event."""
 
@@ -354,11 +342,10 @@ class EventCreateInput(em.EventCreateInput):
     timezone: Timezone
     """Timezone of the event."""
 
-    recurrence: NotRequired[Recurrence | None]
+    recurrence: NotRequired[Recurrence | None]  # pyright: ignore[reportIncompatibleVariableOverride]
     """Recurrence of the event."""
 
 
-@serializable
 class EventUpdateInput(em.EventUpdateInput, total=False):
     """Input data to update an event."""
 
@@ -371,45 +358,45 @@ class EventUpdateInput(em.EventUpdateInput, total=False):
     timezone: Timezone
     """Timezone of the event."""
 
-    recurrence: Recurrence | None
+    recurrence: Recurrence | None  # pyright: ignore[reportIncompatibleVariableOverride]
     """Recurrence of the event."""
 
 
-ListRequestLimit = int | None
+type ListRequestLimit = int | None
 
-ListRequestOffset = int | None
+type ListRequestOffset = int | None
 
-ListRequestWhere = EventWhereInput | None
+type ListRequestWhere = EventWhereInput | None
 
-ListRequestQuery = Query | None
+type ListRequestQuery = Query | None
 
-ListRequestInclude = EventInclude | None
+type ListRequestInclude = EventInclude | None
 
-ListRequestOrder = EventOrderByInput | Sequence[EventOrderByInput] | None
+type ListRequestOrder = EventOrderByInput | Sequence[EventOrderByInput] | None
 
-ListResponseResults = EventList
+type ListResponseResults = EventList
 
-GetRequestId = UUID
+type GetRequestId = UUID
 
-GetRequestInclude = EventInclude | None
+type GetRequestInclude = EventInclude | None
 
-GetResponseEvent = Event
+type GetResponseEvent = Event
 
-CreateRequestData = EventCreateInput
+type CreateRequestData = EventCreateInput
 
-CreateRequestInclude = EventInclude | None
+type CreateRequestInclude = EventInclude | None
 
-CreateResponseEvent = Event
+type CreateResponseEvent = Event
 
-UpdateRequestData = EventUpdateInput
+type UpdateRequestData = EventUpdateInput
 
-UpdateRequestId = UUID
+type UpdateRequestId = UUID
 
-UpdateRequestInclude = EventInclude | None
+type UpdateRequestInclude = EventInclude | None
 
-UpdateResponseEvent = Event
+type UpdateResponseEvent = Event
 
-DeleteRequestId = UUID
+type DeleteRequestId = UUID
 
 
 @datamodel

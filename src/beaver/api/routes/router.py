@@ -5,6 +5,7 @@ from beaver.api.routes.ping.router import router as ping_router
 from beaver.api.routes.schedule.router import router as schedule_router
 from beaver.api.routes.shows.router import router as shows_router
 from beaver.api.routes.sse.router import router as sse_router
+from beaver.api.routes.test.router import router as test_router
 
 router = Router(
     path="/",
@@ -14,5 +15,6 @@ router = Router(
         schedule_router,
         shows_router,
         sse_router,
+        test_router,
     ],
 )

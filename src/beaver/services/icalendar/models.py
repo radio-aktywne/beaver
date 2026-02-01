@@ -1,10 +1,10 @@
 from collections.abc import Sequence
+from datetime import datetime
 from enum import StrEnum
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from beaver.models.base import datamodel
-from beaver.utils.time import NaiveDatetime
 
 
 class Frequency(StrEnum):
@@ -49,7 +49,7 @@ class RecurrenceRule:
     frequency: Frequency
     """Frequency of the recurrence."""
 
-    until: NaiveDatetime | None = None
+    until: datetime | None = None
     """End datetime of the recurrence in UTC."""
 
     count: int | None = None
@@ -96,10 +96,10 @@ class Recurrence:
     rule: RecurrenceRule | None = None
     """Rule of the recurrence."""
 
-    include: Sequence[NaiveDatetime] | None = None
+    include: Sequence[datetime] | None = None
     """Included datetimes of the recurrence in event timezone."""
 
-    exclude: Sequence[NaiveDatetime] | None = None
+    exclude: Sequence[datetime] | None = None
     """Excluded datetimes of the recurrence in event timezone."""
 
 
@@ -110,10 +110,10 @@ class Event:
     id: UUID
     """Identifier of the event."""
 
-    start: NaiveDatetime
+    start: datetime
     """Start datetime of the event in event timezone."""
 
-    end: NaiveDatetime
+    end: datetime
     """End datetime of the event in event timezone."""
 
     timezone: ZoneInfo
@@ -135,8 +135,8 @@ class Calendar:
 class EventInstance:
     """Event instance data."""
 
-    start: NaiveDatetime
+    start: datetime
     """Start datetime of the event instance in event timezone."""
 
-    end: NaiveDatetime
+    end: datetime
     """End datetime of the event instance in event timezone."""
