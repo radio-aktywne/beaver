@@ -22,11 +22,7 @@ from beaver.state import State
 class DependenciesBuilder:
     """Builder for the dependencies of the controller."""
 
-    async def _build_service(
-        self,
-        state: State,
-        channels: ChannelsPlugin,
-    ) -> Service:
+    async def _build_service(self, state: State, channels: ChannelsPlugin) -> Service:
         return Service(
             events=EventsService(
                 howlite=state.howlite, sapphire=state.sapphire, channels=channels
@@ -107,13 +103,13 @@ class Controller(BaseController):
         return Response(Serializable(response.results))
 
     @handlers.get(
-        "/{event_id:str}",
+        "/{id:str}",
         summary="Get event",
     )
     async def get(
         self,
         service: Service,
-        event_id: Annotated[
+        id: Annotated[  # noqa: A002
             Serializable[m.GetRequestId],
             Parameter(
                 description="Identifier of the event to get.",
@@ -127,10 +123,7 @@ class Controller(BaseController):
         ] = None,
     ) -> Response[Serializable[m.GetResponseEvent]]:
         """Get an event by ID."""
-        request = m.GetRequest(
-            id=event_id.root,
-            include=include.root if include else None,
-        )
+        request = m.GetRequest(id=id.root, include=include.root if include else None)
 
         try:
             response = await service.get(request)
@@ -174,13 +167,13 @@ class Controller(BaseController):
         return Response(Serializable(response.event))
 
     @handlers.patch(
-        "/{event_id:str}",
+        "/{id:str}",
         summary="Update event",
     )
     async def update(
         self,
         service: Service,
-        event_id: Annotated[
+        id: Annotated[  # noqa: A002
             Serializable[m.UpdateRequestId],
             Parameter(
                 description="Identifier of the event to update.",
@@ -202,7 +195,7 @@ class Controller(BaseController):
         """Update an event by ID."""
         request = m.UpdateRequest(
             data=data.root,
-            id=event_id.root,
+            id=id.root,
             include=include.root if include else None,
         )
 
@@ -216,7 +209,7 @@ class Controller(BaseController):
         return Response(Serializable(response.event))
 
     @handlers.delete(
-        "/{event_id:str}",
+        "/{id:str}",
         summary="Delete event",
         responses={
             HTTP_204_NO_CONTENT: ResponseSpec(
@@ -227,7 +220,7 @@ class Controller(BaseController):
     async def delete(
         self,
         service: Service,
-        event_id: Annotated[
+        id: Annotated[  # noqa: A002
             Serializable[m.DeleteRequestId],
             Parameter(
                 description="Identifier of the event to delete.",
@@ -235,7 +228,7 @@ class Controller(BaseController):
         ],
     ) -> Response[None]:
         """Delete an event by ID."""
-        request = m.DeleteRequest(id=event_id.root)
+        request = m.DeleteRequest(id=id.root)
 
         try:
             await service.delete(request)

@@ -22,11 +22,7 @@ from beaver.state import State
 class DependenciesBuilder:
     """Builder for the dependencies of the controller."""
 
-    async def _build_service(
-        self,
-        state: State,
-        channels: ChannelsPlugin,
-    ) -> Service:
+    async def _build_service(self, state: State, channels: ChannelsPlugin) -> Service:
         return Service(
             shows=ShowsService(
                 howlite=state.howlite, sapphire=state.sapphire, channels=channels
@@ -99,13 +95,13 @@ class Controller(BaseController):
         return Response(Serializable(response.results))
 
     @handlers.get(
-        "/{show_id:str}",
+        "/{id:str}",
         summary="Get show",
     )
     async def get(
         self,
         service: Service,
-        show_id: Annotated[
+        id: Annotated[  # noqa: A002
             Serializable[m.GetRequestId],
             Parameter(
                 description="Identifier of the show to get.",
@@ -119,10 +115,7 @@ class Controller(BaseController):
         ] = None,
     ) -> Response[Serializable[m.GetResponseShow]]:
         """Get a show by ID."""
-        request = m.GetRequest(
-            id=show_id.root,
-            include=include.root if include else None,
-        )
+        request = m.GetRequest(id=id.root, include=include.root if include else None)
 
         try:
             response = await service.get(request)
@@ -166,13 +159,13 @@ class Controller(BaseController):
         return Response(Serializable(response.show))
 
     @handlers.patch(
-        "/{show_id:str}",
+        "/{id:str}",
         summary="Update show",
     )
     async def update(
         self,
         service: Service,
-        show_id: Annotated[
+        id: Annotated[  # noqa: A002
             Serializable[m.UpdateRequestId],
             Parameter(
                 description="Identifier of the show to update.",
@@ -193,9 +186,7 @@ class Controller(BaseController):
     ) -> Response[Serializable[m.UpdateResponseShow]]:
         """Update a show by ID."""
         request = m.UpdateRequest(
-            data=data.root,
-            id=show_id.root,
-            include=include.root if include else None,
+            data=data.root, id=id.root, include=include.root if include else None
         )
 
         try:
@@ -208,7 +199,7 @@ class Controller(BaseController):
         return Response(Serializable(response.show))
 
     @handlers.delete(
-        "/{show_id:str}",
+        "/{id:str}",
         summary="Delete show",
         responses={
             HTTP_204_NO_CONTENT: ResponseSpec(
@@ -219,7 +210,7 @@ class Controller(BaseController):
     async def delete(
         self,
         service: Service,
-        show_id: Annotated[
+        id: Annotated[  # noqa: A002
             Serializable[m.DeleteRequestId],
             Parameter(
                 description="Identifier of the show to delete.",
@@ -227,7 +218,7 @@ class Controller(BaseController):
         ],
     ) -> Response[None]:
         """Delete a show by ID."""
-        request = m.DeleteRequest(id=show_id.root)
+        request = m.DeleteRequest(id=id.root)
 
         try:
             await service.delete(request)
