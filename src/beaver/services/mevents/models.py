@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 from datetime import datetime
-from typing import NotRequired, TypedDict
+from typing import NotRequired, Self, TypedDict
 from zoneinfo import ZoneInfo
 
 from beaver.models.base import datamodel
@@ -38,14 +38,11 @@ class Show:
     events: Sequence["Event"] | None
     """Events belonging to the show."""
 
-    @staticmethod
-    def map(show: spm.Show, events: Sequence["Event"] | None) -> "Show":
+    @classmethod
+    def map(cls, show: spm.Show, events: Sequence["Event"] | None) -> Self:
         """Map to internal representation."""
-        return Show(
-            id=show.id,
-            title=show.title,
-            description=show.description,
-            events=events,
+        return cls(
+            id=show.id, title=show.title, description=show.description, events=events
         )
 
 

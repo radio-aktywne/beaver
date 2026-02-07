@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Self
 from uuid import UUID
 
 from pydantic import Field
@@ -21,14 +21,10 @@ class Show(SerializableModel):
     description: str | None
     """Description of the show."""
 
-    @staticmethod
-    def map(show: sm.Show) -> "Show":
+    @classmethod
+    def map(cls, show: sm.Show) -> Self:
         """Map to internal representation."""
-        return Show(
-            id=UUID(show.id),
-            title=show.title,
-            description=show.description,
-        )
+        return cls(id=UUID(show.id), title=show.title, description=show.description)
 
 
 class ShowCreatedEventData(SerializableModel):

@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Annotated
+from typing import Annotated, Self
 from uuid import UUID
 
 from pydantic import Field
@@ -36,13 +36,10 @@ class WeekdayRule(SerializableModel):
     occurrence: Week | None = None
     """Occurrence of the day in the year."""
 
-    @staticmethod
-    def map(rule: sm.WeekdayRule) -> "WeekdayRule":
+    @classmethod
+    def map(cls, rule: sm.WeekdayRule) -> Self:
         """Map to internal representation."""
-        return WeekdayRule(
-            day=rule.day,
-            occurrence=rule.occurrence,
-        )
+        return cls(day=rule.day, occurrence=rule.occurrence)
 
 
 class RecurrenceRule(SerializableModel):
@@ -90,10 +87,10 @@ class RecurrenceRule(SerializableModel):
     week_start: sm.Weekday | None = None
     """Start day of the week."""
 
-    @staticmethod
-    def map(rule: sm.RecurrenceRule) -> "RecurrenceRule":
+    @classmethod
+    def map(cls, rule: sm.RecurrenceRule) -> Self:
         """Map to internal representation."""
-        return RecurrenceRule(
+        return cls(
             frequency=rule.frequency,
             until=rule.until,
             count=rule.count,
@@ -127,10 +124,10 @@ class Recurrence(SerializableModel):
     exclude: Sequence[NaiveDatetime] | None = None
     """Excluded datetimes of the recurrence in event timezone."""
 
-    @staticmethod
-    def map(recurrence: sm.Recurrence) -> "Recurrence":
+    @classmethod
+    def map(cls, recurrence: sm.Recurrence) -> Self:
         """Map to internal representation."""
-        return Recurrence(
+        return cls(
             rule=(
                 RecurrenceRule.map(recurrence.rule)
                 if recurrence.rule is not None
@@ -168,10 +165,10 @@ class Event(SerializableModel):
     recurrence: Recurrence | None
     """Recurrence rule of the event."""
 
-    @staticmethod
-    def map(event: sm.Event) -> "Event":
+    @classmethod
+    def map(cls, event: sm.Event) -> Self:
         """Map to internal representation."""
-        return Event(
+        return cls(
             id=UUID(event.id),
             type=event.type,
             show_id=UUID(event.show_id),
@@ -202,10 +199,10 @@ class Show(SerializableModel):
     events: Sequence[Event] | None
     """Events that the show belongs to."""
 
-    @staticmethod
-    def map(show: sm.Show) -> "Show":
+    @classmethod
+    def map(cls, show: sm.Show) -> Self:
         """Map to internal representation."""
-        return Show(
+        return cls(
             id=UUID(show.id),
             title=show.title,
             description=show.description,

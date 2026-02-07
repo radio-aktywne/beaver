@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Annotated, Literal, NotRequired
+from typing import Annotated, Literal, NotRequired, Self
 from uuid import UUID
 
 from pydantic import Field
@@ -36,20 +36,14 @@ class WeekdayRule(SerializableModel):
     occurrence: Week | None = None
     """Occurrence of the day in the year."""
 
-    @staticmethod
-    def imap(rule: em.WeekdayRule) -> "WeekdayRule":
+    @classmethod
+    def imap(cls, rule: em.WeekdayRule) -> Self:
         """Map to internal representation."""
-        return WeekdayRule(
-            day=rule.day,
-            occurrence=rule.occurrence,
-        )
+        return cls(day=rule.day, occurrence=rule.occurrence)
 
     def emap(self) -> em.WeekdayRule:
         """Map to external representation."""
-        return em.WeekdayRule(
-            day=self.day,
-            occurrence=self.occurrence,
-        )
+        return em.WeekdayRule(day=self.day, occurrence=self.occurrence)
 
 
 class RecurrenceRule(SerializableModel):
@@ -97,10 +91,10 @@ class RecurrenceRule(SerializableModel):
     week_start: em.Weekday | None = None
     """Start day of the week."""
 
-    @staticmethod
-    def imap(rule: em.RecurrenceRule) -> "RecurrenceRule":
+    @classmethod
+    def imap(cls, rule: em.RecurrenceRule) -> Self:
         """Map to internal representation."""
-        return RecurrenceRule(
+        return cls(
             frequency=rule.frequency,
             until=rule.until,
             count=rule.count,
@@ -157,10 +151,10 @@ class Recurrence(SerializableModel):
     exclude: Sequence[NaiveDatetime] | None = None
     """Excluded datetimes of the recurrence in event timezone."""
 
-    @staticmethod
-    def imap(recurrence: em.Recurrence) -> "Recurrence":
+    @classmethod
+    def imap(cls, recurrence: em.Recurrence) -> Self:
         """Map to internal representation."""
-        return Recurrence(
+        return cls(
             rule=(
                 RecurrenceRule.imap(recurrence.rule)
                 if recurrence.rule is not None
@@ -194,10 +188,10 @@ class Show(SerializableModel):
     events: Sequence["Event"] | None
     """Events that the show belongs to."""
 
-    @staticmethod
-    def map(show: em.Show) -> "Show":
+    @classmethod
+    def map(cls, show: em.Show) -> Self:
         """Map to internal representation."""
-        return Show(
+        return cls(
             id=show.id,
             title=show.title,
             description=show.description,
@@ -236,10 +230,10 @@ class Event(SerializableModel):
     recurrence: Recurrence | None
     """Recurrence rule of the event."""
 
-    @staticmethod
-    def map(event: em.Event) -> "Event":
+    @classmethod
+    def map(cls, event: em.Event) -> Self:
         """Map to internal representation."""
-        return Event(
+        return cls(
             id=UUID(event.id),
             type=event.type,
             show_id=UUID(event.show_id),
@@ -288,10 +282,7 @@ class TimeRangeQuery(SerializableModel):
 
     def map(self) -> em.TimeRangeQuery:
         """Map to internal representation."""
-        return em.TimeRangeQuery(
-            start=self.start,
-            end=self.end,
-        )
+        return em.TimeRangeQuery(start=self.start, end=self.end)
 
 
 class RecurringQuery(SerializableModel):
@@ -305,9 +296,7 @@ class RecurringQuery(SerializableModel):
 
     def map(self) -> em.RecurringQuery:
         """Map to internal representation."""
-        return em.RecurringQuery(
-            recurring=self.recurring,
-        )
+        return em.RecurringQuery(recurring=self.recurring)
 
 
 type Query = Annotated[TimeRangeQuery | RecurringQuery, Field(discriminator="type")]
