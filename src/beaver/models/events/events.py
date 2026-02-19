@@ -5,7 +5,8 @@ from uuid import UUID
 from pydantic import Field
 
 from beaver.models.base import SerializableModel
-from beaver.models.events import types as t
+from beaver.models.events.enums import EventType
+from beaver.models.events.fields import CreatedAtField, DataField, TypeField
 from beaver.services.mevents import models as em
 from beaver.services.shows import models as sm
 from beaver.utils.time import NaiveDatetime, Timezone, naiveutcnow
@@ -191,9 +192,9 @@ class EventCreatedEventData(SerializableModel):
 class EventCreatedEvent(SerializableModel):
     """Event that is emitted when event is created."""
 
-    type: t.TypeField[Literal["event-created"]] = "event-created"
-    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
-    data: t.DataField[EventCreatedEventData]
+    type: TypeField[Literal[EventType.EVENT_CREATED]] = EventType.EVENT_CREATED
+    created_at: CreatedAtField = Field(default_factory=naiveutcnow)
+    data: DataField[EventCreatedEventData]
 
 
 class EventUpdatedEventData(SerializableModel):
@@ -206,9 +207,9 @@ class EventUpdatedEventData(SerializableModel):
 class EventUpdatedEvent(SerializableModel):
     """Event that is emitted when event is updated."""
 
-    type: t.TypeField[Literal["event-updated"]] = "event-updated"
-    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
-    data: t.DataField[EventUpdatedEventData]
+    type: TypeField[Literal[EventType.EVENT_UPDATED]] = EventType.EVENT_UPDATED
+    created_at: CreatedAtField = Field(default_factory=naiveutcnow)
+    data: DataField[EventUpdatedEventData]
 
 
 class EventDeletedEventData(SerializableModel):
@@ -221,6 +222,6 @@ class EventDeletedEventData(SerializableModel):
 class EventDeletedEvent(SerializableModel):
     """Event that is emitted when event is deleted."""
 
-    type: t.TypeField[Literal["event-deleted"]] = "event-deleted"
-    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
-    data: t.DataField[EventDeletedEventData]
+    type: TypeField[Literal[EventType.EVENT_DELETED]] = EventType.EVENT_DELETED
+    created_at: CreatedAtField = Field(default_factory=naiveutcnow)
+    data: DataField[EventDeletedEventData]

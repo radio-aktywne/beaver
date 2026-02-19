@@ -4,7 +4,8 @@ from uuid import UUID
 from pydantic import Field
 
 from beaver.models.base import SerializableModel
-from beaver.models.events import types as t
+from beaver.models.events.enums import EventType
+from beaver.models.events.fields import CreatedAtField, DataField, TypeField
 from beaver.services.shows import models as sm
 from beaver.utils.time import naiveutcnow
 
@@ -37,9 +38,9 @@ class ShowCreatedEventData(SerializableModel):
 class ShowCreatedEvent(SerializableModel):
     """Event that is emitted when show is created."""
 
-    type: t.TypeField[Literal["show-created"]] = "show-created"
-    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
-    data: t.DataField[ShowCreatedEventData]
+    type: TypeField[Literal[EventType.SHOW_CREATED]] = EventType.SHOW_CREATED
+    created_at: CreatedAtField = Field(default_factory=naiveutcnow)
+    data: DataField[ShowCreatedEventData]
 
 
 class ShowUpdatedEventData(SerializableModel):
@@ -52,9 +53,9 @@ class ShowUpdatedEventData(SerializableModel):
 class ShowUpdatedEvent(SerializableModel):
     """Event that is emitted when show is updated."""
 
-    type: t.TypeField[Literal["show-updated"]] = "show-updated"
-    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
-    data: t.DataField[ShowUpdatedEventData]
+    type: TypeField[Literal[EventType.SHOW_UPDATED]] = EventType.SHOW_UPDATED
+    created_at: CreatedAtField = Field(default_factory=naiveutcnow)
+    data: DataField[ShowUpdatedEventData]
 
 
 class ShowDeletedEventData(SerializableModel):
@@ -67,6 +68,6 @@ class ShowDeletedEventData(SerializableModel):
 class ShowDeletedEvent(SerializableModel):
     """Event that is emitted when show is deleted."""
 
-    type: t.TypeField[Literal["show-deleted"]] = "show-deleted"
-    created_at: t.CreatedAtField = Field(default_factory=naiveutcnow)
-    data: t.DataField[ShowDeletedEventData]
+    type: TypeField[Literal[EventType.SHOW_DELETED]] = EventType.SHOW_DELETED
+    created_at: CreatedAtField = Field(default_factory=naiveutcnow)
+    data: DataField[ShowDeletedEventData]

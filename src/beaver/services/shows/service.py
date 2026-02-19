@@ -6,9 +6,9 @@ from uuid import UUID
 
 from litestar.channels import ChannelsPlugin
 
-from beaver.models.events import mevent as eev
-from beaver.models.events import show as sev
-from beaver.models.events.event import Event
+from beaver.models.events import events as eev
+from beaver.models.events import shows as sev
+from beaver.models.events.types import Event
 from beaver.services.howlite import errors as hle
 from beaver.services.howlite import models as hlm
 from beaver.services.howlite.service import HowliteService

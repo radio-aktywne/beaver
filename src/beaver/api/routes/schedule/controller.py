@@ -45,6 +45,7 @@ class Controller(BaseController):
 
     @handlers.get(
         summary="List schedules",
+        raises=[BadRequestException],
     )
     async def list(  # noqa: PLR0913
         self,

@@ -2,20 +2,15 @@ from typing import Annotated
 
 from pydantic import Field
 
-from beaver.models.base import SerializableModel
-from beaver.utils.time import NaiveDatetime
+from beaver.models.events import events, shows, test
 
-type TypeField[T] = Annotated[
-    T,
-    Field(description="Type of the event."),
-]
-
-type CreatedAtField = Annotated[
-    NaiveDatetime,
-    Field(description="Datetime in UTC at which the event was created."),
-]
-
-type DataField[T: SerializableModel] = Annotated[
-    T,
-    Field(description="Data of the event."),
+type Event = Annotated[
+    test.TestEvent
+    | shows.ShowCreatedEvent
+    | shows.ShowUpdatedEvent
+    | shows.ShowDeletedEvent
+    | events.EventCreatedEvent
+    | events.EventUpdatedEvent
+    | events.EventDeletedEvent,
+    Field(discriminator="type"),
 ]
