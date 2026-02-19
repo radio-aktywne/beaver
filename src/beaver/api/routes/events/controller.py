@@ -5,10 +5,8 @@ from litestar import Controller as BaseController
 from litestar import handlers
 from litestar.channels import ChannelsPlugin
 from litestar.di import Provide
-from litestar.openapi import ResponseSpec
 from litestar.params import Body, Parameter
 from litestar.response import Response
-from litestar.status_codes import HTTP_204_NO_CONTENT
 
 from beaver.api.exceptions import BadRequestException, NotFoundException
 from beaver.api.routes.events import errors as e
@@ -43,6 +41,7 @@ class Controller(BaseController):
 
     @handlers.get(
         summary="List events",
+        raises=[BadRequestException],
     )
     async def list(  # noqa: PLR0913
         self,
@@ -105,6 +104,7 @@ class Controller(BaseController):
     @handlers.get(
         "/{id:str}",
         summary="Get event",
+        raises=[BadRequestException, NotFoundException],
     )
     async def get(
         self,
@@ -136,6 +136,7 @@ class Controller(BaseController):
 
     @handlers.post(
         summary="Create event",
+        raises=[BadRequestException],
     )
     async def create(
         self,
@@ -169,6 +170,7 @@ class Controller(BaseController):
     @handlers.patch(
         "/{id:str}",
         summary="Update event",
+        raises=[BadRequestException, NotFoundException],
     )
     async def update(
         self,
@@ -211,11 +213,7 @@ class Controller(BaseController):
     @handlers.delete(
         "/{id:str}",
         summary="Delete event",
-        responses={
-            HTTP_204_NO_CONTENT: ResponseSpec(
-                None, description="Request fulfilled, nothing follows"
-            )
-        },
+        raises=[BadRequestException, NotFoundException],
     )
     async def delete(
         self,
@@ -226,7 +224,7 @@ class Controller(BaseController):
                 description="Identifier of the event to delete.",
             ),
         ],
-    ) -> Response[None]:
+    ) -> None:
         """Delete an event by ID."""
         request = m.DeleteRequest(id=id.root)
 
@@ -236,5 +234,3 @@ class Controller(BaseController):
             raise BadRequestException from ex
         except e.EventNotFoundError as ex:
             raise NotFoundException from ex
-
-        return Response(None)
