@@ -3,7 +3,6 @@ from typing import Annotated
 
 from litestar import Controller as BaseController
 from litestar import handlers
-from litestar.channels import ChannelsPlugin
 from litestar.di import Provide
 from litestar.params import Body, Parameter
 from litestar.response import Response
@@ -20,11 +19,9 @@ from beaver.state import State
 class DependenciesBuilder:
     """Builder for the dependencies of the controller."""
 
-    async def _build_service(self, state: State, channels: ChannelsPlugin) -> Service:
+    async def _build_service(self, state: State) -> Service:
         return Service(
-            shows=ShowsService(
-                howlite=state.howlite, sapphire=state.sapphire, channels=channels
-            )
+            shows=ShowsService(howlite=state.howlite, sapphire=state.sapphire)
         )
 
     def build(self) -> Mapping[str, Provide]:

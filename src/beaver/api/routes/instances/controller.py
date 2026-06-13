@@ -3,16 +3,17 @@ from typing import Annotated
 
 from litestar import Controller as BaseController
 from litestar import handlers
-from litestar.channels import ChannelsPlugin
 from litestar.di import Provide
 from litestar.params import Parameter
 from litestar.response import Response
 
 from beaver.api.exceptions import BadRequestException
-from beaver.api.routes.schedule import errors as e
-from beaver.api.routes.schedule import models as m
-from beaver.api.routes.schedule.service import Service
+from beaver.api.routes.instances import errors as e
+from beaver.api.routes.instances import models as m
+from beaver.api.routes.instances.service import Service
 from beaver.models.base import Jsonable, Serializable
+from beaver.services.icalendar.service import ICalendarService
+from beaver.services.instances.service import InstancesService
 from beaver.services.mevents.service import EventsService
 from beaver.state import State
 
@@ -20,14 +21,11 @@ from beaver.state import State
 class DependenciesBuilder:
     """Builder for the dependencies of the controller."""
 
-    async def _build_service(
-        self,
-        state: State,
-        channels: ChannelsPlugin,
-    ) -> Service:
+    async def _build_service(self, state: State) -> Service:
         return Service(
-            events=EventsService(
-                howlite=state.howlite, sapphire=state.sapphire, channels=channels
+            instances=InstancesService(
+                events=EventsService(howlite=state.howlite, sapphire=state.sapphire),
+                icalendar=ICalendarService(),
             )
         )
 
@@ -39,12 +37,12 @@ class DependenciesBuilder:
 
 
 class Controller(BaseController):
-    """Controller for the schedules endpoint."""
+    """Controller for the instances endpoint."""
 
     dependencies = DependenciesBuilder().build()
 
     @handlers.get(
-        summary="List schedules",
+        summary="List instances",
         raises=[BadRequestException],
     )
     async def list(  # noqa: PLR0913
@@ -53,31 +51,19 @@ class Controller(BaseController):
         start: Annotated[
             Jsonable[m.ListRequestStart] | None,
             Parameter(
-                description="Start datetime in UTC to filter events instances.",
+                description="Start datetime in UTC to filter instances.",
             ),
         ] = None,
         end: Annotated[
             Jsonable[m.ListRequestEnd] | None,
             Parameter(
-                description="End datetime in UTC to filter events instances.",
-            ),
-        ] = None,
-        limit: Annotated[
-            Jsonable[m.ListRequestLimit] | None,
-            Parameter(
-                description="Maximum number of schedules to return. Default is 10.",
-            ),
-        ] = None,
-        offset: Annotated[
-            Jsonable[m.ListRequestOffset] | None,
-            Parameter(
-                description="Number of schedules to skip.",
+                description="End datetime in UTC to filter instances.",
             ),
         ] = None,
         where: Annotated[
             Jsonable[m.ListRequestWhere] | None,
             Parameter(
-                description="Filter to apply to find events.",
+                description="Filter to apply to find instances.",
             ),
         ] = None,
         include: Annotated[
@@ -93,12 +79,10 @@ class Controller(BaseController):
             ),
         ] = None,
     ) -> Response[Serializable[m.ListResponseResults]]:
-        """List event schedules with instances between two dates."""
+        """List instances."""
         request = m.ListRequest(
             start=start.root if start else None,
             end=end.root if end else None,
-            limit=limit.root if limit else 10,
-            offset=offset.root if offset else None,
             where=where.root if where else None,
             include=include.root if include else None,
             order=order.root if order else None,

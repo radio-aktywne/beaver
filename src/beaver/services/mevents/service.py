@@ -3,10 +3,6 @@ from contextlib import contextmanager
 from typing import cast
 from uuid import UUID
 
-from litestar.channels import ChannelsPlugin
-
-from beaver.models.events import events as ev
-from beaver.models.events.types import Event
 from beaver.services.howlite import errors as hle
 from beaver.services.howlite import models as hlm
 from beaver.services.howlite.service import HowliteService
@@ -21,51 +17,18 @@ from beaver.services.sapphire.service import SapphireService
 class EventsService:
     """Service to manage events."""
 
-    def __init__(
-        self,
-        howlite: HowliteService,
-        sapphire: SapphireService,
-        channels: ChannelsPlugin,
-    ) -> None:
+    def __init__(self, howlite: HowliteService, sapphire: SapphireService) -> None:
         self._howlite = howlite
         self._sapphire = sapphire
-        self._channels = channels
-
-    def _emit_event(self, event: Event) -> None:
-        data = event.model_dump_json(round_trip=True)
-        self._channels.publish(data, "events")
-
-    def _emit_event_created_event(self, event: m.Event) -> None:
-        self._emit_event(
-            ev.EventCreatedEvent(
-                data=ev.EventCreatedEventData(event=ev.Event.map(event))
-            )
-        )
-
-    def _emit_event_updated_event(self, event: m.Event) -> None:
-        self._emit_event(
-            ev.EventUpdatedEvent(
-                data=ev.EventUpdatedEventData(event=ev.Event.map(event))
-            )
-        )
-
-    def _emit_event_deleted_event(self, event: m.Event) -> None:
-        self._emit_event(
-            ev.EventDeletedEvent(
-                data=ev.EventDeletedEventData(event=ev.Event.map(event))
-            )
-        )
 
     @contextmanager
     def _handle_errors(self) -> Generator[None]:
         try:
             yield
-        except hle.ServiceError as ex:
-            raise e.HowliteError from ex
         except spe.DataError as ex:
             raise e.ValidationError from ex
-        except spe.ServiceError as ex:
-            raise e.SapphireError from ex
+        except (hle.ServiceError, spe.ServiceError) as ex:
+            raise e.ServiceError from ex
 
     async def _where_with_query(
         self, where: m.EventWhereInput | None, query: m.Query | None
@@ -92,18 +55,21 @@ class EventsService:
 
         return where
 
+    async def _merge_event(self, dsevent: spm.Event, dtevent: hlm.Event) -> m.Event:
+        if dsevent.show is not None:
+            show = await self._map_show(dsevent.show)
+        else:
+            show = None
+
+        return m.Event.map(dsevent, dtevent, show)
+
     async def _map_event(self, dsevent: spm.Event) -> m.Event:
         request = hlm.GetEventRequest(id=UUID(dsevent.id))
 
         with self._handle_errors():
             response = await self._howlite.get_event(request)
 
-        if dsevent.show is not None:
-            show = await self._map_show(dsevent.show)
-        else:
-            show = None
-
-        return m.Event.merge(dsevent, response.event, show)
+        return await self._merge_event(dsevent, response.event)
 
     async def _map_show(self, dsshow: spm.Show) -> m.Show:
         if dsshow.events is not None:
@@ -112,14 +78,6 @@ class EventsService:
             events = None
 
         return m.Show.map(dsshow, events)
-
-    async def _merge_event(self, dsevent: spm.Event, dtevent: hlm.Event) -> m.Event:
-        if dsevent.show is not None:
-            show = await self._map_show(dsevent.show)
-        else:
-            show = None
-
-        return m.Event.merge(dsevent, dtevent, show)
 
     async def count(self, request: m.CountRequest) -> m.CountResponse:
         """Count events."""
@@ -269,8 +227,6 @@ class EventsService:
             dtevent = await self._create_howlite_event(request.data, dsevent)
 
         event = await self._merge_event(dsevent, dtevent)
-        self._emit_event_created_event(event)
-
         return m.CreateResponse(event=event)
 
     async def _update_sapphire_event(
@@ -332,8 +288,6 @@ class EventsService:
             dtevent = await self._update_howlite_event(request.data, odsevent, ndsevent)
 
         event = await self._merge_event(ndsevent, dtevent)
-        self._emit_event_updated_event(event)
-
         return m.UpdateResponse(event=event)
 
     async def _delete_sapphire_event(
@@ -352,7 +306,6 @@ class EventsService:
             get_event_response = await self._howlite.get_event(get_event_request)
 
         dtevent = get_event_response.event
-
         delete_event_request = hlm.DeleteEventRequest(id=dtevent.id)
 
         with self._handle_errors():
@@ -373,6 +326,4 @@ class EventsService:
             dtevent = await self._delete_howlite_event(dsevent)
 
         event = await self._merge_event(dsevent, dtevent)
-        self._emit_event_deleted_event(event)
-
         return m.DeleteResponse(event=event)

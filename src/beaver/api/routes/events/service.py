@@ -20,10 +20,6 @@ class Service:
             yield
         except ee.ValidationError as ex:
             raise e.ValidationError from ex
-        except ee.HowliteError as ex:
-            raise e.HowliteError from ex
-        except ee.SapphireError as ex:
-            raise e.SapphireError from ex
         except ee.ServiceError as ex:
             raise e.ServiceError from ex
 
@@ -61,10 +57,7 @@ class Service:
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get event."""
         get_request = em.GetRequest(
-            where={
-                "id": str(request.id),
-            },
-            include=request.include,
+            where={"id": str(request.id)}, include=request.include
         )
 
         with self._handle_errors():
@@ -95,8 +88,7 @@ class Service:
             )
 
         create_request = em.CreateRequest(
-            data=create_request_data,
-            include=request.include,
+            data=create_request_data, include=request.include
         )
 
         with self._handle_errors():
@@ -126,9 +118,7 @@ class Service:
 
         update_request = em.UpdateRequest(
             data=update_request_data,
-            where={
-                "id": str(request.id),
-            },
+            where={"id": str(request.id)},
             include=request.include,
         )
 
@@ -142,12 +132,7 @@ class Service:
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete event."""
-        delete_request = em.DeleteRequest(
-            where={
-                "id": str(request.id),
-            },
-            include=None,
-        )
+        delete_request = em.DeleteRequest(where={"id": str(request.id)}, include=None)
 
         with self._handle_errors():
             delete_response = await self._events.delete(delete_request)

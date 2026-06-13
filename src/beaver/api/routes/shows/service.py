@@ -20,18 +20,12 @@ class Service:
             yield
         except se.ValidationError as ex:
             raise e.ValidationError from ex
-        except se.HowliteError as ex:
-            raise e.HowliteError from ex
-        except se.SapphireError as ex:
-            raise e.SapphireError from ex
         except se.ServiceError as ex:
             raise e.ServiceError from ex
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List shows."""
-        count_request = sm.CountRequest(
-            where=request.where,
-        )
+        count_request = sm.CountRequest(where=request.where)
 
         with self._handle_errors():
             count_response = await self._shows.count(count_request)
@@ -59,10 +53,7 @@ class Service:
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get show."""
         get_request = sm.GetRequest(
-            where={
-                "id": str(request.id),
-            },
-            include=request.include,
+            where={"id": str(request.id)}, include=request.include
         )
 
         with self._handle_errors():
@@ -75,10 +66,7 @@ class Service:
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create show."""
-        create_request = sm.CreateRequest(
-            data=request.data,
-            include=request.include,
-        )
+        create_request = sm.CreateRequest(data=request.data, include=request.include)
 
         with self._handle_errors():
             create_response = await self._shows.create(create_request)
@@ -88,11 +76,7 @@ class Service:
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update show."""
         update_request = sm.UpdateRequest(
-            data=request.data,
-            where={
-                "id": str(request.id),
-            },
-            include=request.include,
+            data=request.data, where={"id": str(request.id)}, include=request.include
         )
 
         with self._handle_errors():
@@ -105,12 +89,7 @@ class Service:
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete show."""
-        delete_request = sm.DeleteRequest(
-            where={
-                "id": str(request.id),
-            },
-            include=None,
-        )
+        delete_request = sm.DeleteRequest(where={"id": str(request.id)}, include=None)
 
         with self._handle_errors():
             delete_response = await self._shows.delete(delete_request)

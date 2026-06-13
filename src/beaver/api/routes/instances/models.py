@@ -5,8 +5,7 @@ from uuid import UUID
 from pydantic import Field
 
 from beaver.models.base import SerializableModel, datamodel
-from beaver.services.icalendar import models as im
-from beaver.services.mevents import models as em
+from beaver.services.instances import models as im
 from beaver.utils.time import NaiveDatetime, Timezone
 
 type Second = Annotated[int, Field(ge=0, le=60)]
@@ -31,22 +30,22 @@ type Month = Annotated[int, Field(ge=1, le=12)]
 class WeekdayRule(SerializableModel):
     """Day rule data."""
 
-    day: em.Weekday
+    day: im.Weekday
     """Day of the week."""
 
     occurrence: Week | None = None
     """Occurrence of the day in the year."""
 
     @classmethod
-    def map(cls, rule: em.WeekdayRule) -> Self:
-        """Map to internal representation."""
+    def map(cls, rule: im.WeekdayRule) -> Self:
+        """Map from internal representation."""
         return cls(day=rule.day, occurrence=rule.occurrence)
 
 
 class RecurrenceRule(SerializableModel):
     """Recurrence rule data."""
 
-    frequency: em.Frequency
+    frequency: im.Frequency
     """Frequency of the recurrence."""
 
     until: NaiveDatetime | None = None
@@ -85,12 +84,12 @@ class RecurrenceRule(SerializableModel):
     by_set_positions: Sequence[int] | None = None
     """Set positions of the recurrence."""
 
-    week_start: em.Weekday | None = None
+    week_start: im.Weekday | None = None
     """Start day of the week."""
 
     @classmethod
-    def map(cls, rule: em.RecurrenceRule) -> Self:
-        """Map to internal representation."""
+    def map(cls, rule: im.RecurrenceRule) -> Self:
+        """Map from internal representation."""
         return cls(
             frequency=rule.frequency,
             until=rule.until,
@@ -126,8 +125,8 @@ class Recurrence(SerializableModel):
     """Excluded datetimes of the recurrence in event timezone."""
 
     @classmethod
-    def map(cls, recurrence: em.Recurrence) -> Self:
-        """Map to internal representation."""
+    def map(cls, recurrence: im.Recurrence) -> Self:
+        """Map from internal representation."""
         return cls(
             rule=(
                 RecurrenceRule.map(recurrence.rule)
@@ -155,8 +154,8 @@ class Show(SerializableModel):
     """Events that the show belongs to."""
 
     @classmethod
-    def map(cls, show: em.Show) -> Self:
-        """Map to internal representation."""
+    def map(cls, show: im.Show) -> Self:
+        """Map from internal representation."""
         return cls(
             id=UUID(show.id),
             title=show.title,
@@ -175,7 +174,7 @@ class Event(SerializableModel):
     id: UUID
     """Identifier of the event."""
 
-    type: em.EventType
+    type: im.EventType
     """Type of the event."""
 
     show_id: UUID
@@ -197,8 +196,8 @@ class Event(SerializableModel):
     """Recurrence rule of the event."""
 
     @classmethod
-    def map(cls, event: em.Event) -> Self:
-        """Map to internal representation."""
+    def map(cls, event: im.Event) -> Self:
+        """Map from internal representation."""
         return cls(
             id=UUID(event.id),
             type=event.type,
@@ -215,97 +214,67 @@ class Event(SerializableModel):
         )
 
 
-EventWhereInput = em.EventWhereInput
-
-EventInclude = em.EventInclude
-
-EventOrderByIdInput = em.EventOrderByIdInput
-
-EventOrderByTypeInput = em.EventOrderByTypeInput
-
-EventOrderByShowIdInput = em.EventOrderByShowIdInput
-
-type EventOrderByInput = (
-    EventOrderByIdInput | EventOrderByTypeInput | EventOrderByShowIdInput
-)
-
-
-class EventInstance(SerializableModel):
-    """Event instance data."""
+class Instance(SerializableModel):
+    """Instance data."""
 
     start: NaiveDatetime
-    """Start datetime of the event instance in event timezone."""
+    """Start datetime of the instance in event timezone."""
 
     end: NaiveDatetime
-    """End datetime of the event instance in event timezone."""
+    """End datetime of the instance in event timezone."""
+
+    event_id: UUID
+    """Identifier of the event that the instance belongs to."""
+
+    event: Event | None
+    """Event that the instance belongs to."""
 
     @classmethod
-    def map(cls, instance: im.EventInstance) -> Self:
-        """Map to internal representation."""
-        return cls(start=instance.start, end=instance.end)
+    def map(cls, instance: im.Instance) -> Self:
+        """Map from internal representation."""
+        return cls(
+            start=instance.start,
+            end=instance.end,
+            event_id=UUID(instance.event_id),
+            event=Event.map(instance.event) if instance.event is not None else None,
+        )
 
 
-class Schedule(SerializableModel):
-    """Schedule data."""
-
-    event: Event
-    """Event data."""
-
-    instances: Sequence[EventInstance]
-    """Event instances."""
-
-
-class ScheduleList(SerializableModel):
-    """List of event schedules."""
+class InstanceList(SerializableModel):
+    """List of instances."""
 
     count: int
-    """Total number of schedules that matched the query."""
+    """Total number of instances that matched the query."""
 
-    limit: int | None
-    """Maximum number of returned schedules."""
-
-    offset: int | None
-    """Number of schedules skipped."""
-
-    schedules: Sequence[Schedule]
-    """Schedules that matched the request."""
+    instances: Sequence[Instance]
+    """Instances that matched the request."""
 
 
 type ListRequestStart = NaiveDatetime | None
 
 type ListRequestEnd = NaiveDatetime | None
 
-type ListRequestLimit = int | None
+type ListRequestWhere = im.InstanceWhereInput | None
 
-type ListRequestOffset = int | None
+type ListRequestInclude = im.InstanceInclude | None
 
-type ListRequestWhere = EventWhereInput | None
+type ListRequestOrder = im.InstanceOrderByInput | None
 
-type ListRequestInclude = EventInclude | None
-
-type ListRequestOrder = EventOrderByInput | Sequence[EventOrderByInput] | None
-
-type ListResponseResults = ScheduleList
+type ListResponseResults = InstanceList
 
 
 @datamodel
 class ListRequest:
-    """Request to list schedules."""
+    """Request to list instances."""
 
     start: ListRequestStart
-    """Start datetime in UTC to filter events instances."""
+    """Start datetime in UTC to filter instances."""
 
     end: ListRequestEnd
-    """End datetime in UTC to filter events instances."""
-
-    limit: ListRequestLimit
-    """Maximum number of schedules to return."""
-
-    offset: ListRequestOffset
-    """Number of schedules to skip."""
+    """End datetime in UTC to filter instances."""
 
     where: ListRequestWhere
-    """Filter to apply to find events."""
+    """Filter to apply to find instances."""
 
     include: ListRequestInclude
     """Relations to include in the response."""
@@ -316,7 +285,7 @@ class ListRequest:
 
 @datamodel
 class ListResponse:
-    """Response for listing schedules."""
+    """Response for listing instances."""
 
     results: ListResponseResults
-    """List of schedules."""
+    """List of instances."""

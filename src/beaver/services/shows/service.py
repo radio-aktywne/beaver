@@ -4,11 +4,6 @@ from contextlib import contextmanager
 from typing import cast
 from uuid import UUID
 
-from litestar.channels import ChannelsPlugin
-
-from beaver.models.events import events as eev
-from beaver.models.events import shows as sev
-from beaver.models.events.types import Event
 from beaver.services.howlite import errors as hle
 from beaver.services.howlite import models as hlm
 from beaver.services.howlite.service import HowliteService
@@ -23,59 +18,18 @@ from beaver.services.shows import models as m
 class ShowsService:
     """Service to manage shows."""
 
-    def __init__(
-        self,
-        howlite: HowliteService,
-        sapphire: SapphireService,
-        channels: ChannelsPlugin,
-    ) -> None:
+    def __init__(self, howlite: HowliteService, sapphire: SapphireService) -> None:
         self._howlite = howlite
         self._sapphire = sapphire
-        self._channels = channels
-
-    def _emit_event(self, event: Event) -> None:
-        data = event.model_dump_json(round_trip=True)
-        self._channels.publish(data, "events")
-
-    def _emit_show_created_event(self, show: m.Show) -> None:
-        self._emit_event(
-            sev.ShowCreatedEvent(data=sev.ShowCreatedEventData(show=sev.Show.map(show)))
-        )
-
-    def _emit_show_updated_event(self, show: m.Show) -> None:
-        self._emit_event(
-            sev.ShowUpdatedEvent(data=sev.ShowUpdatedEventData(show=sev.Show.map(show)))
-        )
-
-    def _emit_show_deleted_event(self, show: m.Show) -> None:
-        self._emit_event(
-            sev.ShowDeletedEvent(data=sev.ShowDeletedEventData(show=sev.Show.map(show)))
-        )
-
-    def _emit_event_updated_event(self, event: m.Event) -> None:
-        self._emit_event(
-            eev.EventUpdatedEvent(
-                data=eev.EventUpdatedEventData(event=eev.Event.map(event))
-            )
-        )
-
-    def _emit_event_deleted_event(self, event: m.Event) -> None:
-        self._emit_event(
-            eev.EventDeletedEvent(
-                data=eev.EventDeletedEventData(event=eev.Event.map(event))
-            )
-        )
 
     @contextmanager
     def _handle_errors(self) -> Generator[None]:
         try:
             yield
-        except hle.ServiceError as ex:
-            raise e.HowliteError from ex
         except spe.DataError as ex:
             raise e.ValidationError from ex
-        except spe.ServiceError as ex:
-            raise e.SapphireError from ex
+        except (hle.ServiceError, spe.ServiceError) as ex:
+            raise e.ServiceError from ex
 
     async def _map_event(self, dsevent: spm.Event) -> m.Event:
         request = hlm.GetEventRequest(id=UUID(dsevent.id))
@@ -88,7 +42,7 @@ class ShowsService:
         else:
             show = None
 
-        return m.Event.merge(dsevent, res.event, show)
+        return m.Event.map(dsevent, res.event, show)
 
     async def _map_show(self, dsshow: spm.Show) -> m.Show:
         if dsshow.events is not None:
@@ -118,7 +72,8 @@ class ShowsService:
                 else request.order,
             )
 
-        return m.ListResponse(shows=[await self._map_show(show) for show in shows])
+        shows = [await self._map_show(show) for show in shows]
+        return m.ListResponse(shows=shows)
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get show."""
@@ -130,7 +85,8 @@ class ShowsService:
         if show is None:
             return m.GetResponse(show=None)
 
-        return m.GetResponse(show=await self._map_show(show))
+        show = await self._map_show(show)
+        return m.GetResponse(show=show)
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create show."""
@@ -140,8 +96,6 @@ class ShowsService:
             )
 
         show = await self._map_show(show)
-        self._emit_show_created_event(show)
-
         return m.CreateResponse(show=show)
 
     async def _update_handle_events(
@@ -150,24 +104,12 @@ class ShowsService:
         events = []
 
         if new.id != old.id:
-            events = await transaction.event.find_many(where={"showId": old.id})
+            for event in await transaction.event.find_many(where={"showId": old.id}):
+                await transaction.event.update(
+                    data={"show": {"connect": {"id": new.id}}}, where={"id": event.id}
+                )
 
-            ids = [event.id for event in events]
-
-            await transaction.event.delete_many(where={"id": {"in": ids}})
-
-            await transaction.event.create_many(
-                data=[
-                    {
-                        "id": event.id,
-                        "showId": new.id,
-                        "type": event.type,
-                    }
-                    for event in events
-                ]
-            )
-
-            events = await transaction.event.find_many(where={"id": {"in": ids}})
+            events = await transaction.event.find_many(where={"showId": new.id})
 
         return events
 
@@ -189,15 +131,9 @@ class ShowsService:
                 if new is None:
                     return m.UpdateResponse(show=None)
 
-                events = await self._update_handle_events(transaction, old, new)
+                await self._update_handle_events(transaction, old, new)
 
         new = await self._map_show(new)
-        events = [await self._map_event(event) for event in events]
-
-        self._emit_show_updated_event(new)
-        for event in events:
-            self._emit_event_updated_event(event)
-
         return m.UpdateResponse(show=new)
 
     async def _delete_handle_events(
@@ -211,7 +147,6 @@ class ShowsService:
 
         for event in events:
             req = hlm.DeleteEventRequest(id=UUID(event.id))
-
             await self._howlite.delete_event(req)
 
         return events
@@ -227,13 +162,7 @@ class ShowsService:
                 if show is None:
                     return m.DeleteResponse(show=None)
 
-                events = await self._delete_handle_events(transaction, show)
+                await self._delete_handle_events(transaction, show)
 
         show = await self._map_show(show)
-        events = [await self._map_event(event) for event in events]
-
-        self._emit_show_deleted_event(show)
-        for event in events:
-            self._emit_event_deleted_event(event)
-
         return m.DeleteResponse(show=show)
