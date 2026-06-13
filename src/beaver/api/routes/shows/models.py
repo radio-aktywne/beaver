@@ -38,7 +38,7 @@ class WeekdayRule(SerializableModel):
 
     @classmethod
     def map(cls, rule: sm.WeekdayRule) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(day=rule.day, occurrence=rule.occurrence)
 
 
@@ -89,7 +89,7 @@ class RecurrenceRule(SerializableModel):
 
     @classmethod
     def map(cls, rule: sm.RecurrenceRule) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(
             frequency=rule.frequency,
             until=rule.until,
@@ -126,7 +126,7 @@ class Recurrence(SerializableModel):
 
     @classmethod
     def map(cls, recurrence: sm.Recurrence) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(
             rule=(
                 RecurrenceRule.map(recurrence.rule)
@@ -167,7 +167,7 @@ class Event(SerializableModel):
 
     @classmethod
     def map(cls, event: sm.Event) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(
             id=UUID(event.id),
             type=event.type,
@@ -201,7 +201,7 @@ class Show(SerializableModel):
 
     @classmethod
     def map(cls, show: sm.Show) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(
             id=UUID(show.id),
             title=show.title,
@@ -230,53 +230,35 @@ class ShowList(SerializableModel):
     """Shows that matched the request."""
 
 
-ShowWhereInput = sm.ShowWhereInput
-
-ShowInclude = sm.ShowInclude
-
-ShowOrderByIdInput = sm.ShowOrderByIdInput
-
-ShowOrderByTitleInput = sm.ShowOrderByTitleInput
-
-ShowOrderByDescriptionInput = sm.ShowOrderByDescriptionInput
-
-type ShowOrderByInput = (
-    ShowOrderByIdInput | ShowOrderByTitleInput | ShowOrderByDescriptionInput
-)
-
-ShowCreateInput = sm.ShowCreateInput
-
-ShowUpdateInput = sm.ShowUpdateInput
-
 type ListRequestLimit = int | None
 
 type ListRequestOffset = int | None
 
-type ListRequestWhere = ShowWhereInput | None
+type ListRequestWhere = sm.ShowWhereInput | None
 
-type ListRequestInclude = ShowInclude | None
+type ListRequestInclude = sm.ShowInclude | None
 
-type ListRequestOrder = ShowOrderByInput | Sequence[ShowOrderByInput] | None
+type ListRequestOrder = sm.ShowOrderByInput | Sequence[sm.ShowOrderByInput] | None
 
 type ListResponseResults = ShowList
 
 type GetRequestId = UUID
 
-type GetRequestInclude = ShowInclude | None
+type GetRequestInclude = sm.ShowInclude | None
 
 type GetResponseShow = Show
 
-type CreateRequestData = ShowCreateInput
+type CreateRequestData = sm.ShowCreateInput
 
-type CreateRequestInclude = ShowInclude | None
+type CreateRequestInclude = sm.ShowInclude | None
 
 type CreateResponseShow = Show
 
-type UpdateRequestData = ShowUpdateInput
+type UpdateRequestData = sm.ShowUpdateInput
 
 type UpdateRequestId = UUID
 
-type UpdateRequestInclude = ShowInclude | None
+type UpdateRequestInclude = sm.ShowInclude | None
 
 type UpdateResponseShow = Show
 

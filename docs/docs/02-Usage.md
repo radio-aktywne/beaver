@@ -3,12 +3,12 @@ slug: /usage
 title: Usage
 ---
 
-## Managing shows and events
+## Managing shows, events and instances
 
-You can manage shows and events using
-the `/shows` and `/events` endpoints.
+You can manage shows, events and instances using
+the `/shows`, `/events` and `/instances` endpoints.
 The API follows RESTful conventions,
-so you can use the following HTTP methods:
+so you can use the following HTTP methods wherever applicable:
 
 - `GET` to retrieve a resource or a list of resources
 - `POST` to create a new resource
@@ -27,20 +27,8 @@ curl \
     http://localhost:10500/shows
 ```
 
-## Retrieving the schedule
-
-Events themselves only contain the information
-about start and end times of the first instance
-and the recurrence rule.
-To make it easier to retrieve event instances
-for a given time range,
-there is a `/schedule` endpoint.
-It expands the recurrence rule
-into event instances in the given time range.
-
-For example, to retrieve the schedule for a given week,
-you can use [`curl`](https://curl.se)
-to send a `GET` request to the `/schedule` endpoint:
+And to list all instances for a given week,
+you can use `curl` to send a `GET` request to the `/instances` endpoint:
 
 ```sh
 curl \
@@ -49,7 +37,7 @@ curl \
     --header "Content-Type: application/json" \
     --data-urlencode "start=2024-01-01T00:00:00" \
     --data-urlencode "end=2024-01-08T00:00:00" \
-    http://localhost:10500/schedule
+    http://localhost:10500/instances
 ```
 
 The start and end times should be in the UTC timezone.

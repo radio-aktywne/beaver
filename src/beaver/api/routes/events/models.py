@@ -38,11 +38,11 @@ class WeekdayRule(SerializableModel):
 
     @classmethod
     def imap(cls, rule: em.WeekdayRule) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(day=rule.day, occurrence=rule.occurrence)
 
     def emap(self) -> em.WeekdayRule:
-        """Map to external representation."""
+        """Map to internal representation."""
         return em.WeekdayRule(day=self.day, occurrence=self.occurrence)
 
 
@@ -93,7 +93,7 @@ class RecurrenceRule(SerializableModel):
 
     @classmethod
     def imap(cls, rule: em.RecurrenceRule) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(
             frequency=rule.frequency,
             until=rule.until,
@@ -116,7 +116,7 @@ class RecurrenceRule(SerializableModel):
         )
 
     def emap(self) -> em.RecurrenceRule:
-        """Map to external representation."""
+        """Map to internal representation."""
         return em.RecurrenceRule(
             frequency=self.frequency,
             until=self.until,
@@ -153,7 +153,7 @@ class Recurrence(SerializableModel):
 
     @classmethod
     def imap(cls, recurrence: em.Recurrence) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(
             rule=(
                 RecurrenceRule.imap(recurrence.rule)
@@ -165,7 +165,7 @@ class Recurrence(SerializableModel):
         )
 
     def emap(self) -> em.Recurrence:
-        """Map to external representation."""
+        """Map to internal representation."""
         return em.Recurrence(
             rule=(self.rule.emap() if self.rule is not None else None),
             include=self.include,
@@ -190,7 +190,7 @@ class Show(SerializableModel):
 
     @classmethod
     def map(cls, show: em.Show) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(
             id=show.id,
             title=show.title,
@@ -232,7 +232,7 @@ class Event(SerializableModel):
 
     @classmethod
     def map(cls, event: em.Event) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(
             id=UUID(event.id),
             type=event.type,
@@ -263,9 +263,6 @@ class EventList(SerializableModel):
 
     events: Sequence[Event]
     """Events that matched the request."""
-
-
-EventWhereInput = em.EventWhereInput
 
 
 class TimeRangeQuery(SerializableModel):
@@ -300,23 +297,6 @@ class RecurringQuery(SerializableModel):
 
 
 type Query = Annotated[TimeRangeQuery | RecurringQuery, Field(discriminator="type")]
-
-
-EventInclude = em.EventInclude
-
-
-EventOrderByIdInput = em.EventOrderByIdInput
-
-
-EventOrderByTypeInput = em.EventOrderByTypeInput
-
-
-EventOrderByShowIdInput = em.EventOrderByShowIdInput
-
-
-type EventOrderByInput = (
-    EventOrderByIdInput | EventOrderByTypeInput | EventOrderByShowIdInput
-)
 
 
 class EventCreateInput(em.EventCreateInput):
@@ -355,25 +335,25 @@ type ListRequestLimit = int | None
 
 type ListRequestOffset = int | None
 
-type ListRequestWhere = EventWhereInput | None
+type ListRequestWhere = em.EventWhereInput | None
 
 type ListRequestQuery = Query | None
 
-type ListRequestInclude = EventInclude | None
+type ListRequestInclude = em.EventInclude | None
 
-type ListRequestOrder = EventOrderByInput | Sequence[EventOrderByInput] | None
+type ListRequestOrder = em.EventOrderByInput | Sequence[em.EventOrderByInput] | None
 
 type ListResponseResults = EventList
 
 type GetRequestId = UUID
 
-type GetRequestInclude = EventInclude | None
+type GetRequestInclude = em.EventInclude | None
 
 type GetResponseEvent = Event
 
 type CreateRequestData = EventCreateInput
 
-type CreateRequestInclude = EventInclude | None
+type CreateRequestInclude = em.EventInclude | None
 
 type CreateResponseEvent = Event
 
@@ -381,7 +361,7 @@ type UpdateRequestData = EventUpdateInput
 
 type UpdateRequestId = UUID
 
-type UpdateRequestInclude = EventInclude | None
+type UpdateRequestInclude = em.EventInclude | None
 
 type UpdateResponseEvent = Event
 

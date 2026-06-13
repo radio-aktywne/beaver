@@ -5,21 +5,21 @@ from zoneinfo import ZoneInfo
 
 from beaver.models.base import datamodel
 from beaver.services.howlite import models as hlm
-from beaver.services.howlite.models import (
-    Frequency,
-    Query,
-    Recurrence,
-    RecurrenceRule,
-    RecurringQuery,
-    TimeRangeQuery,
-    Weekday,
-    WeekdayRule,
-)
 from beaver.services.sapphire import enums as spe
 from beaver.services.sapphire import models as spm
 from beaver.services.sapphire import types as spt
 
 EventType = spe.EventType
+
+Frequency = hlm.Frequency
+
+Weekday = hlm.Weekday
+
+WeekdayRule = hlm.WeekdayRule
+
+RecurrenceRule = hlm.RecurrenceRule
+
+Recurrence = hlm.Recurrence
 
 
 @datamodel
@@ -40,7 +40,7 @@ class Show:
 
     @classmethod
     def map(cls, show: spm.Show, events: Sequence["Event"] | None) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(
             id=show.id, title=show.title, description=show.description, events=events
         )
@@ -75,8 +75,8 @@ class Event:
     """Recurrence of the event."""
 
     @classmethod
-    def merge(cls, ds: spm.Event, dt: hlm.Event, show: Show | None) -> "Event":
-        """Map to internal representation."""
+    def map(cls, ds: spm.Event, dt: hlm.Event, show: Show | None) -> "Event":
+        """Map from internal representation."""
         return Event(
             id=ds.id,
             type=ds.type,
@@ -96,6 +96,12 @@ EventInclude = spt.EventInclude
 EventWhereUniqueIdInput = spt._EventWhereUnique_id_Input  # noqa: SLF001
 
 type EventWhereUniqueInput = EventWhereUniqueIdInput
+
+Query = hlm.Query
+
+RecurringQuery = hlm.RecurringQuery
+
+TimeRangeQuery = hlm.TimeRangeQuery
 
 EventOrderByIdInput = spt._Event_id_OrderByInput  # noqa: SLF001
 
@@ -291,43 +297,3 @@ class DeleteResponse:
 
     event: Event | None
     """Event that was deleted."""
-
-
-__all__ = [
-    "CountRequest",
-    "CountResponse",
-    "CreateRequest",
-    "CreateResponse",
-    "DeleteRequest",
-    "DeleteResponse",
-    "Event",
-    "EventCreateInput",
-    "EventInclude",
-    "EventOrderByEndInput",
-    "EventOrderByIdInput",
-    "EventOrderByInput",
-    "EventOrderByShowIdInput",
-    "EventOrderByStartInput",
-    "EventOrderByTimezoneInput",
-    "EventOrderByTypeInput",
-    "EventType",
-    "EventUpdateInput",
-    "EventWhereInput",
-    "EventWhereUniqueIdInput",
-    "EventWhereUniqueInput",
-    "Frequency",
-    "GetRequest",
-    "GetResponse",
-    "ListRequest",
-    "ListResponse",
-    "Query",
-    "Recurrence",
-    "RecurrenceRule",
-    "RecurringQuery",
-    "Show",
-    "TimeRangeQuery",
-    "UpdateRequest",
-    "UpdateResponse",
-    "Weekday",
-    "WeekdayRule",
-]
