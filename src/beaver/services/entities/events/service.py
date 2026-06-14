@@ -3,15 +3,15 @@ from contextlib import contextmanager
 from typing import cast
 from uuid import UUID
 
-from beaver.services.howlite import errors as hle
-from beaver.services.howlite import models as hlm
-from beaver.services.howlite.service import HowliteService
-from beaver.services.mevents import errors as e
-from beaver.services.mevents import models as m
-from beaver.services.sapphire import errors as spe
-from beaver.services.sapphire import models as spm
-from beaver.services.sapphire import types as spt
-from beaver.services.sapphire.service import SapphireService
+from beaver.services.data.howlite import errors as he
+from beaver.services.data.howlite import models as hm
+from beaver.services.data.howlite.service import HowliteService
+from beaver.services.data.sapphire import errors as se
+from beaver.services.data.sapphire import models as sm
+from beaver.services.data.sapphire import types as st
+from beaver.services.data.sapphire.service import SapphireService
+from beaver.services.entities.events import errors as e
+from beaver.services.entities.events import models as m
 
 
 class EventsService:
@@ -25,9 +25,9 @@ class EventsService:
     def _handle_errors(self) -> Generator[None]:
         try:
             yield
-        except spe.DataError as ex:
+        except se.DataError as ex:
             raise e.ValidationError from ex
-        except (hle.ServiceError, spe.ServiceError) as ex:
+        except (he.ServiceError, se.ServiceError) as ex:
             raise e.ServiceError from ex
 
     async def _where_with_query(
@@ -36,7 +36,7 @@ class EventsService:
         if query is None:
             return where
 
-        request = hlm.QueryEventsRequest(query=query)
+        request = hm.QueryEventsRequest(query=query)
 
         with self._handle_errors():
             response = await self._howlite.query_events(request)
@@ -55,7 +55,7 @@ class EventsService:
 
         return where
 
-    async def _merge_event(self, dsevent: spm.Event, dtevent: hlm.Event) -> m.Event:
+    async def _merge_event(self, dsevent: sm.Event, dtevent: hm.Event) -> m.Event:
         if dsevent.show is not None:
             show = await self._map_show(dsevent.show)
         else:
@@ -63,15 +63,15 @@ class EventsService:
 
         return m.Event.map(dsevent, dtevent, show)
 
-    async def _map_event(self, dsevent: spm.Event) -> m.Event:
-        request = hlm.GetEventRequest(id=UUID(dsevent.id))
+    async def _map_event(self, dsevent: sm.Event) -> m.Event:
+        request = hm.GetEventRequest(id=UUID(dsevent.id))
 
         with self._handle_errors():
             response = await self._howlite.get_event(request)
 
         return await self._merge_event(dsevent, response.event)
 
-    async def _map_show(self, dsshow: spm.Show) -> m.Show:
+    async def _map_show(self, dsshow: sm.Show) -> m.Show:
         if dsshow.events is not None:
             events = [await self._map_event(event) for event in dsshow.events]
         else:
@@ -95,25 +95,25 @@ class EventsService:
         where: m.EventWhereInput | None,
         include: m.EventInclude | None,
         order: m.EventOrderByInput | Sequence[m.EventOrderByInput] | None,
-    ) -> Sequence[spm.Event]:
+    ) -> Sequence[sm.Event]:
         with self._handle_errors():
             return await self._sapphire.event.find_many(
                 take=limit,
                 skip=offset,
                 where=where,
                 include=include,
-                order=cast("list[spt.EventOrderByInput]", list(order))
+                order=cast("list[st.EventOrderByInput]", list(order))
                 if isinstance(order, Sequence)
-                else cast("spt.EventOrderByInput | None", order),
+                else cast("st.EventOrderByInput | None", order),
             )
 
     async def _list_howlite_events(
-        self, dsevents: Sequence[spm.Event]
-    ) -> Sequence[hlm.Event]:
+        self, dsevents: Sequence[sm.Event]
+    ) -> Sequence[hm.Event]:
         dtevents = []
 
         for dsevent in dsevents:
-            request = hlm.GetEventRequest(id=UUID(dsevent.id))
+            request = hm.GetEventRequest(id=UUID(dsevent.id))
 
             with self._handle_errors():
                 response = await self._howlite.get_event(request)
@@ -162,12 +162,12 @@ class EventsService:
 
     async def _get_sapphire_event(
         self, where: m.EventWhereUniqueInput, include: m.EventInclude | None
-    ) -> spm.Event | None:
+    ) -> sm.Event | None:
         with self._handle_errors():
             return await self._sapphire.event.find_unique(where=where, include=include)
 
-    async def _get_howlite_event(self, dsevent: spm.Event) -> hlm.Event:
-        request = hlm.GetEventRequest(id=UUID(dsevent.id))
+    async def _get_howlite_event(self, dsevent: sm.Event) -> hm.Event:
+        request = hm.GetEventRequest(id=UUID(dsevent.id))
 
         with self._handle_errors():
             response = await self._howlite.get_event(request)
@@ -191,8 +191,8 @@ class EventsService:
         data: m.EventCreateInput,
         include: m.EventInclude | None,
         transaction: SapphireService,
-    ) -> spm.Event:
-        d: spt.EventCreateInput = {"type": data["type"]}
+    ) -> sm.Event:
+        d: st.EventCreateInput = {"type": data["type"]}
         if "id" in data:
             d["id"] = data["id"]
         if "showId" in data:
@@ -202,16 +202,16 @@ class EventsService:
             return await transaction.event.create(data=d, include=include)
 
     async def _create_howlite_event(
-        self, data: m.EventCreateInput, dsevent: spm.Event
-    ) -> hlm.Event:
-        dtevent = hlm.Event(
+        self, data: m.EventCreateInput, dsevent: sm.Event
+    ) -> hm.Event:
+        dtevent = hm.Event(
             id=UUID(dsevent.id),
             start=data["start"],
             end=data["end"],
             timezone=data["timezone"],
             recurrence=data.get("recurrence"),
         )
-        request = hlm.UpsertEventRequest(event=dtevent)
+        request = hm.UpsertEventRequest(event=dtevent)
 
         with self._handle_errors():
             response = await self._howlite.upsert_event(request)
@@ -235,8 +235,8 @@ class EventsService:
         where: m.EventWhereUniqueInput,
         include: m.EventInclude | None,
         transaction: SapphireService,
-    ) -> spm.Event | None:
-        d: spt.EventUpdateInput = {}
+    ) -> sm.Event | None:
+        d: st.EventUpdateInput = {}
         if "id" in data:
             d["id"] = data["id"]
         if "type" in data:
@@ -246,14 +246,14 @@ class EventsService:
             return await transaction.event.update(data=d, where=where, include=include)
 
     async def _update_howlite_event(
-        self, data: m.EventUpdateInput, odsevent: spm.Event, ndsevent: spm.Event
-    ) -> hlm.Event:
+        self, data: m.EventUpdateInput, odsevent: sm.Event, ndsevent: sm.Event
+    ) -> hm.Event:
         with self._handle_errors():
-            request = hlm.GetEventRequest(id=UUID(odsevent.id))
+            request = hm.GetEventRequest(id=UUID(odsevent.id))
             response = await self._howlite.get_event(request)
             odtevent = response.event
 
-        ndtevent = hlm.Event(
+        ndtevent = hm.Event(
             id=UUID(ndsevent.id),
             start=data.get("start", odtevent.start),
             end=data.get("end", odtevent.end),
@@ -262,12 +262,12 @@ class EventsService:
         )
 
         if odtevent.id != ndtevent.id:
-            request = hlm.DeleteEventRequest(id=odtevent.id)
+            request = hm.DeleteEventRequest(id=odtevent.id)
 
             with self._handle_errors():
                 await self._howlite.delete_event(request)
 
-        request = hlm.UpsertEventRequest(event=ndtevent)
+        request = hm.UpsertEventRequest(event=ndtevent)
 
         with self._handle_errors():
             response = await self._howlite.upsert_event(request)
@@ -295,18 +295,18 @@ class EventsService:
         where: m.EventWhereUniqueInput,
         include: m.EventInclude | None,
         transaction: SapphireService,
-    ) -> spm.Event | None:
+    ) -> sm.Event | None:
         with self._handle_errors():
             return await transaction.event.delete(where=where, include=include)
 
-    async def _delete_howlite_event(self, dsevent: spm.Event) -> hlm.Event:
-        get_event_request = hlm.GetEventRequest(id=UUID(dsevent.id))
+    async def _delete_howlite_event(self, dsevent: sm.Event) -> hm.Event:
+        get_event_request = hm.GetEventRequest(id=UUID(dsevent.id))
 
         with self._handle_errors():
             get_event_response = await self._howlite.get_event(get_event_request)
 
         dtevent = get_event_response.event
-        delete_event_request = hlm.DeleteEventRequest(id=dtevent.id)
+        delete_event_request = hm.DeleteEventRequest(id=dtevent.id)
 
         with self._handle_errors():
             await self._howlite.delete_event(delete_event_request)

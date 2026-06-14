@@ -3,10 +3,9 @@ from contextlib import contextmanager
 
 from beaver.api.routes.instances import errors as e
 from beaver.api.routes.instances import models as m
-from beaver.services.instances import errors as ie
-from beaver.services.instances import models as im
-from beaver.services.instances.service import InstancesService
-from beaver.utils.time import naiveutcnow
+from beaver.services.entities.instances import errors as ie
+from beaver.services.entities.instances import models as im
+from beaver.services.entities.instances.service import InstancesService
 
 
 class Service:
@@ -26,11 +25,9 @@ class Service:
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List instances."""
-        now = naiveutcnow()
-
         list_request = im.ListRequest(
-            start=request.start if request.start is not None else now,
-            end=request.end if request.end is not None else now,
+            start=request.start,
+            end=request.end,
             where=request.where,
             include=request.include,
             order=request.order,
@@ -41,7 +38,8 @@ class Service:
 
         return m.ListResponse(
             results=m.InstanceList(
-                count=len(list_response.instances),
+                start=request.start,
+                end=request.end,
                 instances=[
                     m.Instance.map(instance) for instance in list_response.instances
                 ],

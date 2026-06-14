@@ -6,8 +6,8 @@ from gracy import BaseEndpoint, GracefulRetry, Gracy, GracyConfig
 from httpx import BasicAuth, Response
 
 from beaver.config.models import HowliteConfig
-from beaver.services.howlite import models as m
-from beaver.services.howlite.queries import QueryBuilderFactory
+from beaver.services.data.howlite import models as m
+from beaver.services.data.howlite.queries import QueryBuilderFactory
 from beaver.services.icalendar.service import ICalendarService
 
 

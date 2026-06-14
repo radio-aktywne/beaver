@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Literal, TypedDict
 
 from beaver.models.base import datamodel
-from beaver.services.mevents import models as em
+from beaver.services.entities.events import models as em
 
 EventType = em.EventType
 

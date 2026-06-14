@@ -3,9 +3,9 @@ from contextlib import contextmanager
 
 from beaver.api.routes.events import errors as e
 from beaver.api.routes.events import models as m
-from beaver.services.mevents import errors as ee
-from beaver.services.mevents import models as em
-from beaver.services.mevents.service import EventsService
+from beaver.services.entities.events import errors as ee
+from beaver.services.entities.events import models as em
+from beaver.services.entities.events.service import EventsService
 
 
 class Service:

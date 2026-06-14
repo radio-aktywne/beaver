@@ -4,15 +4,15 @@ from contextlib import contextmanager
 from typing import cast
 from uuid import UUID
 
-from beaver.services.howlite import errors as hle
-from beaver.services.howlite import models as hlm
-from beaver.services.howlite.service import HowliteService
-from beaver.services.sapphire import errors as spe
-from beaver.services.sapphire import models as spm
-from beaver.services.sapphire import types as spt
-from beaver.services.sapphire.service import SapphireService
-from beaver.services.shows import errors as e
-from beaver.services.shows import models as m
+from beaver.services.data.howlite import errors as he
+from beaver.services.data.howlite import models as hm
+from beaver.services.data.howlite.service import HowliteService
+from beaver.services.data.sapphire import errors as se
+from beaver.services.data.sapphire import models as sm
+from beaver.services.data.sapphire import types as st
+from beaver.services.data.sapphire.service import SapphireService
+from beaver.services.entities.shows import errors as e
+from beaver.services.entities.shows import models as m
 
 
 class ShowsService:
@@ -26,13 +26,13 @@ class ShowsService:
     def _handle_errors(self) -> Generator[None]:
         try:
             yield
-        except spe.DataError as ex:
+        except se.DataError as ex:
             raise e.ValidationError from ex
-        except (hle.ServiceError, spe.ServiceError) as ex:
+        except (he.ServiceError, se.ServiceError) as ex:
             raise e.ServiceError from ex
 
-    async def _map_event(self, dsevent: spm.Event) -> m.Event:
-        request = hlm.GetEventRequest(id=UUID(dsevent.id))
+    async def _map_event(self, dsevent: sm.Event) -> m.Event:
+        request = hm.GetEventRequest(id=UUID(dsevent.id))
 
         with self._handle_errors():
             res = await self._howlite.get_event(request)
@@ -44,7 +44,7 @@ class ShowsService:
 
         return m.Event.map(dsevent, res.event, show)
 
-    async def _map_show(self, dsshow: spm.Show) -> m.Show:
+    async def _map_show(self, dsshow: sm.Show) -> m.Show:
         if dsshow.events is not None:
             events = [await self._map_event(event) for event in dsshow.events]
         else:
@@ -92,15 +92,15 @@ class ShowsService:
         """Create show."""
         with self._handle_errors():
             show = await self._sapphire.show.create(
-                data=cast("spt.ShowCreateInput", request.data), include=request.include
+                data=cast("st.ShowCreateInput", request.data), include=request.include
             )
 
         show = await self._map_show(show)
         return m.CreateResponse(show=show)
 
     async def _update_handle_events(
-        self, transaction: SapphireService, old: spm.Show, new: spm.Show
-    ) -> Sequence[spm.Event]:
+        self, transaction: SapphireService, old: sm.Show, new: sm.Show
+    ) -> Sequence[sm.Event]:
         events = []
 
         if new.id != old.id:
@@ -123,7 +123,7 @@ class ShowsService:
                     return m.UpdateResponse(show=None)
 
                 new = await transaction.show.update(
-                    data=cast("spt.ShowUpdateInput", request.data),
+                    data=cast("st.ShowUpdateInput", request.data),
                     where=request.where,
                     include=request.include,
                 )
@@ -137,8 +137,8 @@ class ShowsService:
         return m.UpdateResponse(show=new)
 
     async def _delete_handle_events(
-        self, transaction: SapphireService, show: spm.Show
-    ) -> Sequence[spm.Event]:
+        self, transaction: SapphireService, show: sm.Show
+    ) -> Sequence[sm.Event]:
         events = await transaction.event.find_many(where={"showId": show.id})
 
         await transaction.event.delete_many(
@@ -146,7 +146,7 @@ class ShowsService:
         )
 
         for event in events:
-            req = hlm.DeleteEventRequest(id=UUID(event.id))
+            req = hm.DeleteEventRequest(id=UUID(event.id))
             await self._howlite.delete_event(req)
 
         return events

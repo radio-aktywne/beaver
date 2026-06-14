@@ -16,8 +16,8 @@ from beaver.api.openapi import OpenAPIConfigBuilder
 from beaver.api.plugins.pydantic import PydanticPlugin
 from beaver.api.routes.router import router
 from beaver.config.models import Config
-from beaver.services.howlite.service import HowliteService
-from beaver.services.sapphire.service import SapphireService
+from beaver.services.data.howlite.service import HowliteService
+from beaver.services.data.sapphire.service import SapphireService
 from beaver.state import State
 
 

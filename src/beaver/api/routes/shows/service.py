@@ -3,9 +3,9 @@ from contextlib import contextmanager
 
 from beaver.api.routes.shows import errors as e
 from beaver.api.routes.shows import models as m
-from beaver.services.shows import errors as se
-from beaver.services.shows import models as sm
-from beaver.services.shows.service import ShowsService
+from beaver.services.entities.shows import errors as se
+from beaver.services.entities.shows import models as sm
+from beaver.services.entities.shows.service import ShowsService
 
 
 class Service:

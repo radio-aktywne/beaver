@@ -4,22 +4,22 @@ from typing import NotRequired, Self, TypedDict
 from zoneinfo import ZoneInfo
 
 from beaver.models.base import datamodel
-from beaver.services.howlite import models as hlm
-from beaver.services.sapphire import enums as spe
-from beaver.services.sapphire import models as spm
-from beaver.services.sapphire import types as spt
+from beaver.services.data.howlite import models as hm
+from beaver.services.data.sapphire import enums as se
+from beaver.services.data.sapphire import models as sm
+from beaver.services.data.sapphire import types as st
 
-EventType = spe.EventType
+EventType = se.EventType
 
-Frequency = hlm.Frequency
+Frequency = hm.Frequency
 
-Weekday = hlm.Weekday
+Weekday = hm.Weekday
 
-WeekdayRule = hlm.WeekdayRule
+WeekdayRule = hm.WeekdayRule
 
-RecurrenceRule = hlm.RecurrenceRule
+RecurrenceRule = hm.RecurrenceRule
 
-Recurrence = hlm.Recurrence
+Recurrence = hm.Recurrence
 
 
 @datamodel
@@ -39,7 +39,7 @@ class Show:
     """Events belonging to the show."""
 
     @classmethod
-    def map(cls, show: spm.Show, events: Sequence["Event"] | None) -> Self:
+    def map(cls, show: sm.Show, events: Sequence["Event"] | None) -> Self:
         """Map from internal representation."""
         return cls(
             id=show.id, title=show.title, description=show.description, events=events
@@ -75,7 +75,7 @@ class Event:
     """Recurrence of the event."""
 
     @classmethod
-    def map(cls, ds: spm.Event, dt: hlm.Event, show: Show | None) -> "Event":
+    def map(cls, ds: sm.Event, dt: hm.Event, show: Show | None) -> "Event":
         """Map from internal representation."""
         return Event(
             id=ds.id,
@@ -89,43 +89,43 @@ class Event:
         )
 
 
-EventWhereInput = spt.EventWhereInput
+EventWhereInput = st.EventWhereInput
 
-EventInclude = spt.EventInclude
+EventInclude = st.EventInclude
 
-EventWhereUniqueIdInput = spt._EventWhereUnique_id_Input  # noqa: SLF001
+EventWhereUniqueIdInput = st._EventWhereUnique_id_Input  # noqa: SLF001
 
 type EventWhereUniqueInput = EventWhereUniqueIdInput
 
-Query = hlm.Query
+Query = hm.Query
 
-RecurringQuery = hlm.RecurringQuery
+RecurringQuery = hm.RecurringQuery
 
-TimeRangeQuery = hlm.TimeRangeQuery
+TimeRangeQuery = hm.TimeRangeQuery
 
-EventOrderByIdInput = spt._Event_id_OrderByInput  # noqa: SLF001
+EventOrderByIdInput = st._Event_id_OrderByInput  # noqa: SLF001
 
-EventOrderByTypeInput = spt._Event_type_OrderByInput  # noqa: SLF001
+EventOrderByTypeInput = st._Event_type_OrderByInput  # noqa: SLF001
 
-EventOrderByShowIdInput = spt._Event_showId_OrderByInput  # noqa: SLF001
+EventOrderByShowIdInput = st._Event_showId_OrderByInput  # noqa: SLF001
 
 
 class EventOrderByStartInput(TypedDict, total=True):
     """Order by start time."""
 
-    start: spt.SortOrder
+    start: st.SortOrder
 
 
 class EventOrderByEndInput(TypedDict, total=True):
     """Order by end time."""
 
-    end: spt.SortOrder
+    end: st.SortOrder
 
 
 class EventOrderByTimezoneInput(TypedDict, total=True):
     """Order by timezone."""
 
-    timezone: spt.SortOrder
+    timezone: st.SortOrder
 
 
 type EventOrderByInput = (
@@ -138,7 +138,7 @@ type EventOrderByInput = (
 )
 
 
-class EventCreateInput(spt.EventCreateWithoutRelationsInput):
+class EventCreateInput(st.EventCreateWithoutRelationsInput):
     """Input data to create an event."""
 
     start: datetime
@@ -154,7 +154,7 @@ class EventCreateInput(spt.EventCreateWithoutRelationsInput):
     """Recurrence of the event."""
 
 
-class EventUpdateInput(spt.EventUpdateManyMutationInput, total=False):
+class EventUpdateInput(st.EventUpdateManyMutationInput, total=False):
     """Input data to update an event."""
 
     start: datetime

@@ -4,22 +4,22 @@ from typing import Self
 from zoneinfo import ZoneInfo
 
 from beaver.models.base import datamodel
-from beaver.services.howlite import models as hlm
-from beaver.services.sapphire import enums as spe
-from beaver.services.sapphire import models as spm
-from beaver.services.sapphire import types as spt
+from beaver.services.data.howlite import models as hm
+from beaver.services.data.sapphire import enums as se
+from beaver.services.data.sapphire import models as sm
+from beaver.services.data.sapphire import types as st
 
-EventType = spe.EventType
+EventType = se.EventType
 
-Frequency = hlm.Frequency
+Frequency = hm.Frequency
 
-Weekday = hlm.Weekday
+Weekday = hm.Weekday
 
-WeekdayRule = hlm.WeekdayRule
+WeekdayRule = hm.WeekdayRule
 
-RecurrenceRule = hlm.RecurrenceRule
+RecurrenceRule = hm.RecurrenceRule
 
-Recurrence = hlm.Recurrence
+Recurrence = hm.Recurrence
 
 
 @datamodel
@@ -51,7 +51,7 @@ class Event:
     """Recurrence of the event."""
 
     @classmethod
-    def map(cls, ds: spm.Event, dt: hlm.Event, show: "Show | None") -> "Event":
+    def map(cls, ds: sm.Event, dt: hm.Event, show: "Show | None") -> "Event":
         """Map from internal representation."""
         return Event(
             id=ds.id,
@@ -82,36 +82,36 @@ class Show:
     """Events belonging to the show."""
 
     @classmethod
-    def map(cls, show: spm.Show, events: Sequence[Event] | None) -> Self:
+    def map(cls, show: sm.Show, events: Sequence[Event] | None) -> Self:
         """Map from internal representation."""
         return cls(
             id=show.id, title=show.title, description=show.description, events=events
         )
 
 
-ShowWhereInput = spt.ShowWhereInput
+ShowWhereInput = st.ShowWhereInput
 
-ShowInclude = spt.ShowInclude
+ShowInclude = st.ShowInclude
 
-ShowWhereUniqueIdInput = spt._ShowWhereUnique_id_Input  # noqa: SLF001
+ShowWhereUniqueIdInput = st._ShowWhereUnique_id_Input  # noqa: SLF001
 
-ShowWhereUniqueTitleInput = spt._ShowWhereUnique_title_Input  # noqa: SLF001
+ShowWhereUniqueTitleInput = st._ShowWhereUnique_title_Input  # noqa: SLF001
 
 type ShowWhereUniqueInput = ShowWhereUniqueIdInput | ShowWhereUniqueTitleInput
 
-ShowOrderByIdInput = spt._Show_id_OrderByInput  # noqa: SLF001
+ShowOrderByIdInput = st._Show_id_OrderByInput  # noqa: SLF001
 
-ShowOrderByTitleInput = spt._Show_title_OrderByInput  # noqa: SLF001
+ShowOrderByTitleInput = st._Show_title_OrderByInput  # noqa: SLF001
 
-ShowOrderByDescriptionInput = spt._Show_description_OrderByInput  # noqa: SLF001
+ShowOrderByDescriptionInput = st._Show_description_OrderByInput  # noqa: SLF001
 
 type ShowOrderByInput = (
     ShowOrderByIdInput | ShowOrderByTitleInput | ShowOrderByDescriptionInput
 )
 
-ShowCreateInput = spt.ShowCreateWithoutRelationsInput
+ShowCreateInput = st.ShowCreateWithoutRelationsInput
 
-ShowUpdateInput = spt.ShowUpdateManyMutationInput
+ShowUpdateInput = st.ShowUpdateManyMutationInput
 
 
 @datamodel
