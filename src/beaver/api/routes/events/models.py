@@ -5,7 +5,7 @@ from uuid import UUID
 from pydantic import Field
 
 from beaver.models.base import SerializableModel, datamodel
-from beaver.services.mevents import models as em
+from beaver.services.entities.events import models as em
 from beaver.utils.time import NaiveDatetime, Timezone
 
 type Second = Annotated[int, Field(ge=0, le=60)]

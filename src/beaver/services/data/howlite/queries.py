@@ -3,7 +3,7 @@ from collections.abc import Mapping, Sequence
 from datetime import UTC
 from xml.etree import ElementTree as ET
 
-from beaver.services.howlite import models as m
+from beaver.services.data.howlite import models as m
 from beaver.services.icalendar.service import ICalendarService
 
 

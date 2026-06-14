@@ -12,7 +12,7 @@ from beaver.api.routes.shows import errors as e
 from beaver.api.routes.shows import models as m
 from beaver.api.routes.shows.service import Service
 from beaver.models.base import Jsonable, Serializable
-from beaver.services.shows.service import ShowsService
+from beaver.services.entities.shows.service import ShowsService
 from beaver.state import State
 
 

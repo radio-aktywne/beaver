@@ -1,8 +1,8 @@
 from litestar.datastructures import State as LitestarState
 
 from beaver.config.models import Config
-from beaver.services.howlite.service import HowliteService
-from beaver.services.sapphire.service import SapphireService
+from beaver.services.data.howlite.service import HowliteService
+from beaver.services.data.sapphire.service import SapphireService
 
 
 class State(LitestarState):

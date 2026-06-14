@@ -6,7 +6,7 @@ from beaver.config.builder import ConfigBuilder
 from beaver.config.errors import ConfigError
 from beaver.console import FallbackConsoleBuilder
 from beaver.server import Server
-from beaver.services.sapphire.migrator import SapphireMigrator
+from beaver.services.data.sapphire.migrator import SapphireMigrator
 
 cli = CliBuilder().build()
 

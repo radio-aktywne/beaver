@@ -5,7 +5,7 @@ from uuid import UUID
 from pydantic import Field
 
 from beaver.models.base import SerializableModel, datamodel
-from beaver.services.instances import models as im
+from beaver.services.entities.instances import models as im
 from beaver.utils.time import NaiveDatetime, Timezone
 
 type Second = Annotated[int, Field(ge=0, le=60)]
@@ -243,16 +243,19 @@ class Instance(SerializableModel):
 class InstanceList(SerializableModel):
     """List of instances."""
 
-    count: int
-    """Total number of instances that matched the query."""
+    start: NaiveDatetime
+    """Start datetime in UTC used to filter instances."""
+
+    end: NaiveDatetime
+    """End datetime in UTC used to filter instances."""
 
     instances: Sequence[Instance]
     """Instances that matched the request."""
 
 
-type ListRequestStart = NaiveDatetime | None
+type ListRequestStart = NaiveDatetime
 
-type ListRequestEnd = NaiveDatetime | None
+type ListRequestEnd = NaiveDatetime
 
 type ListRequestWhere = im.InstanceWhereInput | None
 

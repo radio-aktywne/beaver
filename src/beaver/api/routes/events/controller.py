@@ -12,7 +12,7 @@ from beaver.api.routes.events import errors as e
 from beaver.api.routes.events import models as m
 from beaver.api.routes.events.service import Service
 from beaver.models.base import Jsonable, Serializable
-from beaver.services.mevents.service import EventsService
+from beaver.services.entities.events.service import EventsService
 from beaver.state import State
 
 

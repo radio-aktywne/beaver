@@ -12,10 +12,11 @@ from beaver.api.routes.instances import errors as e
 from beaver.api.routes.instances import models as m
 from beaver.api.routes.instances.service import Service
 from beaver.models.base import Jsonable, Serializable
+from beaver.services.entities.events.service import EventsService
+from beaver.services.entities.instances.service import InstancesService
 from beaver.services.icalendar.service import ICalendarService
-from beaver.services.instances.service import InstancesService
-from beaver.services.mevents.service import EventsService
 from beaver.state import State
+from beaver.utils.time import naiveutcnow
 
 
 class DependenciesBuilder:
@@ -51,13 +52,13 @@ class Controller(BaseController):
         start: Annotated[
             Jsonable[m.ListRequestStart] | None,
             Parameter(
-                description="Start datetime in UTC to filter instances.",
+                description="Start datetime in UTC to filter instances. Default is now.",
             ),
         ] = None,
         end: Annotated[
             Jsonable[m.ListRequestEnd] | None,
             Parameter(
-                description="End datetime in UTC to filter instances.",
+                description="End datetime in UTC to filter instances. Default is now.",
             ),
         ] = None,
         where: Annotated[
@@ -81,8 +82,8 @@ class Controller(BaseController):
     ) -> Response[Serializable[m.ListResponseResults]]:
         """List instances."""
         request = m.ListRequest(
-            start=start.root if start else None,
-            end=end.root if end else None,
+            start=start.root if start else naiveutcnow(),
+            end=end.root if end else naiveutcnow(),
             where=where.root if where else None,
             include=include.root if include else None,
             order=order.root if order else None,

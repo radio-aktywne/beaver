@@ -3,14 +3,14 @@ from contextlib import contextmanager
 from datetime import datetime
 from uuid import UUID
 
+from beaver.services.entities.events import errors as ee
+from beaver.services.entities.events import models as em
+from beaver.services.entities.events.service import EventsService
+from beaver.services.entities.instances import errors as e
+from beaver.services.entities.instances import models as m
 from beaver.services.icalendar import errors as ie
 from beaver.services.icalendar import models as im
 from beaver.services.icalendar.service import ICalendarService
-from beaver.services.instances import errors as e
-from beaver.services.instances import models as m
-from beaver.services.mevents import errors as ee
-from beaver.services.mevents import models as em
-from beaver.services.mevents.service import EventsService
 
 
 class InstancesService:
