@@ -33,28 +33,18 @@ class InstancesService:
         except ie.ServiceError as ex:
             raise e.ServiceError from ex
 
-    async def _get_events(
+    async def _list_events(
         self,
-        start: datetime,
-        end: datetime,
-        where: m.InstanceWhereInput | None,
-        include: m.InstanceInclude | None,
+        query: em.Query,
+        where: em.EventWhereInput | None = None,
+        include: em.EventInclude | None = None,
     ) -> Sequence[em.Event]:
         list_request = em.ListRequest(
             limit=None,
             offset=None,
-            where=where["event"]["is"]
-            if where and "event" in where and "is" in where["event"]
-            else {"NOT": [where["event"]["is_not"]]}
-            if where and "event" in where and "is_not" in where["event"]
-            else None,
-            query=em.TimeRangeQuery(start=start, end=end),
-            include=include["event"]["include"]
-            if include
-            and "event" in include
-            and not isinstance(include["event"], bool)
-            and "include" in include["event"]
-            else None,
+            where=where,
+            query=query,
+            include=include,
             order=None,
         )
 
@@ -63,13 +53,21 @@ class InstancesService:
 
         return list_response.events
 
-    def _get_event_instances(
+    async def _get_event(
         self,
-        event: em.Event,
-        start: datetime,
-        end: datetime,
-        include: m.InstanceInclude | None,
-    ) -> list[m.Instance]:
+        where: em.EventWhereUniqueInput,
+        include: em.EventInclude | None = None,
+    ) -> em.Event | None:
+        get_request = em.GetRequest(where=where, include=include)
+
+        with self._handle_errors():
+            get_response = await self._events.get(get_request)
+
+        return get_response.event
+
+    def _list_event_instances(
+        self, event: em.Event, start: datetime, end: datetime
+    ) -> Sequence[im.EventInstance]:
         ievent = im.Event(
             id=UUID(event.id),
             start=event.start,
@@ -79,19 +77,7 @@ class InstancesService:
         )
 
         with self._handle_errors():
-            instances = self._icalendar.expander.expand(ievent, start, end)
-
-        return [
-            m.Instance(
-                start=instance.start,
-                end=instance.end,
-                event_id=event.id,
-                event=event
-                if include and "event" in include and include["event"]
-                else None,
-            )
-            for instance in instances
-        ]
+            return self._icalendar.expander.expand(ievent, start, end)
 
     def _sort_instances(
         self, instances: list[m.Instance], order: m.InstanceOrderByInput | None
@@ -113,17 +99,73 @@ class InstancesService:
         return instances
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
-        """List all instances."""
-        events = await self._get_events(
-            request.start, request.end, request.where, request.include
+        """List instances."""
+        start = request.start
+        end = request.end
+        where = request.where
+        include = request.include
+
+        events = await self._list_events(
+            query=em.TimeRangeQuery(start=start, end=end),
+            where=where["event"]["is"]
+            if where and "event" in where and "is" in where["event"]
+            else {"NOT": [where["event"]["is_not"]]}
+            if where and "event" in where and "is_not" in where["event"]
+            else None,
+            include=include["event"]["include"]
+            if include
+            and "event" in include
+            and not isinstance(include["event"], bool)
+            and "include" in include["event"]
+            else None,
         )
+
         instances = [
-            instance
-            for event in events
-            for instance in self._get_event_instances(
-                event, request.start, request.end, request.include
+            m.Instance(
+                start=instance.start,
+                end=instance.end,
+                event_id=event.id,
+                event=event if include and include.get("event") else None,
             )
+            for event in events
+            for instance in self._list_event_instances(event, start, end)
         ]
         instances = self._sort_instances(instances, request.order)
 
         return m.ListResponse(instances=instances)
+
+    async def get(self, request: m.GetRequest) -> m.GetResponse:
+        """Get instance."""
+        where = request.where
+        include = request.include
+
+        event = await self._get_event(
+            where={"id": where["event_id"]},
+            include=include["event"]["include"]
+            if include
+            and "event" in include
+            and not isinstance(include["event"], bool)
+            and "include" in include["event"]
+            else None,
+        )
+
+        if event is None:
+            return m.GetResponse(instance=None)
+
+        instances = self._list_event_instances(event, where["start"], where["start"])
+        instance = next(
+            (instance for instance in instances if instance.start == where["start"]),
+            None,
+        )
+
+        if instance is None:
+            return m.GetResponse(instance=None)
+
+        return m.GetResponse(
+            instance=m.Instance(
+                start=instance.start,
+                end=instance.end,
+                event_id=event.id,
+                event=event if include and include.get("event") else None,
+            )
+        )

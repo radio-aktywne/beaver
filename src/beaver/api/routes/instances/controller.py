@@ -7,7 +7,7 @@ from litestar.di import Provide
 from litestar.params import Parameter
 from litestar.response import Response
 
-from beaver.api.exceptions import BadRequestException
+from beaver.api.exceptions import BadRequestException, NotFoundException
 from beaver.api.routes.instances import errors as e
 from beaver.api.routes.instances import models as m
 from beaver.api.routes.instances.service import Service
@@ -94,3 +94,46 @@ class Controller(BaseController):
             raise BadRequestException from ex
 
         return Response(Serializable(response.results))
+
+    @handlers.get(
+        path="/{eventId:str}/{start:str}",
+        summary="Get instance",
+        raises=[BadRequestException, NotFoundException],
+    )
+    async def get(
+        self,
+        service: Service,
+        eventId: Annotated[  # noqa: N803
+            Serializable[m.GetRequestEventId],
+            Parameter(
+                description="Identifier of the event that the instance to get belongs to.",
+            ),
+        ],
+        start: Annotated[
+            Serializable[m.GetRequestStart],
+            Parameter(
+                description="Start datetime of the instance to get in event timezone.",
+            ),
+        ],
+        include: Annotated[
+            Jsonable[m.GetRequestInclude] | None,
+            Parameter(
+                description="Relations to include in the response.",
+            ),
+        ] = None,
+    ) -> Response[Serializable[m.GetResponseInstance]]:
+        """Get an instance by event ID and start datetime."""
+        request = m.GetRequest(
+            event_id=eventId.root,
+            start=start.root,
+            include=include.root if include else None,
+        )
+
+        try:
+            response = await service.get(request)
+        except e.ValidationError as ex:
+            raise BadRequestException from ex
+        except e.InstanceNotFoundError as ex:
+            raise NotFoundException from ex
+
+        return Response(Serializable(response.instance))

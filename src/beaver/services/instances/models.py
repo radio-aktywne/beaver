@@ -56,6 +56,16 @@ class InstanceWhereInput(TypedDict, total=False):
     """Event relation filter."""
 
 
+class InstanceWhereUniqueInput(TypedDict, total=True):
+    """Instance unique arguments for searching."""
+
+    event_id: str
+    """Identifier of the event that the instance belongs to."""
+
+    start: datetime
+    """Start datetime of the instance in event timezone."""
+
+
 class EventArgsFromInstance(TypedDict, total=False):
     """Event arguments to include when querying instances."""
 
@@ -116,3 +126,22 @@ class ListResponse:
 
     instances: Sequence[Instance]
     """List of instances that match the filter."""
+
+
+@datamodel
+class GetRequest:
+    """Request to get an instance."""
+
+    where: InstanceWhereUniqueInput
+    """Unique filter to apply to find an instance."""
+
+    include: InstanceInclude | None
+    """Relations to include in the response."""
+
+
+@datamodel
+class GetResponse:
+    """Response for getting an instance."""
+
+    instance: Instance | None
+    """Instance that matches the filter."""

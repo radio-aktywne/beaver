@@ -60,7 +60,7 @@ class ShowsService:
         return m.CountResponse(count=count)
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
-        """List all shows."""
+        """List shows."""
         with self._handle_errors():
             shows = await self._sapphire.show.find_many(
                 take=request.limit,

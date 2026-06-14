@@ -262,6 +262,14 @@ type ListRequestOrder = im.InstanceOrderByInput | None
 
 type ListResponseResults = InstanceList
 
+type GetRequestEventId = UUID
+
+type GetRequestStart = NaiveDatetime
+
+type GetRequestInclude = im.InstanceInclude | None
+
+type GetResponseInstance = Instance | None
+
 
 @datamodel
 class ListRequest:
@@ -289,3 +297,25 @@ class ListResponse:
 
     results: ListResponseResults
     """List of instances."""
+
+
+@datamodel
+class GetRequest:
+    """Request to get an instance."""
+
+    event_id: GetRequestEventId
+    """Identifier of the event that the instance to get belongs to."""
+
+    start: GetRequestStart
+    """Start datetime of the instance to get in event timezone."""
+
+    include: GetRequestInclude
+    """Relations to include in the response."""
+
+
+@datamodel
+class GetResponse:
+    """Response for getting an instance."""
+
+    instance: GetResponseInstance
+    """Instance that matched the request."""
