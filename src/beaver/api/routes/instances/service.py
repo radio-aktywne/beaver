@@ -47,3 +47,18 @@ class Service:
                 ],
             )
         )
+
+    async def get(self, request: m.GetRequest) -> m.GetResponse:
+        """Get instance."""
+        get_request = im.GetRequest(
+            where={"event_id": str(request.event_id), "start": request.start},
+            include=request.include,
+        )
+
+        with self._handle_errors():
+            get_response = await self._instances.get(get_request)
+
+        if get_response.instance is None:
+            raise e.InstanceNotFoundError(request.event_id, request.start)
+
+        return m.GetResponse(instance=m.Instance.map(get_response.instance))

@@ -144,7 +144,7 @@ class EventsService:
         return list(events)
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
-        """List all events."""
+        """List events."""
         where = await self._where_with_query(request.where, request.query)
 
         dsevents = await self._list_sapphire_events(
