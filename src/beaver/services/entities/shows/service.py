@@ -31,26 +31,26 @@ class ShowsService:
         except (he.ServiceError, se.ServiceError) as ex:
             raise e.ServiceError from ex
 
-    async def _map_event(self, dsevent: sm.Event) -> m.Event:
-        request = hm.GetEventRequest(id=UUID(dsevent.id))
+    async def _map_event(self, sevent: sm.Event) -> m.Event:
+        request = hm.GetEventRequest(id=UUID(sevent.id))
 
         with self._handle_errors():
             res = await self._howlite.get_event(request)
 
-        if dsevent.show is not None:
-            show = await self._map_show(dsevent.show)
+        if sevent.show is not None:
+            show = await self._map_show(sevent.show)
         else:
             show = None
 
-        return m.Event.map(dsevent, res.event, show)
+        return m.Event.map(sevent, res.event, show)
 
-    async def _map_show(self, dsshow: sm.Show) -> m.Show:
-        if dsshow.events is not None:
-            events = [await self._map_event(event) for event in dsshow.events]
+    async def _map_show(self, sshow: sm.Show) -> m.Show:
+        if sshow.events is not None:
+            events = [await self._map_event(event) for event in sshow.events]
         else:
             events = None
 
-        return m.Show.map(dsshow, events)
+        return m.Show.map(sshow, events)
 
     async def count(self, request: m.CountRequest) -> m.CountResponse:
         """Count shows."""

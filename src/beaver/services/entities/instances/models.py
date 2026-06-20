@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Literal, TypedDict
 
 from beaver.models.base import datamodel
@@ -17,6 +17,10 @@ WeekdayRule = em.WeekdayRule
 
 RecurrenceRule = em.RecurrenceRule
 
+Inclusion = em.Inclusion
+
+Exclusion = em.Exclusion
+
 Recurrence = em.Recurrence
 
 Event = em.Event
@@ -29,8 +33,8 @@ class Instance:
     start: datetime
     """Start datetime of the instance in event timezone."""
 
-    end: datetime
-    """End datetime of the instance in event timezone."""
+    duration: timedelta
+    """Duration of the instance."""
 
     event_id: str
     """Identifier of the event that the instance belongs to."""
@@ -90,14 +94,14 @@ class InstanceOrderByStartInput(TypedDict, total=True):
     """Order for start datetime of the instance."""
 
 
-class InstanceOrderByEndInput(TypedDict, total=True):
-    """Order by end datetime of the instance."""
+class InstanceOrderByDurationInput(TypedDict, total=True):
+    """Order by duration of the instance."""
 
-    end: SortOrder
-    """Order for end datetime of the instance."""
+    duration: SortOrder
+    """Order for duration of the instance."""
 
 
-type InstanceOrderByInput = InstanceOrderByStartInput | InstanceOrderByEndInput
+type InstanceOrderByInput = InstanceOrderByStartInput | InstanceOrderByDurationInput
 
 
 @datamodel

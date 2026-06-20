@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Self
 from zoneinfo import ZoneInfo
 
@@ -18,6 +18,10 @@ Weekday = hm.Weekday
 WeekdayRule = hm.WeekdayRule
 
 RecurrenceRule = hm.RecurrenceRule
+
+Inclusion = hm.Inclusion
+
+Exclusion = hm.Exclusion
 
 Recurrence = hm.Recurrence
 
@@ -41,8 +45,8 @@ class Event:
     start: datetime
     """Start datetime of the event in event timezone."""
 
-    end: datetime
-    """End datetime of the event in event timezone."""
+    duration: timedelta
+    """Duration of the event."""
 
     timezone: ZoneInfo
     """Timezone of the event."""
@@ -59,7 +63,7 @@ class Event:
             show_id=ds.showId,
             show=show,
             start=dt.start,
-            end=dt.end,
+            duration=dt.duration,
             timezone=dt.timezone,
             recurrence=dt.recurrence,
         )

@@ -2,13 +2,13 @@ from collections.abc import Sequence
 from typing import Annotated, Self
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import Field, PositiveInt
 
 from beaver.models.base import SerializableModel, datamodel
 from beaver.services.entities.instances import models as im
-from beaver.utils.time import NaiveDatetime, Timezone
+from beaver.utils.time import NaiveDatetime, Timedelta, Timezone
 
-type Second = Annotated[int, Field(ge=0, le=60)]
+type Second = Annotated[int, Field(ge=0, le=59)]
 
 type Minute = Annotated[int, Field(ge=0, le=59)]
 
@@ -51,10 +51,10 @@ class RecurrenceRule(SerializableModel):
     until: NaiveDatetime | None = None
     """End datetime of the recurrence in UTC."""
 
-    count: int | None = None
+    count: PositiveInt | None = None
     """Number of occurrences of the recurrence."""
 
-    interval: int | None = None
+    interval: PositiveInt | None = None
     """Interval of the recurrence."""
 
     by_seconds: Sequence[Second] | None = None
@@ -81,7 +81,7 @@ class RecurrenceRule(SerializableModel):
     by_months: Sequence[Month] | None = None
     """Months of the recurrence."""
 
-    by_set_positions: Sequence[int] | None = None
+    by_set_positions: Sequence[Yearday] | None = None
     """Set positions of the recurrence."""
 
     week_start: im.Weekday | None = None
@@ -112,29 +112,57 @@ class RecurrenceRule(SerializableModel):
         )
 
 
+class Inclusion(SerializableModel):
+    """Inclusion data."""
+
+    start: NaiveDatetime
+    """Start datetime of the included instance in event timezone."""
+
+    @classmethod
+    def map(cls, instance: im.Inclusion) -> Self:
+        """Map from internal representation."""
+        return cls(start=instance.start)
+
+
+class Exclusion(SerializableModel):
+    """Exclusion data."""
+
+    start: NaiveDatetime
+    """Start datetime of the excluded instance in event timezone."""
+
+    @classmethod
+    def map(cls, instance: im.Exclusion) -> Self:
+        """Map from internal representation."""
+        return cls(start=instance.start)
+
+
 class Recurrence(SerializableModel):
     """Recurrence data."""
 
-    rule: RecurrenceRule | None = None
+    rule: RecurrenceRule
     """Rule of the recurrence."""
 
-    include: Sequence[NaiveDatetime] | None = None
-    """Included datetimes of the recurrence in event timezone."""
+    include: Sequence[Inclusion] | None = None
+    """Included instances of the recurrence."""
 
-    exclude: Sequence[NaiveDatetime] | None = None
-    """Excluded datetimes of the recurrence in event timezone."""
+    exclude: Sequence[Exclusion] | None = None
+    """Excluded instances of the recurrence."""
 
     @classmethod
     def map(cls, recurrence: im.Recurrence) -> Self:
         """Map from internal representation."""
         return cls(
-            rule=(
-                RecurrenceRule.map(recurrence.rule)
-                if recurrence.rule is not None
+            rule=RecurrenceRule.map(recurrence.rule),
+            include=(
+                [Inclusion.map(i) for i in recurrence.include]
+                if recurrence.include is not None
                 else None
             ),
-            include=recurrence.include,
-            exclude=recurrence.exclude,
+            exclude=(
+                [Exclusion.map(e) for e in recurrence.exclude]
+                if recurrence.exclude is not None
+                else None
+            ),
         )
 
 
@@ -186,8 +214,8 @@ class Event(SerializableModel):
     start: NaiveDatetime
     """Start datetime of the event in event timezone."""
 
-    end: NaiveDatetime
-    """End datetime of the event in event timezone."""
+    duration: Timedelta
+    """Duration of the event."""
 
     timezone: Timezone
     """Timezone of the event."""
@@ -204,7 +232,7 @@ class Event(SerializableModel):
             show_id=UUID(event.show_id),
             show=Show.map(event.show) if event.show is not None else None,
             start=event.start,
-            end=event.end,
+            duration=event.duration,
             timezone=event.timezone,
             recurrence=(
                 Recurrence.map(event.recurrence)
@@ -220,8 +248,8 @@ class Instance(SerializableModel):
     start: NaiveDatetime
     """Start datetime of the instance in event timezone."""
 
-    end: NaiveDatetime
-    """End datetime of the instance in event timezone."""
+    duration: Timedelta
+    """Duration of the instance."""
 
     event_id: UUID
     """Identifier of the event that the instance belongs to."""
@@ -234,7 +262,7 @@ class Instance(SerializableModel):
         """Map from internal representation."""
         return cls(
             start=instance.start,
-            end=instance.end,
+            duration=instance.duration,
             event_id=UUID(instance.event_id),
             event=Event.map(instance.event) if instance.event is not None else None,
         )

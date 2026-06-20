@@ -67,11 +67,11 @@ class InstancesService:
 
     def _list_event_instances(
         self, event: em.Event, start: datetime, end: datetime
-    ) -> Sequence[im.EventInstance]:
+    ) -> Sequence[im.Instance]:
         ievent = im.Event(
             id=UUID(event.id),
             start=event.start,
-            end=event.end,
+            duration=event.duration,
             timezone=event.timezone,
             recurrence=event.recurrence,
         )
@@ -89,11 +89,11 @@ class InstancesService:
                 reverse=order["start"] == "desc",
             )
 
-        if order and "end" in order:
+        if order and "duration" in order:
             return sorted(
                 instances,
-                key=lambda instance: instance.end,
-                reverse=order["end"] == "desc",
+                key=lambda instance: instance.duration,
+                reverse=order["duration"] == "desc",
             )
 
         return instances
@@ -123,7 +123,7 @@ class InstancesService:
         instances = [
             m.Instance(
                 start=instance.start,
-                end=instance.end,
+                duration=instance.duration,
                 event_id=event.id,
                 event=event if include and include.get("event") else None,
             )
@@ -164,7 +164,7 @@ class InstancesService:
         return m.GetResponse(
             instance=m.Instance(
                 start=instance.start,
-                end=instance.end,
+                duration=instance.duration,
                 event_id=event.id,
                 event=event if include and include.get("event") else None,
             )
