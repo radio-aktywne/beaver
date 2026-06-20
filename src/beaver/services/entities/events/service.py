@@ -25,6 +25,8 @@ class EventsService:
     def _handle_errors(self) -> Generator[None]:
         try:
             yield
+        except se.UniqueViolationError as ex:
+            raise e.ConflictError from ex
         except se.DataError as ex:
             raise e.ValidationError from ex
         except (he.ServiceError, se.ServiceError) as ex:

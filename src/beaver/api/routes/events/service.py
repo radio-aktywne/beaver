@@ -18,6 +18,8 @@ class Service:
     def _handle_errors(self) -> Generator[None]:
         try:
             yield
+        except ee.ConflictError as ex:
+            raise e.ConflictError from ex
         except ee.ValidationError as ex:
             raise e.ValidationError from ex
         except ee.ServiceError as ex:

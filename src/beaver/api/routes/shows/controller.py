@@ -7,7 +7,11 @@ from litestar.di import Provide
 from litestar.params import Body, Parameter
 from litestar.response import Response
 
-from beaver.api.exceptions import BadRequestException, NotFoundException
+from beaver.api.exceptions import (
+    BadRequestException,
+    ConflictException,
+    NotFoundException,
+)
 from beaver.api.routes.shows import errors as e
 from beaver.api.routes.shows import models as m
 from beaver.api.routes.shows.service import Service
@@ -125,7 +129,7 @@ class Controller(BaseController):
 
     @handlers.post(
         summary="Create show",
-        raises=[BadRequestException],
+        raises=[BadRequestException, ConflictException],
     )
     async def create(
         self,
@@ -151,6 +155,8 @@ class Controller(BaseController):
 
         try:
             response = await service.create(request)
+        except e.ConflictError as ex:
+            raise ConflictException from ex
         except e.ValidationError as ex:
             raise BadRequestException from ex
 
@@ -159,7 +165,7 @@ class Controller(BaseController):
     @handlers.patch(
         "/{id:str}",
         summary="Update show",
-        raises=[BadRequestException, NotFoundException],
+        raises=[BadRequestException, NotFoundException, ConflictException],
     )
     async def update(
         self,
@@ -190,6 +196,8 @@ class Controller(BaseController):
 
         try:
             response = await service.update(request)
+        except e.ConflictError as ex:
+            raise ConflictException from ex
         except e.ValidationError as ex:
             raise BadRequestException from ex
         except e.ShowNotFoundError as ex:
