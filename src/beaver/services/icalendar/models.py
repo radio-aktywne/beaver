@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import StrEnum
 from uuid import UUID
 from zoneinfo import ZoneInfo
@@ -90,17 +90,33 @@ class RecurrenceRule:
 
 
 @datamodel
+class Inclusion:
+    """Inclusion data."""
+
+    start: datetime
+    """Start datetime of the included instance in event timezone."""
+
+
+@datamodel
+class Exclusion:
+    """Exclusion data."""
+
+    start: datetime
+    """Start datetime of the excluded instance in event timezone."""
+
+
+@datamodel
 class Recurrence:
     """Recurrence data."""
 
-    rule: RecurrenceRule | None = None
+    rule: RecurrenceRule
     """Rule of the recurrence."""
 
-    include: Sequence[datetime] | None = None
-    """Included datetimes of the recurrence in event timezone."""
+    include: Sequence[Inclusion] | None = None
+    """Included instances of the recurrence."""
 
-    exclude: Sequence[datetime] | None = None
-    """Excluded datetimes of the recurrence in event timezone."""
+    exclude: Sequence[Exclusion] | None = None
+    """Excluded instances of the recurrence."""
 
 
 @datamodel
@@ -113,8 +129,8 @@ class Event:
     start: datetime
     """Start datetime of the event in event timezone."""
 
-    end: datetime
-    """End datetime of the event in event timezone."""
+    duration: timedelta
+    """Duration of the event."""
 
     timezone: ZoneInfo
     """Timezone of the event."""
@@ -124,19 +140,19 @@ class Event:
 
 
 @datamodel
+class Instance:
+    """Instance data."""
+
+    start: datetime
+    """Start datetime of the instance in event timezone."""
+
+    duration: timedelta
+    """Duration of the instance."""
+
+
+@datamodel
 class Calendar:
     """Calendar date."""
 
     events: Sequence[Event]
     """Events of the calendar."""
-
-
-@datamodel
-class EventInstance:
-    """Event instance data."""
-
-    start: datetime
-    """Start datetime of the event instance in event timezone."""
-
-    end: datetime
-    """End datetime of the event instance in event timezone."""

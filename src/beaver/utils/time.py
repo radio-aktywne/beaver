@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from email.utils import format_datetime, parsedate_to_datetime
 from typing import Annotated, Any
 from zoneinfo import ZoneInfo
@@ -34,6 +34,12 @@ type Timezone = Annotated[
     ZoneInfo,
     BeforeValidator(validate_timezone, json_schema_input_type=str),
     Field(examples=["Europe/Warsaw"]),
+]
+
+
+type Timedelta = Annotated[
+    timedelta,
+    Field(examples=["PT1H"]),
 ]
 
 

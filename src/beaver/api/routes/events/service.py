@@ -68,27 +68,32 @@ class Service:
 
         return m.GetResponse(event=m.Event.map(get_response.event))
 
-    async def create(self, request: m.CreateRequest) -> m.CreateResponse:
-        """Create event."""
-        create_request_data: em.EventCreateInput = {
-            "type": request.data["type"],
-            "start": request.data["start"],
-            "end": request.data["end"],
-            "timezone": request.data["timezone"],
+    def _map_event_create_input(self, data: m.EventCreateInput) -> em.EventCreateInput:
+        """Map event create input to internal representation."""
+        edata: em.EventCreateInput = {
+            "type": data["type"],
+            "start": data["start"],
+            "duration": data["duration"],
+            "timezone": data["timezone"],
         }
-        if "id" in request.data:
-            create_request_data["id"] = request.data["id"]
-        if "showId" in request.data:
-            create_request_data["showId"] = request.data["showId"]
-        if "recurrence" in request.data:
-            create_request_data["recurrence"] = (
-                request.data["recurrence"].emap()
-                if request.data["recurrence"] is not None
-                else None
+
+        if "id" in data:
+            edata["id"] = data["id"]
+
+        if "showId" in data:
+            edata["showId"] = data["showId"]
+
+        if "recurrence" in data:
+            edata["recurrence"] = (
+                data["recurrence"].emap() if data["recurrence"] is not None else None
             )
 
+        return edata
+
+    async def create(self, request: m.CreateRequest) -> m.CreateResponse:
+        """Create event."""
         create_request = em.CreateRequest(
-            data=create_request_data, include=request.include
+            data=self._map_event_create_input(request.data), include=request.include
         )
 
         with self._handle_errors():
@@ -96,28 +101,117 @@ class Service:
 
         return m.CreateResponse(event=m.Event.map(create_response.event))
 
-    async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
-        """Update event."""
-        update_request_data: em.EventUpdateInput = {}
-        if "id" in request.data:
-            update_request_data["id"] = request.data["id"]
-        if "type" in request.data:
-            update_request_data["type"] = request.data["type"]
-        if "start" in request.data:
-            update_request_data["start"] = request.data["start"]
-        if "end" in request.data:
-            update_request_data["end"] = request.data["end"]
-        if "timezone" in request.data:
-            update_request_data["timezone"] = request.data["timezone"]
-        if "recurrence" in request.data:
-            update_request_data["recurrence"] = (
-                request.data["recurrence"].emap()
-                if request.data["recurrence"] is not None
+    def _map_recurrence_rule_update_input(  # noqa: C901, PLR0912
+        self, data: m.RecurrenceRuleUpdateInput
+    ) -> em.RecurrenceRuleUpdateInput:
+        """Map recurrence rule update input to internal representation."""
+        edata: em.RecurrenceRuleUpdateInput = {}
+
+        if "frequency" in data:
+            edata["frequency"] = data["frequency"]
+
+        if "until" in data:
+            edata["until"] = data["until"]
+
+        if "count" in data:
+            edata["count"] = data["count"]
+
+        if "interval" in data:
+            edata["interval"] = data["interval"]
+
+        if "by_seconds" in data:
+            edata["by_seconds"] = data["by_seconds"]
+
+        if "by_minutes" in data:
+            edata["by_minutes"] = data["by_minutes"]
+
+        if "by_hours" in data:
+            edata["by_hours"] = data["by_hours"]
+
+        if "by_weekdays" in data:
+            edata["by_weekdays"] = (
+                [w.emap() for w in by_weekdays]
+                if (by_weekdays := data["by_weekdays"]) is not None
                 else None
             )
 
+        if "by_monthdays" in data:
+            edata["by_monthdays"] = data["by_monthdays"]
+
+        if "by_yeardays" in data:
+            edata["by_yeardays"] = data["by_yeardays"]
+
+        if "by_weeks" in data:
+            edata["by_weeks"] = data["by_weeks"]
+
+        if "by_months" in data:
+            edata["by_months"] = data["by_months"]
+
+        if "by_set_positions" in data:
+            edata["by_set_positions"] = data["by_set_positions"]
+
+        if "week_start" in data:
+            edata["week_start"] = data["week_start"]
+
+        return edata
+
+    def _map_recurrence_update_input(
+        self, data: m.RecurrenceUpdateInput
+    ) -> em.RecurrenceUpdateInput:
+        """Map recurrence update input to internal representation."""
+        edata: em.RecurrenceUpdateInput | None = {}
+
+        if "rule" in data:
+            edata["rule"] = self._map_recurrence_rule_update_input(data["rule"])
+
+        if "include" in data:
+            edata["include"] = (
+                [i.emap() for i in include]
+                if (include := data["include"]) is not None
+                else None
+            )
+
+        if "exclude" in data:
+            edata["exclude"] = (
+                [e.emap() for e in exclude]
+                if (exclude := data["exclude"]) is not None
+                else None
+            )
+
+        return edata
+
+    def _map_event_update_input(self, data: m.EventUpdateInput) -> em.EventUpdateInput:
+        """Map event update input to internal representation."""
+        edata: em.EventUpdateInput = {}
+
+        if "id" in data:
+            edata["id"] = data["id"]
+
+        if "type" in data:
+            edata["type"] = data["type"]
+
+        if "start" in data:
+            edata["start"] = data["start"]
+
+        if "duration" in data:
+            edata["duration"] = data["duration"]
+
+        if "timezone" in data:
+            edata["timezone"] = data["timezone"]
+
+        if "recurrence" in data:
+            edata["recurrence"] = (
+                self._map_recurrence_update_input(data["recurrence"])
+                if data["recurrence"] is not None
+                else None
+            )
+
+        return edata
+
+    async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
+        """Update event."""
         update_request = em.UpdateRequest(
-            data=update_request_data,
+            data=self._map_event_update_input(request.data),
             where={"id": str(request.id)},
             include=request.include,
         )

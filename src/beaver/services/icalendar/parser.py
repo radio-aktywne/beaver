@@ -1,13 +1,13 @@
 from collections import OrderedDict
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import cast
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
 import icalendar
-from icalendar.prop import WEEKDAY_RULE, vDDDLists
-from icalendar.timezone import tzid_from_dt
+from icalendar.prop import WEEKDAY_RULE
+from icalendar.timezone import tzid_from_dt, tzid_from_tzinfo
 
 from beaver.services.icalendar import errors as e
 from beaver.services.icalendar import models as m
@@ -60,34 +60,13 @@ class ICalendarParser:
         """Convert an icalendar.vDatetime object to a datetime."""
         return vdt.dt
 
-    def datetimes_to_ical(self, dts: Sequence[datetime]) -> vDDDLists:
-        """Convert a sequence of datetimes to a vDDDLists object."""
-        tzs = {tzid_from_dt(dt) for dt in dts}
+    def ical_to_timedelta(self, vduration: icalendar.vDuration) -> timedelta:
+        """Convert an icalendar.vDuration object to a timedelta."""
+        return vduration.dt
 
-        if len(tzs) > 1:
-            raise e.DifferentTimezonesError
-
-        tz = tzs.pop()
-
-        if tz == "Etc/UTC":
-            tz = "UTC"
-
-        icaldts = [self.datetime_to_ical(dt) for dt in dts]
-        icaldts = ",".join([icaldt.to_ical().decode("utf-8") for icaldt in icaldts])
-        icaldts = vDDDLists.from_ical(icaldts, tz)
-        return vDDDLists(icaldts)
-
-    def ical_to_datetimes(self, vdts: vDDDLists) -> Sequence[datetime]:
-        """Convert a vDDDLists object to a sequence of datetimes."""
-        tz = vdts.params.get("TZID")
-
-        icaldts = vdts.to_ical().decode("utf-8")
-        icaldts = icaldts.split(",")
-        icaldts = [
-            icalendar.vDatetime(icalendar.vDatetime.from_ical(icaldt, tz))
-            for icaldt in icaldts
-        ]
-        return [self.ical_to_datetime(icaldt) for icaldt in icaldts]
+    def timedelta_to_ical(self, td: timedelta) -> icalendar.vDuration:
+        """Convert a timedelta to an icalendar.vDuration object."""
+        return icalendar.vDuration(td)
 
     def frequency_to_ical(self, frequency: m.Frequency) -> icalendar.vFrequency:
         """Convert a Frequency to an icalendar.vFrequency object."""
@@ -297,69 +276,70 @@ class ICalendarParser:
     def ical_to_recurrence_rule(self, vrecur: icalendar.vRecur) -> m.RecurrenceRule:  # noqa: PLR0912, PLR0915, C901
         """Convert an icalendar.vRecur object to a RecurrenceRule object."""
         frequency = self.ical_to_frequency(
-            icalendar.vFrequency(next(iter(vrecur.get("freq"))))
+            icalendar.vFrequency(next(iter(vrecur["FREQ"])))
         )
 
-        until = vrecur.get("until")
+        until = vrecur.get("UNTIL")
         if until is not None:
             until = self.ical_to_datetime(icalendar.vDatetime(next(iter(until))))
             until = until.astimezone(UTC).replace(tzinfo=None)
 
-        count = vrecur.get("count")
+        count = vrecur.get("COUNT")
         if count is not None:
             count = self.ical_to_int(icalendar.vInt(next(iter(count))))
 
-        interval = vrecur.get("interval")
+        interval = vrecur.get("INTERVAL")
         if interval is not None:
             interval = self.ical_to_int(icalendar.vInt(next(iter(interval))))
-        by_seconds = vrecur.get("bysecond")
+
+        by_seconds = vrecur.get("BYSECOND")
         if by_seconds is not None:
             by_seconds = [icalendar.vInt(second) for second in by_seconds]
             by_seconds = self.ical_to_ints(by_seconds)
 
-        by_minutes = vrecur.get("byminute")
+        by_minutes = vrecur.get("BYMINUTE")
         if by_minutes is not None:
             by_minutes = [icalendar.vInt(minute) for minute in by_minutes]
             by_minutes = self.ical_to_ints(by_minutes)
 
-        by_hours = vrecur.get("byhour")
+        by_hours = vrecur.get("BYHOUR")
         if by_hours is not None:
             by_hours = [icalendar.vInt(hour) for hour in by_hours]
             by_hours = self.ical_to_ints(by_hours)
 
-        by_weekdays = vrecur.get("byweekday")
+        by_weekdays = vrecur.get("BYDAY")
         if by_weekdays is not None:
             by_weekdays = [icalendar.vWeekday(weekday) for weekday in by_weekdays]
             by_weekdays = self.ical_to_weekday_rules(by_weekdays)
 
-        by_monthdays = vrecur.get("bymonthday")
+        by_monthdays = vrecur.get("BYMONTHDAY")
         if by_monthdays is not None:
             by_monthdays = [icalendar.vInt(monthday) for monthday in by_monthdays]
             by_monthdays = self.ical_to_ints(by_monthdays)
 
-        by_yeardays = vrecur.get("byyearday")
+        by_yeardays = vrecur.get("BYYEARDAY")
         if by_yeardays is not None:
             by_yeardays = [icalendar.vInt(yearday) for yearday in by_yeardays]
             by_yeardays = self.ical_to_ints(by_yeardays)
 
-        by_weeks = vrecur.get("byweekno")
+        by_weeks = vrecur.get("BYWEEKNO")
         if by_weeks is not None:
             by_weeks = [icalendar.vInt(week) for week in by_weeks]
             by_weeks = self.ical_to_ints(by_weeks)
 
-        by_months = vrecur.get("bymonth")
+        by_months = vrecur.get("BYMONTH")
         if by_months is not None:
             by_months = [icalendar.vInt(month) for month in by_months]
             by_months = self.ical_to_ints(by_months)
 
-        by_set_positions = vrecur.get("bysetpos")
+        by_set_positions = vrecur.get("BYSETPOS")
         if by_set_positions is not None:
             by_set_positions = [
                 icalendar.vInt(position) for position in by_set_positions
             ]
             by_set_positions = self.ical_to_ints(by_set_positions)
 
-        week_start = vrecur.get("wkst")
+        week_start = vrecur.get("WKST")
         if week_start is not None:
             week_start = self.ical_to_weekday(
                 icalendar.vWeekday(next(iter(week_start)))
@@ -382,84 +362,147 @@ class ICalendarParser:
             week_start=week_start,
         )
 
+    def inclusions_to_ical(
+        self, inclusions: Sequence[m.Inclusion], tz: ZoneInfo
+    ) -> Sequence[icalendar.vDDDLists]:
+        """Convert a sequence of Inclusion objects to a sequence of icalendar.vDDDLists objects."""
+        vdddlists = []
+
+        for inclusion in inclusions:
+            vdddl = icalendar.vDDDLists([inclusion.start.replace(tzinfo=tz)])
+
+            if tzid := tzid_from_tzinfo(tz):
+                vdddl.params["TZID"] = tzid
+
+            vdddlists.append(vdddl)
+
+        return vdddlists
+
+    def ical_to_inclusions(
+        self, vdddlists: Sequence[icalendar.vDDDLists], tz: ZoneInfo
+    ) -> Sequence[m.Inclusion]:
+        """Convert a sequence of icalendar.vDDDLists objects to a sequence of Inclusion objects."""
+        inclusions = []
+
+        for vdddlist in vdddlists:
+            for vdddtypes in vdddlist.dts:
+                dt = vdddtypes.dt
+                match dt:
+                    case datetime():
+                        start = dt.astimezone(tz).replace(tzinfo=None)
+                        inclusions.append(m.Inclusion(start=start))
+                    case date():
+                        start = datetime.combine(dt, datetime.min.time(), tzinfo=None)
+                        inclusions.append(m.Inclusion(start=start))
+                    case _:
+                        raise e.ValidationError
+
+        return inclusions
+
+    def exclusions_to_ical(
+        self, exclusions: Sequence[m.Exclusion], tz: ZoneInfo
+    ) -> Sequence[icalendar.vDDDLists]:
+        """Convert a sequence of Exclusion objects to a sequence of icalendar.vDDDLists objects."""
+        vdddlists = []
+
+        for exclusion in exclusions:
+            vdddl = icalendar.vDDDLists([exclusion.start.replace(tzinfo=tz)])
+
+            if tzid := tzid_from_tzinfo(tz):
+                vdddl.params["TZID"] = tzid
+
+            vdddlists.append(vdddl)
+
+        return vdddlists
+
+    def ical_to_exclusions(
+        self, vdddlists: Sequence[icalendar.vDDDLists], tz: ZoneInfo
+    ) -> Sequence[m.Exclusion]:
+        """Convert a sequence of icalendar.vDDDLists objects to a sequence of Exclusion objects."""
+        exclusions = []
+
+        for vdddl in vdddlists:
+            for vdddtypes in vdddl.dts:
+                dt = vdddtypes.dt
+                match dt:
+                    case datetime():
+                        start = dt.astimezone(tz).replace(tzinfo=None)
+                        exclusions.append(m.Exclusion(start=start))
+                    case date():
+                        start = datetime.combine(dt, datetime.min.time(), tzinfo=None)
+                        exclusions.append(m.Exclusion(start=start))
+                    case _:
+                        raise e.ValidationError
+
+        return exclusions
+
     def event_to_ical(self, event: m.Event) -> icalendar.Event:
         """Convert an Event object to an icalendar.Event object."""
         ical = icalendar.Event()
-        ical.add("uid", self.string_to_ical(str(event.id)))
+
+        uid = str(event.id)
+        ical.add("UID", self.string_to_ical(uid), encode=False)
 
         start = event.start.replace(tzinfo=event.timezone)
-        ical.add("dtstart", self.datetime_to_ical(start))
+        ical.add("DTSTART", self.datetime_to_ical(start), encode=False)
 
-        end = event.end.replace(tzinfo=event.timezone)
-        ical.add("dtend", self.datetime_to_ical(end))
+        duration = event.duration
+        ical.add("DURATION", self.timedelta_to_ical(duration), encode=False)
 
         recurrence = event.recurrence
         if recurrence is not None:
-            if recurrence.rule is not None:
-                ical.add("rrule", self.recurrence_rule_to_ical(recurrence.rule))
+            rrule = recurrence.rule
+            ical.add("RRULE", self.recurrence_rule_to_ical(rrule), encode=False)
+
+            timezone = event.timezone
+
             if recurrence.include is not None:
-                rdate = [dt.replace(tzinfo=event.timezone) for dt in recurrence.include]
-                ical.add("rdate", self.datetimes_to_ical(rdate))
+                rdate = self.inclusions_to_ical(recurrence.include, timezone)
+                ical.add("RDATE", rdate, encode=False)
+
             if recurrence.exclude is not None:
-                exdate = [
-                    dt.replace(tzinfo=event.timezone) for dt in recurrence.exclude
-                ]
-                ical.add("exdate", self.datetimes_to_ical(exdate))
+                exdate = self.exclusions_to_ical(recurrence.exclude, timezone)
+                ical.add("EXDATE", exdate, encode=False)
 
         return ical
 
     def ical_to_event(self, event: icalendar.Event) -> m.Event:
         """Convert an icalendar.Event object to an Event object."""
-        event_id = UUID(self.ical_to_string(event.get("uid")))
+        event_id = UUID(self.ical_to_string(event["UID"]))
 
-        start = event.get("dtstart")
-        end = event.get("dtend")
+        start = (
+            event.start
+            if isinstance(event.start, datetime)
+            else datetime.combine(event.start, datetime.min.time())
+        )
 
-        tz = tzid_from_dt(start.dt)
+        tz = tzid_from_dt(start)
         if tz is None:
             raise e.ValidationError
 
+        start = start.replace(tzinfo=None)
+        duration = event.duration
         tz = ZoneInfo(tz)
 
-        start = self.ical_to_datetime(start)
-        start = start.replace(tzinfo=None)
+        rrule = event.get("RRULE")
+        rdate = event.get("RDATE")
+        rdate = [rdate] if isinstance(rdate, icalendar.vDDDLists) else rdate
 
-        end = self.ical_to_datetime(end)
-        end = end.replace(tzinfo=None)
+        exdate = event.get("EXDATE")
+        exdate = [exdate] if isinstance(exdate, icalendar.vDDDLists) else exdate
 
-        rrule = event.get("rrule")
-        rdate = event.get("rdate")
-        exdate = event.get("exdate")
-
-        if rrule is None and rdate is None and exdate is None:
+        if rrule is None:
             recurrence = None
         else:
-            rule = self.ical_to_recurrence_rule(rrule) if rrule is not None else None
-
-            include = self.ical_to_datetimes(rdate) if rdate is not None else None
-            include = (
-                [dt.replace(tzinfo=None) for dt in include]
-                if include is not None
-                else None
-            )
-
-            exclude = self.ical_to_datetimes(exdate) if exdate is not None else None
-            exclude = (
-                [dt.replace(tzinfo=None) for dt in exclude]
-                if exclude is not None
-                else None
-            )
-
-            recurrence = m.Recurrence(
-                rule=rule,
-                include=include,
-                exclude=exclude,
-            )
+            rule = self.ical_to_recurrence_rule(rrule)
+            include = self.ical_to_inclusions(rdate, tz) if rdate else None
+            exclude = self.ical_to_exclusions(exdate, tz) if exdate else None
+            recurrence = m.Recurrence(rule=rule, include=include, exclude=exclude)
 
         return m.Event(
             id=event_id,
             start=start,
-            end=end,
+            duration=duration,
             timezone=tz,
             recurrence=recurrence,
         )

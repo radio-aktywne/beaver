@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import NotRequired, Self, TypedDict
 from zoneinfo import ZoneInfo
 
@@ -18,6 +18,10 @@ Weekday = hm.Weekday
 WeekdayRule = hm.WeekdayRule
 
 RecurrenceRule = hm.RecurrenceRule
+
+Inclusion = hm.Inclusion
+
+Exclusion = hm.Exclusion
 
 Recurrence = hm.Recurrence
 
@@ -65,8 +69,8 @@ class Event:
     start: datetime
     """Start datetime of the event in event timezone."""
 
-    end: datetime
-    """End datetime of the event in event timezone."""
+    duration: timedelta
+    """Duration of the event."""
 
     timezone: ZoneInfo
     """Timezone of the event."""
@@ -83,7 +87,7 @@ class Event:
             show_id=ds.showId,
             show=show,
             start=dt.start,
-            end=dt.end,
+            duration=dt.duration,
             timezone=dt.timezone,
             recurrence=dt.recurrence,
         )
@@ -144,8 +148,8 @@ class EventCreateInput(st.EventCreateWithoutRelationsInput):
     start: datetime
     """Start datetime of the event in event timezone."""
 
-    end: datetime
-    """End datetime of the event in event timezone."""
+    duration: timedelta
+    """Duration of the event."""
 
     timezone: ZoneInfo
     """Timezone of the event."""
@@ -154,19 +158,78 @@ class EventCreateInput(st.EventCreateWithoutRelationsInput):
     """Recurrence of the event."""
 
 
+class RecurrenceRuleUpdateInput(TypedDict, total=False):
+    """Input data to update a recurrence rule."""
+
+    frequency: Frequency
+    """Frequency of the recurrence."""
+
+    until: datetime | None
+    """End datetime of the recurrence in UTC."""
+
+    count: int | None
+    """Number of occurrences of the recurrence."""
+
+    interval: int | None
+    """Interval of the recurrence."""
+
+    by_seconds: Sequence[int] | None
+    """Seconds of the recurrence."""
+
+    by_minutes: Sequence[int] | None
+    """Minutes of the recurrence."""
+
+    by_hours: Sequence[int] | None
+    """Hours of the recurrence."""
+
+    by_weekdays: Sequence[WeekdayRule] | None
+    """Weekdays of the recurrence."""
+
+    by_monthdays: Sequence[int] | None
+    """Monthdays of the recurrence."""
+
+    by_yeardays: Sequence[int] | None
+    """Yeardays of the recurrence."""
+
+    by_weeks: Sequence[int] | None
+    """Weeks of the recurrence."""
+
+    by_months: Sequence[int] | None
+    """Months of the recurrence."""
+
+    by_set_positions: Sequence[int] | None
+    """Set positions of the recurrence."""
+
+    week_start: Weekday | None
+    """Start day of the week."""
+
+
+class RecurrenceUpdateInput(TypedDict, total=False):
+    """Input data to update a recurrence."""
+
+    rule: RecurrenceRuleUpdateInput
+    """Rule of the recurrence."""
+
+    include: Sequence[Inclusion] | None
+    """Included instances of the recurrence."""
+
+    exclude: Sequence[Exclusion] | None
+    """Excluded instances of the recurrence."""
+
+
 class EventUpdateInput(st.EventUpdateManyMutationInput, total=False):
     """Input data to update an event."""
 
     start: datetime
     """Start datetime of the event in event timezone."""
 
-    end: datetime
-    """End datetime of the event in event timezone."""
+    duration: timedelta
+    """Duration of the event."""
 
     timezone: ZoneInfo
     """Timezone of the event."""
 
-    recurrence: Recurrence | None
+    recurrence: RecurrenceUpdateInput | None
     """Recurrence of the event."""
 
 

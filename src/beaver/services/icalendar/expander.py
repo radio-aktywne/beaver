@@ -4,7 +4,6 @@ from zoneinfo import ZoneInfo
 
 import recurring_ical_events
 from icalendar import Event as vEvent
-from icalendar import vDatetime
 
 from beaver.services.icalendar import models as m
 from beaver.services.icalendar.parser import ICalendarParser
@@ -16,32 +15,24 @@ class EventExpander:
     def __init__(self, parser: ICalendarParser) -> None:
         self._parser = parser
 
-    def _normalize_datetime(self, vdt: vDatetime, tz: ZoneInfo) -> datetime:
-        dt = self._parser.ical_to_datetime(vdt)
-        dt = dt.astimezone(tz)
-        return dt.replace(tzinfo=None)
-
-    def _build_instance(self, vevent: vEvent, tz: ZoneInfo) -> m.EventInstance:
-        start = self._normalize_datetime(vevent["DTSTART"], tz)
-        end = self._normalize_datetime(vevent["DTEND"], tz)
-
-        return m.EventInstance(
-            start=start,
-            end=end,
+    def _build_instance(self, vevent: vEvent, tz: ZoneInfo) -> m.Instance:
+        return m.Instance(
+            start=vevent.start.astimezone(tz).replace(tzinfo=None)
+            if isinstance(vevent.start, datetime)
+            else datetime.combine(vevent.start, datetime.min.time(), tzinfo=None),
+            duration=vevent.duration,
         )
 
     def expand(
         self, event: m.Event, start: datetime, end: datetime
-    ) -> Sequence[m.EventInstance]:
+    ) -> Sequence[m.Instance]:
         """Expand the event into instances between start and end."""
         tz = event.timezone
 
         start = start.replace(tzinfo=UTC)
         end = end.replace(tzinfo=UTC)
 
-        calendar = m.Calendar(
-            events=[event],
-        )
+        calendar = m.Calendar(events=[event])
         calendar = self._parser.calendar_to_ical(calendar)
 
         components = recurring_ical_events.of(calendar).between(start, end)

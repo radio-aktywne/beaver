@@ -3,15 +3,27 @@ from datetime import datetime
 from uuid import UUID
 
 from beaver.models.base import datamodel
-from beaver.services.icalendar.models import (
-    Calendar,
-    Event,
-    Frequency,
-    Recurrence,
-    RecurrenceRule,
-    Weekday,
-    WeekdayRule,
-)
+from beaver.services.icalendar import models as im
+
+Frequency = im.Frequency
+
+Weekday = im.Weekday
+
+WeekdayRule = im.WeekdayRule
+
+RecurrenceRule = im.RecurrenceRule
+
+Inclusion = im.Inclusion
+
+Exclusion = im.Exclusion
+
+Recurrence = im.Recurrence
+
+Event = im.Event
+
+Instance = im.Instance
+
+Calendar = im.Calendar
 
 
 class Query:
@@ -109,27 +121,3 @@ class DeleteEventRequest:
 @datamodel
 class DeleteEventResponse:
     """Response for deleting an event."""
-
-
-__all__ = [
-    "Calendar",
-    "DeleteEventRequest",
-    "DeleteEventResponse",
-    "Event",
-    "Frequency",
-    "GetCalendarRequest",
-    "GetCalendarResponse",
-    "GetEventRequest",
-    "GetEventResponse",
-    "Query",
-    "QueryEventsRequest",
-    "QueryEventsResponse",
-    "Recurrence",
-    "RecurrenceRule",
-    "RecurringQuery",
-    "TimeRangeQuery",
-    "UpsertEventRequest",
-    "UpsertEventResponse",
-    "Weekday",
-    "WeekdayRule",
-]

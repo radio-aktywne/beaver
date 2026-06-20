@@ -55,29 +55,29 @@ class EventsService:
 
         return where
 
-    async def _merge_event(self, dsevent: sm.Event, dtevent: hm.Event) -> m.Event:
-        if dsevent.show is not None:
-            show = await self._map_show(dsevent.show)
+    async def _merge_event(self, sevent: sm.Event, hevent: hm.Event) -> m.Event:
+        if sevent.show is not None:
+            show = await self._map_show(sevent.show)
         else:
             show = None
 
-        return m.Event.map(dsevent, dtevent, show)
+        return m.Event.map(sevent, hevent, show)
 
-    async def _map_event(self, dsevent: sm.Event) -> m.Event:
-        request = hm.GetEventRequest(id=UUID(dsevent.id))
+    async def _map_event(self, sevent: sm.Event) -> m.Event:
+        request = hm.GetEventRequest(id=UUID(sevent.id))
 
         with self._handle_errors():
             response = await self._howlite.get_event(request)
 
-        return await self._merge_event(dsevent, response.event)
+        return await self._merge_event(sevent, response.event)
 
-    async def _map_show(self, dsshow: sm.Show) -> m.Show:
-        if dsshow.events is not None:
-            events = [await self._map_event(event) for event in dsshow.events]
+    async def _map_show(self, sshow: sm.Show) -> m.Show:
+        if sshow.events is not None:
+            events = [await self._map_event(event) for event in sshow.events]
         else:
             events = None
 
-        return m.Show.map(dsshow, events)
+        return m.Show.map(sshow, events)
 
     async def count(self, request: m.CountRequest) -> m.CountResponse:
         """Count events."""
@@ -108,20 +108,20 @@ class EventsService:
             )
 
     async def _list_howlite_events(
-        self, dsevents: Sequence[sm.Event]
+        self, sevents: Sequence[sm.Event]
     ) -> Sequence[hm.Event]:
-        dtevents = []
+        hevents = []
 
-        for dsevent in dsevents:
-            request = hm.GetEventRequest(id=UUID(dsevent.id))
+        for sevent in sevents:
+            request = hm.GetEventRequest(id=UUID(sevent.id))
 
             with self._handle_errors():
                 response = await self._howlite.get_event(request)
 
-            dtevent = response.event
-            dtevents.append(dtevent)
+            hevent = response.event
+            hevents.append(hevent)
 
-        return dtevents
+        return hevents
 
     async def _list_sort_events(
         self,
@@ -147,14 +147,14 @@ class EventsService:
         """List events."""
         where = await self._where_with_query(request.where, request.query)
 
-        dsevents = await self._list_sapphire_events(
+        sevents = await self._list_sapphire_events(
             request.limit, request.offset, where, request.include, request.order
         )
-        dtevents = await self._list_howlite_events(dsevents)
+        hevents = await self._list_howlite_events(sevents)
 
         events = [
             await self._merge_event(dsevent, dtevent)
-            for dsevent, dtevent in zip(dsevents, dtevents, strict=False)
+            for dsevent, dtevent in zip(sevents, hevents, strict=False)
         ]
         events = await self._list_sort_events(events, request.order)
 
@@ -166,8 +166,8 @@ class EventsService:
         with self._handle_errors():
             return await self._sapphire.event.find_unique(where=where, include=include)
 
-    async def _get_howlite_event(self, dsevent: sm.Event) -> hm.Event:
-        request = hm.GetEventRequest(id=UUID(dsevent.id))
+    async def _get_howlite_event(self, sevent: sm.Event) -> hm.Event:
+        request = hm.GetEventRequest(id=UUID(sevent.id))
 
         with self._handle_errors():
             response = await self._howlite.get_event(request)
@@ -176,13 +176,13 @@ class EventsService:
 
     async def get(self, request: m.GetRequest) -> m.GetResponse:
         """Get event."""
-        dsevent = await self._get_sapphire_event(request.where, request.include)
+        sevent = await self._get_sapphire_event(request.where, request.include)
 
-        if dsevent is None:
+        if sevent is None:
             return m.GetResponse(event=None)
 
-        dtevent = await self._get_howlite_event(dsevent)
-        event = await self._merge_event(dsevent, dtevent)
+        hevent = await self._get_howlite_event(sevent)
+        event = await self._merge_event(sevent, hevent)
 
         return m.GetResponse(event=event)
 
@@ -202,16 +202,16 @@ class EventsService:
             return await transaction.event.create(data=d, include=include)
 
     async def _create_howlite_event(
-        self, data: m.EventCreateInput, dsevent: sm.Event
+        self, data: m.EventCreateInput, sevent: sm.Event
     ) -> hm.Event:
-        dtevent = hm.Event(
-            id=UUID(dsevent.id),
+        hevent = hm.Event(
+            id=UUID(sevent.id),
             start=data["start"],
-            end=data["end"],
+            duration=data["duration"],
             timezone=data["timezone"],
             recurrence=data.get("recurrence"),
         )
-        request = hm.UpsertEventRequest(event=dtevent)
+        request = hm.UpsertEventRequest(event=hevent)
 
         with self._handle_errors():
             response = await self._howlite.upsert_event(request)
@@ -221,12 +221,12 @@ class EventsService:
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
         """Create event."""
         async with self._sapphire.tx() as transaction:
-            dsevent = await self._create_sapphire_event(
+            sevent = await self._create_sapphire_event(
                 request.data, request.include, transaction
             )
-            dtevent = await self._create_howlite_event(request.data, dsevent)
+            hevent = await self._create_howlite_event(request.data, sevent)
 
-        event = await self._merge_event(dsevent, dtevent)
+        event = await self._merge_event(sevent, hevent)
         return m.CreateResponse(event=event)
 
     async def _update_sapphire_event(
@@ -246,28 +246,86 @@ class EventsService:
             return await transaction.event.update(data=d, where=where, include=include)
 
     async def _update_howlite_event(
-        self, data: m.EventUpdateInput, odsevent: sm.Event, ndsevent: sm.Event
+        self, data: m.EventUpdateInput, osevent: sm.Event, nsevent: sm.Event
     ) -> hm.Event:
         with self._handle_errors():
-            request = hm.GetEventRequest(id=UUID(odsevent.id))
+            request = hm.GetEventRequest(id=UUID(osevent.id))
             response = await self._howlite.get_event(request)
-            odtevent = response.event
+            ohevent = response.event
 
-        ndtevent = hm.Event(
-            id=UUID(ndsevent.id),
-            start=data.get("start", odtevent.start),
-            end=data.get("end", odtevent.end),
-            timezone=data.get("timezone", odtevent.timezone),
-            recurrence=data.get("recurrence", odtevent.recurrence),
+        if "recurrence" not in data:
+            recurrence = ohevent.recurrence
+        elif data["recurrence"] is None:
+            recurrence = None
+        elif ohevent.recurrence is not None:
+            orr = ohevent.recurrence.rule
+            recurrence = hm.Recurrence(
+                rule=hm.RecurrenceRule(
+                    frequency=rule.get("frequency", orr.frequency),
+                    until=rule.get("until", orr.until),
+                    count=rule.get("count", orr.count),
+                    interval=rule.get("interval", orr.interval),
+                    by_seconds=rule.get("by_seconds", orr.by_seconds),
+                    by_minutes=rule.get("by_minutes", orr.by_minutes),
+                    by_hours=rule.get("by_hours", orr.by_hours),
+                    by_weekdays=rule.get("by_weekdays", orr.by_weekdays),
+                    by_monthdays=rule.get("by_monthdays", orr.by_monthdays),
+                    by_yeardays=rule.get("by_yeardays", orr.by_yeardays),
+                    by_weeks=rule.get("by_weeks", orr.by_weeks),
+                    by_months=rule.get("by_months", orr.by_months),
+                    by_set_positions=rule.get("by_set_positions", orr.by_set_positions),
+                    week_start=rule.get("week_start", orr.week_start),
+                )
+                if "rule" in data["recurrence"] and (rule := data["recurrence"]["rule"])
+                else orr,
+                include=data["recurrence"].get("include", ohevent.recurrence.include),
+                exclude=data["recurrence"].get("exclude", ohevent.recurrence.exclude),
+            )
+        else:
+            if "rule" not in data["recurrence"]:
+                raise e.PartialUpdateInsufficientDataError
+
+            rule = data["recurrence"]["rule"]
+
+            if "frequency" not in rule:
+                raise e.PartialUpdateInsufficientDataError
+
+            recurrence = hm.Recurrence(
+                rule=hm.RecurrenceRule(
+                    frequency=rule["frequency"],
+                    until=rule.get("until"),
+                    count=rule.get("count"),
+                    interval=rule.get("interval"),
+                    by_seconds=rule.get("by_seconds"),
+                    by_minutes=rule.get("by_minutes"),
+                    by_hours=rule.get("by_hours"),
+                    by_weekdays=rule.get("by_weekdays"),
+                    by_monthdays=rule.get("by_monthdays"),
+                    by_yeardays=rule.get("by_yeardays"),
+                    by_weeks=rule.get("by_weeks"),
+                    by_months=rule.get("by_months"),
+                    by_set_positions=rule.get("by_set_positions"),
+                    week_start=rule.get("week_start"),
+                ),
+                include=data["recurrence"].get("include"),
+                exclude=data["recurrence"].get("exclude"),
+            )
+
+        nhevent = hm.Event(
+            id=UUID(nsevent.id),
+            start=data.get("start", ohevent.start),
+            duration=data.get("duration", ohevent.duration),
+            timezone=data.get("timezone", ohevent.timezone),
+            recurrence=recurrence,
         )
 
-        if odtevent.id != ndtevent.id:
-            request = hm.DeleteEventRequest(id=odtevent.id)
+        if ohevent.id != nhevent.id:
+            request = hm.DeleteEventRequest(id=ohevent.id)
 
             with self._handle_errors():
                 await self._howlite.delete_event(request)
 
-        request = hm.UpsertEventRequest(event=ndtevent)
+        request = hm.UpsertEventRequest(event=nhevent)
 
         with self._handle_errors():
             response = await self._howlite.upsert_event(request)
@@ -277,17 +335,17 @@ class EventsService:
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update event."""
         async with self._sapphire.tx() as transaction:
-            odsevent = await self._get_sapphire_event(request.where, None)
-            ndsevent = await self._update_sapphire_event(
+            osevent = await self._get_sapphire_event(request.where, None)
+            nsevent = await self._update_sapphire_event(
                 request.data, request.where, request.include, transaction
             )
 
-            if odsevent is None or ndsevent is None:
+            if osevent is None or nsevent is None:
                 return m.UpdateResponse(event=None)
 
-            dtevent = await self._update_howlite_event(request.data, odsevent, ndsevent)
+            hevent = await self._update_howlite_event(request.data, osevent, nsevent)
 
-        event = await self._merge_event(ndsevent, dtevent)
+        event = await self._merge_event(nsevent, hevent)
         return m.UpdateResponse(event=event)
 
     async def _delete_sapphire_event(
@@ -305,25 +363,25 @@ class EventsService:
         with self._handle_errors():
             get_event_response = await self._howlite.get_event(get_event_request)
 
-        dtevent = get_event_response.event
-        delete_event_request = hm.DeleteEventRequest(id=dtevent.id)
+        hevent = get_event_response.event
+        delete_event_request = hm.DeleteEventRequest(id=hevent.id)
 
         with self._handle_errors():
             await self._howlite.delete_event(delete_event_request)
 
-        return dtevent
+        return hevent
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete event."""
         async with self._sapphire.tx() as transaction:
-            dsevent = await self._delete_sapphire_event(
+            sevent = await self._delete_sapphire_event(
                 request.where, request.include, transaction
             )
 
-            if dsevent is None:
+            if sevent is None:
                 return m.DeleteResponse(event=None)
 
-            dtevent = await self._delete_howlite_event(dsevent)
+            hevent = await self._delete_howlite_event(sevent)
 
-        event = await self._merge_event(dsevent, dtevent)
+        event = await self._merge_event(sevent, hevent)
         return m.DeleteResponse(event=event)
