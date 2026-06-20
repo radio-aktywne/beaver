@@ -105,6 +105,17 @@ type InstanceOrderByInput = InstanceOrderByStartInput | InstanceOrderByDurationI
 
 
 @datamodel
+class InstanceCreateInput:
+    """Data to create an instance."""
+
+    start: datetime
+    """Start datetime of the instance in event timezone."""
+
+    event_id: str
+    """Identifier of the event that the instance belongs to."""
+
+
+@datamodel
 class ListRequest:
     """Request to list instances."""
 
@@ -149,3 +160,22 @@ class GetResponse:
 
     instance: Instance | None
     """Instance that matches the filter."""
+
+
+@datamodel
+class CreateRequest:
+    """Request to create an instance."""
+
+    data: InstanceCreateInput
+    """Data to create an instance."""
+
+    include: InstanceInclude | None
+    """Relations to include in the response."""
+
+
+@datamodel
+class CreateResponse:
+    """Response for creating an instance."""
+
+    instance: Instance
+    """Instance that was created."""

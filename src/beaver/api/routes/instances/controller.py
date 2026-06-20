@@ -4,10 +4,14 @@ from typing import Annotated
 from litestar import Controller as BaseController
 from litestar import handlers
 from litestar.di import Provide
-from litestar.params import Parameter
+from litestar.params import Body, Parameter
 from litestar.response import Response
 
-from beaver.api.exceptions import BadRequestException, NotFoundException
+from beaver.api.exceptions import (
+    BadRequestException,
+    ConflictException,
+    NotFoundException,
+)
 from beaver.api.routes.instances import errors as e
 from beaver.api.routes.instances import models as m
 from beaver.api.routes.instances.service import Service
@@ -134,7 +138,42 @@ class Controller(BaseController):
             response = await service.get(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
-        except e.InstanceNotFoundError as ex:
+        except e.NotFoundError as ex:
             raise NotFoundException from ex
+
+        return Response(Serializable(response.instance))
+
+    @handlers.post(
+        summary="Create instance",
+        raises=[BadRequestException, ConflictException],
+    )
+    async def create(
+        self,
+        service: Service,
+        data: Annotated[
+            Serializable[m.CreateRequestData],
+            Body(
+                description="Data to create an instance.",
+            ),
+        ],
+        include: Annotated[
+            Jsonable[m.CreateRequestInclude] | None,
+            Parameter(
+                description="Relations to include in the response.",
+            ),
+        ] = None,
+    ) -> Response[Serializable[m.CreateResponseInstance]]:
+        """Create a new instance."""
+        request = m.CreateRequest(
+            data=data.root,
+            include=include.root if include else None,
+        )
+
+        try:
+            response = await service.create(request)
+        except e.ConflictError as ex:
+            raise ConflictException from ex
+        except e.ValidationError as ex:
+            raise BadRequestException from ex
 
         return Response(Serializable(response.instance))

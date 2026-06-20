@@ -1,6 +1,3 @@
-from uuid import UUID
-
-
 class ServiceError(Exception):
     """Base class for service errors."""
 
@@ -13,8 +10,5 @@ class ConflictError(ValidationError):
     """Raised when a conflict error occurs."""
 
 
-class EventNotFoundError(ServiceError):
+class NotFoundError(ServiceError):
     """Raised when event is not found."""
-
-    def __init__(self, event_id: UUID) -> None:
-        super().__init__(f"Event not found: {event_id}.")

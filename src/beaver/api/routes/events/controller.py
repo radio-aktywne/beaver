@@ -130,7 +130,7 @@ class Controller(BaseController):
             response = await service.get(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
-        except e.EventNotFoundError as ex:
+        except e.NotFoundError as ex:
             raise NotFoundException from ex
 
         return Response(Serializable(response.event))
@@ -210,7 +210,7 @@ class Controller(BaseController):
             raise ConflictException from ex
         except e.ValidationError as ex:
             raise BadRequestException from ex
-        except e.EventNotFoundError as ex:
+        except e.NotFoundError as ex:
             raise NotFoundException from ex
 
         return Response(Serializable(response.event))
@@ -237,5 +237,5 @@ class Controller(BaseController):
             await service.delete(request)
         except e.ValidationError as ex:
             raise BadRequestException from ex
-        except e.EventNotFoundError as ex:
+        except e.NotFoundError as ex:
             raise NotFoundException from ex

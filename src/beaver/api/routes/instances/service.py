@@ -59,6 +59,17 @@ class Service:
             get_response = await self._instances.get(get_request)
 
         if get_response.instance is None:
-            raise e.InstanceNotFoundError(request.event_id, request.start)
+            raise e.NotFoundError
 
         return m.GetResponse(instance=m.Instance.map(get_response.instance))
+
+    async def create(self, request: m.CreateRequest) -> m.CreateResponse:
+        """Create instance."""
+        create_request = im.CreateRequest(
+            data=request.data.map(), include=request.include
+        )
+
+        with self._handle_errors():
+            create_response = await self._instances.create(create_request)
+
+        return m.CreateResponse(instance=m.Instance.map(create_response.instance))
