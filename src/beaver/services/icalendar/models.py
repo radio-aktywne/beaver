@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from collections.abc import Set as AbstractSet
 from datetime import datetime, timedelta
 from enum import StrEnum
 from uuid import UUID
@@ -112,10 +113,10 @@ class Recurrence:
     rule: RecurrenceRule
     """Rule of the recurrence."""
 
-    include: Sequence[Inclusion] | None = None
+    include: AbstractSet[Inclusion] | None = None
     """Included instances of the recurrence."""
 
-    exclude: Sequence[Exclusion] | None = None
+    exclude: AbstractSet[Exclusion] | None = None
     """Excluded instances of the recurrence."""
 
 

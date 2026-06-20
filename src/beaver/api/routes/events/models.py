@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from collections.abc import Set as AbstractSet
 from typing import Annotated, Literal, NotRequired, Self, TypedDict
 from uuid import UUID
 
@@ -102,11 +103,9 @@ class RecurrenceRule(SerializableModel):
             by_seconds=rule.by_seconds,
             by_minutes=rule.by_minutes,
             by_hours=rule.by_hours,
-            by_weekdays=(
-                [WeekdayRule.imap(r) for r in rule.by_weekdays]
-                if rule.by_weekdays is not None
-                else None
-            ),
+            by_weekdays=[WeekdayRule.imap(r) for r in rule.by_weekdays]
+            if rule.by_weekdays is not None
+            else None,
             by_monthdays=rule.by_monthdays,
             by_yeardays=rule.by_yeardays,
             by_weeks=rule.by_weeks,
@@ -125,11 +124,9 @@ class RecurrenceRule(SerializableModel):
             by_seconds=self.by_seconds,
             by_minutes=self.by_minutes,
             by_hours=self.by_hours,
-            by_weekdays=(
-                [r.emap() for r in self.by_weekdays]
-                if self.by_weekdays is not None
-                else None
-            ),
+            by_weekdays=[r.emap() for r in self.by_weekdays]
+            if self.by_weekdays is not None
+            else None,
             by_monthdays=self.by_monthdays,
             by_yeardays=self.by_yeardays,
             by_weeks=self.by_weeks,
@@ -177,10 +174,10 @@ class Recurrence(SerializableModel):
     rule: RecurrenceRule
     """Rule of the recurrence."""
 
-    include: Sequence[Inclusion] | None = None
+    include: AbstractSet[Inclusion] | None = None
     """Included instances of the recurrence."""
 
-    exclude: Sequence[Exclusion] | None = None
+    exclude: AbstractSet[Exclusion] | None = None
     """Excluded instances of the recurrence."""
 
     @classmethod
@@ -188,28 +185,24 @@ class Recurrence(SerializableModel):
         """Map from internal representation."""
         return cls(
             rule=RecurrenceRule.imap(recurrence.rule),
-            include=(
-                [Inclusion.imap(i) for i in recurrence.include]
-                if recurrence.include is not None
-                else None
-            ),
-            exclude=(
-                [Exclusion.imap(e) for e in recurrence.exclude]
-                if recurrence.exclude is not None
-                else None
-            ),
+            include={Inclusion.imap(i) for i in recurrence.include}  # pyright: ignore[reportUnhashable]
+            if recurrence.include is not None
+            else None,
+            exclude={Exclusion.imap(e) for e in recurrence.exclude}  # pyright: ignore[reportUnhashable]
+            if recurrence.exclude is not None
+            else None,
         )
 
     def emap(self) -> em.Recurrence:
         """Map to internal representation."""
         return em.Recurrence(
             rule=self.rule.emap(),
-            include=(
-                [i.emap() for i in self.include] if self.include is not None else None
-            ),
-            exclude=(
-                [e.emap() for e in self.exclude] if self.exclude is not None else None
-            ),
+            include={i.emap() for i in self.include}
+            if self.include is not None
+            else None,
+            exclude={e.emap() for e in self.exclude}
+            if self.exclude is not None
+            else None,
         )
 
 
@@ -235,11 +228,9 @@ class Show(SerializableModel):
             id=show.id,
             title=show.title,
             description=show.description,
-            events=(
-                [Event.map(event) for event in show.events]
-                if show.events is not None
-                else None
-            ),
+            events=[Event.map(event) for event in show.events]
+            if show.events is not None
+            else None,
         )
 
 
@@ -281,11 +272,9 @@ class Event(SerializableModel):
             start=event.start,
             duration=event.duration,
             timezone=event.timezone,
-            recurrence=(
-                Recurrence.imap(event.recurrence)
-                if event.recurrence is not None
-                else None
-            ),
+            recurrence=Recurrence.imap(event.recurrence)
+            if event.recurrence is not None
+            else None,
         )
 
 
@@ -407,10 +396,10 @@ class RecurrenceUpdateInput(TypedDict, total=False):
     rule: RecurrenceRuleUpdateInput
     """Rule of the recurrence."""
 
-    include: Sequence[Inclusion] | None
+    include: AbstractSet[Inclusion] | None
     """Included instances of the recurrence."""
 
-    exclude: Sequence[Exclusion] | None
+    exclude: AbstractSet[Exclusion] | None
     """Excluded instances of the recurrence."""
 
 

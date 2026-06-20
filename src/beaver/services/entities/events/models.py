@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from collections.abc import Set as AbstractSet
 from datetime import datetime, timedelta
 from typing import NotRequired, Self, TypedDict
 from zoneinfo import ZoneInfo
@@ -210,10 +211,10 @@ class RecurrenceUpdateInput(TypedDict, total=False):
     rule: RecurrenceRuleUpdateInput
     """Rule of the recurrence."""
 
-    include: Sequence[Inclusion] | None
+    include: AbstractSet[Inclusion] | None
     """Included instances of the recurrence."""
 
-    exclude: Sequence[Exclusion] | None
+    exclude: AbstractSet[Exclusion] | None
     """Excluded instances of the recurrence."""
 
 

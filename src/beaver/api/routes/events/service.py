@@ -168,14 +168,14 @@ class Service:
 
         if "include" in data:
             edata["include"] = (
-                [i.emap() for i in include]
+                {i.emap() for i in include}
                 if (include := data["include"]) is not None
                 else None
             )
 
         if "exclude" in data:
             edata["exclude"] = (
-                [e.emap() for e in exclude]
+                {e.emap() for e in exclude}
                 if (exclude := data["exclude"]) is not None
                 else None
             )

@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from collections.abc import Set as AbstractSet
 from typing import Annotated, Self
 from uuid import UUID
 
@@ -98,11 +99,9 @@ class RecurrenceRule(SerializableModel):
             by_seconds=rule.by_seconds,
             by_minutes=rule.by_minutes,
             by_hours=rule.by_hours,
-            by_weekdays=(
-                [WeekdayRule.map(r) for r in rule.by_weekdays]
-                if rule.by_weekdays is not None
-                else None
-            ),
+            by_weekdays=[WeekdayRule.map(r) for r in rule.by_weekdays]
+            if rule.by_weekdays is not None
+            else None,
             by_monthdays=rule.by_monthdays,
             by_yeardays=rule.by_yeardays,
             by_weeks=rule.by_weeks,
@@ -142,10 +141,10 @@ class Recurrence(SerializableModel):
     rule: RecurrenceRule
     """Rule of the recurrence."""
 
-    include: Sequence[Inclusion] | None = None
+    include: AbstractSet[Inclusion] | None = None
     """Included instances of the recurrence."""
 
-    exclude: Sequence[Exclusion] | None = None
+    exclude: AbstractSet[Exclusion] | None = None
     """Excluded instances of the recurrence."""
 
     @classmethod
@@ -153,16 +152,12 @@ class Recurrence(SerializableModel):
         """Map from internal representation."""
         return cls(
             rule=RecurrenceRule.map(recurrence.rule),
-            include=(
-                [Inclusion.map(i) for i in recurrence.include]
-                if recurrence.include is not None
-                else None
-            ),
-            exclude=(
-                [Exclusion.map(e) for e in recurrence.exclude]
-                if recurrence.exclude is not None
-                else None
-            ),
+            include={Inclusion.map(i) for i in recurrence.include}  # pyright: ignore[reportUnhashable]
+            if recurrence.include is not None
+            else None,
+            exclude={Exclusion.map(e) for e in recurrence.exclude}  # pyright: ignore[reportUnhashable]
+            if recurrence.exclude is not None
+            else None,
         )
 
 
@@ -188,11 +183,9 @@ class Show(SerializableModel):
             id=UUID(show.id),
             title=show.title,
             description=show.description,
-            events=(
-                [Event.map(event) for event in show.events]
-                if show.events is not None
-                else None
-            ),
+            events=[Event.map(event) for event in show.events]
+            if show.events is not None
+            else None,
         )
 
 
@@ -234,11 +227,9 @@ class Event(SerializableModel):
             start=event.start,
             duration=event.duration,
             timezone=event.timezone,
-            recurrence=(
-                Recurrence.map(event.recurrence)
-                if event.recurrence is not None
-                else None
-            ),
+            recurrence=Recurrence.map(event.recurrence)
+            if event.recurrence is not None
+            else None,
         )
 
 
