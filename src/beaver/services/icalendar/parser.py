@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from collections.abc import Sequence
+from collections.abc import Set as AbstractSet
 from datetime import UTC, date, datetime, timedelta
 from typing import cast
 from uuid import UUID
@@ -363,7 +364,7 @@ class ICalendarParser:
         )
 
     def inclusions_to_ical(
-        self, inclusions: Sequence[m.Inclusion], tz: ZoneInfo
+        self, inclusions: AbstractSet[m.Inclusion], tz: ZoneInfo
     ) -> Sequence[icalendar.vDDDLists]:
         """Convert a sequence of Inclusion objects to a sequence of icalendar.vDDDLists objects."""
         vdddlists = []
@@ -380,9 +381,9 @@ class ICalendarParser:
 
     def ical_to_inclusions(
         self, vdddlists: Sequence[icalendar.vDDDLists], tz: ZoneInfo
-    ) -> Sequence[m.Inclusion]:
+    ) -> AbstractSet[m.Inclusion]:
         """Convert a sequence of icalendar.vDDDLists objects to a sequence of Inclusion objects."""
-        inclusions = []
+        inclusions = set()
 
         for vdddlist in vdddlists:
             for vdddtypes in vdddlist.dts:
@@ -390,17 +391,17 @@ class ICalendarParser:
                 match dt:
                     case datetime():
                         start = dt.astimezone(tz).replace(tzinfo=None)
-                        inclusions.append(m.Inclusion(start=start))
+                        inclusions.add(m.Inclusion(start=start))
                     case date():
                         start = datetime.combine(dt, datetime.min.time(), tzinfo=None)
-                        inclusions.append(m.Inclusion(start=start))
+                        inclusions.add(m.Inclusion(start=start))
                     case _:
                         raise e.ValidationError
 
         return inclusions
 
     def exclusions_to_ical(
-        self, exclusions: Sequence[m.Exclusion], tz: ZoneInfo
+        self, exclusions: AbstractSet[m.Exclusion], tz: ZoneInfo
     ) -> Sequence[icalendar.vDDDLists]:
         """Convert a sequence of Exclusion objects to a sequence of icalendar.vDDDLists objects."""
         vdddlists = []
@@ -417,9 +418,9 @@ class ICalendarParser:
 
     def ical_to_exclusions(
         self, vdddlists: Sequence[icalendar.vDDDLists], tz: ZoneInfo
-    ) -> Sequence[m.Exclusion]:
+    ) -> AbstractSet[m.Exclusion]:
         """Convert a sequence of icalendar.vDDDLists objects to a sequence of Exclusion objects."""
-        exclusions = []
+        exclusions = set()
 
         for vdddl in vdddlists:
             for vdddtypes in vdddl.dts:
@@ -427,10 +428,10 @@ class ICalendarParser:
                 match dt:
                     case datetime():
                         start = dt.astimezone(tz).replace(tzinfo=None)
-                        exclusions.append(m.Exclusion(start=start))
+                        exclusions.add(m.Exclusion(start=start))
                     case date():
                         start = datetime.combine(dt, datetime.min.time(), tzinfo=None)
-                        exclusions.append(m.Exclusion(start=start))
+                        exclusions.add(m.Exclusion(start=start))
                     case _:
                         raise e.ValidationError
 
