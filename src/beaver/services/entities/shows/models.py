@@ -197,7 +197,7 @@ class CreateResponse:
     """Response for creating a show."""
 
     show: Show
-    """Created show."""
+    """Show that was created."""
 
 
 @datamodel

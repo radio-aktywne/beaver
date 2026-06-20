@@ -272,6 +272,20 @@ class InstanceList(SerializableModel):
     """Instances that matched the request."""
 
 
+class InstanceCreateInput(SerializableModel):
+    """Data to create an instance."""
+
+    start: NaiveDatetime
+    """Start datetime of the instance in event timezone."""
+
+    event_id: str
+    """Identifier of the event that the instance belongs to."""
+
+    def map(self) -> im.InstanceCreateInput:
+        """Map to internal representation."""
+        return im.InstanceCreateInput(start=self.start, event_id=self.event_id)
+
+
 type ListRequestStart = NaiveDatetime
 
 type ListRequestEnd = NaiveDatetime
@@ -291,6 +305,12 @@ type GetRequestStart = NaiveDatetime
 type GetRequestInclude = im.InstanceInclude | None
 
 type GetResponseInstance = Instance | None
+
+type CreateRequestData = InstanceCreateInput
+
+type CreateRequestInclude = im.InstanceInclude | None
+
+type CreateResponseInstance = Instance
 
 
 @datamodel
@@ -341,3 +361,22 @@ class GetResponse:
 
     instance: GetResponseInstance
     """Instance that matched the request."""
+
+
+@datamodel
+class CreateRequest:
+    """Request to create an instance."""
+
+    data: CreateRequestData
+    """Data to create the instance."""
+
+    include: CreateRequestInclude
+    """Relations to include in the response."""
+
+
+@datamodel
+class CreateResponse:
+    """Response for creating an instance."""
+
+    instance: CreateResponseInstance
+    """Instance that was created."""

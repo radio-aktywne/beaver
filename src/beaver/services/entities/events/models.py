@@ -319,7 +319,7 @@ class CreateResponse:
     """Response for creating an event."""
 
     event: Event
-    """Created event."""
+    """Event that was created."""
 
 
 @datamodel

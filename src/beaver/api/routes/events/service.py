@@ -66,7 +66,7 @@ class Service:
             get_response = await self._events.get(get_request)
 
         if get_response.event is None:
-            raise e.EventNotFoundError(request.id)
+            raise e.NotFoundError
 
         return m.GetResponse(event=m.Event.map(get_response.event))
 
@@ -222,7 +222,7 @@ class Service:
             update_response = await self._events.update(update_request)
 
         if update_response.event is None:
-            raise e.EventNotFoundError(request.id)
+            raise e.NotFoundError
 
         return m.UpdateResponse(event=m.Event.map(update_response.event))
 
@@ -234,6 +234,6 @@ class Service:
             delete_response = await self._events.delete(delete_request)
 
         if delete_response.event is None:
-            raise e.EventNotFoundError(request.id)
+            raise e.NotFoundError
 
         return m.DeleteResponse()

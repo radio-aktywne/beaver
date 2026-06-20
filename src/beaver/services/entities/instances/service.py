@@ -1,6 +1,6 @@
 from collections.abc import Generator, Sequence
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import UUID
 
 from beaver.services.entities.events import errors as ee
@@ -154,16 +154,85 @@ class InstancesService:
         if event is None:
             return m.GetResponse(instance=None)
 
-        instances = self._list_event_instances(event, where["start"], where["start"])
-        instance = next(
-            (instance for instance in instances if instance.start == where["start"]),
-            None,
+        utcstart = (
+            where["start"]
+            .replace(tzinfo=event.timezone)
+            .astimezone(UTC)
+            .replace(tzinfo=None)
         )
+        instances = self._list_event_instances(
+            event, utcstart, utcstart + event.duration
+        )
+        instance = next((i for i in instances if i.start == where["start"]), None)
 
         if instance is None:
             return m.GetResponse(instance=None)
 
         return m.GetResponse(
+            instance=m.Instance(
+                start=instance.start,
+                duration=instance.duration,
+                event_id=event.id,
+                event=event if include and include.get("event") else None,
+            )
+        )
+
+    async def create(self, request: m.CreateRequest) -> m.CreateResponse:
+        """Create instance."""
+        data = request.data
+        include = request.include
+
+        event = await self._get_event(where={"id": data.event_id})
+
+        if event is None:
+            raise e.EventDoesNotExistError(data.event_id)
+
+        utcstart = (
+            data.start.replace(tzinfo=event.timezone)
+            .astimezone(UTC)
+            .replace(tzinfo=None)
+        )
+        instances = self._list_event_instances(
+            event, utcstart, utcstart + event.duration
+        )
+
+        if any(instance.start == data.start for instance in instances):
+            raise e.InstanceAlreadyExistsError(data.event_id, data.start)
+
+        with self._handle_errors():
+            update_request = em.UpdateRequest(
+                data={
+                    "recurrence": {
+                        "include": {em.Inclusion(start=data.start)}
+                        | (
+                            event.recurrence.include
+                            if event.recurrence and event.recurrence.include
+                            else set()
+                        )
+                    }
+                },
+                where={"id": event.id},
+                include=include["event"]["include"]
+                if include
+                and "event" in include
+                and not isinstance(include["event"], bool)
+                and "include" in include["event"]
+                else None,
+            )
+
+            update_response = await self._events.update(update_request)
+
+        event = update_response.event
+
+        if event is None:
+            raise e.EventDoesNotExistError(data.event_id)
+
+        instances = self._list_event_instances(
+            event, utcstart, utcstart + event.duration
+        )
+        instance = next(i for i in instances if i.start == data.start)
+
+        return m.CreateResponse(
             instance=m.Instance(
                 start=instance.start,
                 duration=instance.duration,

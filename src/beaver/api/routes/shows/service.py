@@ -62,7 +62,7 @@ class Service:
             get_response = await self._shows.get(get_request)
 
         if get_response.show is None:
-            raise e.ShowNotFoundError(request.id)
+            raise e.NotFoundError
 
         return m.GetResponse(show=m.Show.map(get_response.show))
 
@@ -85,7 +85,7 @@ class Service:
             update_response = await self._shows.update(update_request)
 
         if update_response.show is None:
-            raise e.ShowNotFoundError(request.id)
+            raise e.NotFoundError
 
         return m.UpdateResponse(show=m.Show.map(update_response.show))
 
@@ -97,6 +97,6 @@ class Service:
             delete_response = await self._shows.delete(delete_request)
 
         if delete_response.show is None:
-            raise e.ShowNotFoundError(request.id)
+            raise e.NotFoundError
 
         return m.DeleteResponse()
