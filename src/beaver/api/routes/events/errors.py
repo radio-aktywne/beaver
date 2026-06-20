@@ -9,6 +9,10 @@ class ValidationError(ServiceError):
     """Raised when a validation error occurs."""
 
 
+class ConflictError(ValidationError):
+    """Raised when a conflict error occurs."""
+
+
 class EventNotFoundError(ServiceError):
     """Raised when event is not found."""
 

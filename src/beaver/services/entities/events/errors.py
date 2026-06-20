@@ -13,3 +13,7 @@ class PartialUpdateInsufficientDataError(ValidationError):
         super().__init__(
             "Provided data is insufficient for a partial update in the current resource state."
         )
+
+
+class ConflictError(ValidationError):
+    """Raised when a conflict error occurs."""
