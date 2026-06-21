@@ -59,31 +59,31 @@ class Recurrence:
     interval: int | None = None
     """Interval of the recurrence."""
 
-    by_seconds: Sequence[int] | None = None
+    by_seconds: AbstractSet[int] | None = None
     """Seconds of the recurrence."""
 
-    by_minutes: Sequence[int] | None = None
+    by_minutes: AbstractSet[int] | None = None
     """Minutes of the recurrence."""
 
-    by_hours: Sequence[int] | None = None
+    by_hours: AbstractSet[int] | None = None
     """Hours of the recurrence."""
 
-    by_weekdays: Sequence[WeekdayRule] | None = None
+    by_weekdays: AbstractSet[WeekdayRule] | None = None
     """Weekdays of the recurrence."""
 
-    by_monthdays: Sequence[int] | None = None
+    by_monthdays: AbstractSet[int] | None = None
     """Monthdays of the recurrence."""
 
-    by_yeardays: Sequence[int] | None = None
+    by_yeardays: AbstractSet[int] | None = None
     """Yeardays of the recurrence."""
 
-    by_weeks: Sequence[int] | None = None
+    by_weeks: AbstractSet[int] | None = None
     """Weeks of the recurrence."""
 
-    by_months: Sequence[int] | None = None
+    by_months: AbstractSet[int] | None = None
     """Months of the recurrence."""
 
-    by_set_positions: Sequence[int] | None = None
+    by_set_positions: AbstractSet[int] | None = None
     """Set positions of the recurrence."""
 
     week_start: Weekday | None = None
