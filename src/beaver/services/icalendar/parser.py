@@ -33,18 +33,18 @@ class ICalendarParser:
         """Convert an icalendar.vInt object to an int."""
         return int(vint)
 
-    def ints_to_ical(self, values: Sequence[int]) -> Sequence[icalendar.vInt]:
-        """Convert a sequence of ints to a sequence of icalendar.vInt objects."""
+    def ints_to_ical(self, values: AbstractSet[int]) -> Sequence[icalendar.vInt]:
+        """Convert a set of ints to a sequence of icalendar.vInt objects."""
         return [self.int_to_ical(value) for value in values]
 
     def ical_to_ints(
         self, vints: icalendar.vInt | Sequence[icalendar.vInt]
-    ) -> Sequence[int]:
-        """Convert a sequence of icalendar.vInt objects to a sequence of ints."""
+    ) -> AbstractSet[int]:
+        """Convert a sequence of icalendar.vInt objects to a set of ints."""
         if isinstance(vints, icalendar.vInt):
             vints = [vints]
 
-        return [self.ical_to_int(vint) for vint in vints]
+        return {self.ical_to_int(vint) for vint in vints}
 
     def datetime_to_ical(self, dt: datetime) -> icalendar.vDatetime:
         """Convert a datetime to an icalendar.vDatetime object."""
@@ -132,9 +132,9 @@ class ICalendarParser:
         return weekdays_map[day]
 
     def weekday_rules_to_ical(
-        self, rules: Sequence[m.WeekdayRule]
+        self, rules: AbstractSet[m.WeekdayRule]
     ) -> Sequence[icalendar.vWeekday]:
-        """Convert a sequence of WeekdayRule objects to a sequence of icalendar.vWeekday objects."""
+        """Convert a set of WeekdayRule objects to a sequence of icalendar.vWeekday objects."""
         results = []
 
         for rule in rules:
@@ -151,12 +151,12 @@ class ICalendarParser:
 
     def ical_to_weekday_rules(
         self, vweekdays: icalendar.vWeekday | Sequence[icalendar.vWeekday]
-    ) -> Sequence[m.WeekdayRule]:
-        """Convert a sequence of icalendar.vWeekday objects to a sequence of WeekdayRule objects."""
+    ) -> AbstractSet[m.WeekdayRule]:
+        """Convert a sequence of icalendar.vWeekday objects to a set of WeekdayRule objects."""
         if isinstance(vweekdays, icalendar.vWeekday):
             vweekdays = [vweekdays]
 
-        results = []
+        results = set()
 
         for weekday in vweekdays:
             day = self.ical_to_weekday(weekday)
@@ -172,7 +172,7 @@ class ICalendarParser:
                     occurrence = -occurrence
 
             rule = m.WeekdayRule(day=day, occurrence=occurrence)
-            results.append(rule)
+            results.add(rule)
 
         return results
 

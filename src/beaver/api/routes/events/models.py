@@ -62,31 +62,31 @@ class Recurrence(SerializableModel):
     interval: PositiveInt | None = None
     """Interval of the recurrence."""
 
-    by_seconds: Sequence[Second] | None = None
+    by_seconds: AbstractSet[Second] | None = None
     """Seconds of the recurrence."""
 
-    by_minutes: Sequence[Minute] | None = None
+    by_minutes: AbstractSet[Minute] | None = None
     """Minutes of the recurrence."""
 
-    by_hours: Sequence[Hour] | None = None
+    by_hours: AbstractSet[Hour] | None = None
     """Hours of the recurrence."""
 
-    by_weekdays: Sequence[WeekdayRule] | None = None
+    by_weekdays: AbstractSet[WeekdayRule] | None = None
     """Weekdays of the recurrence."""
 
-    by_monthdays: Sequence[Monthday] | None = None
+    by_monthdays: AbstractSet[Monthday] | None = None
     """Monthdays of the recurrence."""
 
-    by_yeardays: Sequence[Yearday] | None = None
+    by_yeardays: AbstractSet[Yearday] | None = None
     """Yeardays of the recurrence."""
 
-    by_weeks: Sequence[Week] | None = None
+    by_weeks: AbstractSet[Week] | None = None
     """Weeks of the recurrence."""
 
-    by_months: Sequence[Month] | None = None
+    by_months: AbstractSet[Month] | None = None
     """Months of the recurrence."""
 
-    by_set_positions: Sequence[Yearday] | None = None
+    by_set_positions: AbstractSet[Yearday] | None = None
     """Set positions of the recurrence."""
 
     week_start: em.Weekday | None = None
@@ -103,7 +103,7 @@ class Recurrence(SerializableModel):
             by_seconds=rule.by_seconds,
             by_minutes=rule.by_minutes,
             by_hours=rule.by_hours,
-            by_weekdays=[WeekdayRule.imap(r) for r in rule.by_weekdays]
+            by_weekdays={WeekdayRule.imap(r) for r in rule.by_weekdays}  # pyright: ignore[reportUnhashable]
             if rule.by_weekdays is not None
             else None,
             by_monthdays=rule.by_monthdays,
@@ -124,7 +124,7 @@ class Recurrence(SerializableModel):
             by_seconds=self.by_seconds,
             by_minutes=self.by_minutes,
             by_hours=self.by_hours,
-            by_weekdays=[r.emap() for r in self.by_weekdays]
+            by_weekdays={r.emap() for r in self.by_weekdays}
             if self.by_weekdays is not None
             else None,
             by_monthdays=self.by_monthdays,
@@ -339,31 +339,31 @@ class RecurrenceUpdateInput(TypedDict, total=False):
     interval: PositiveInt | None
     """Interval of the recurrence."""
 
-    by_seconds: Sequence[Second] | None
+    by_seconds: AbstractSet[Second] | None
     """Seconds of the recurrence."""
 
-    by_minutes: Sequence[Minute] | None
+    by_minutes: AbstractSet[Minute] | None
     """Minutes of the recurrence."""
 
-    by_hours: Sequence[Hour] | None
+    by_hours: AbstractSet[Hour] | None
     """Hours of the recurrence."""
 
-    by_weekdays: Sequence[WeekdayRule] | None
+    by_weekdays: AbstractSet[WeekdayRule] | None
     """Weekdays of the recurrence."""
 
-    by_monthdays: Sequence[Monthday] | None
+    by_monthdays: AbstractSet[Monthday] | None
     """Monthdays of the recurrence."""
 
-    by_yeardays: Sequence[Yearday] | None
+    by_yeardays: AbstractSet[Yearday] | None
     """Yeardays of the recurrence."""
 
-    by_weeks: Sequence[Week] | None
+    by_weeks: AbstractSet[Week] | None
     """Weeks of the recurrence."""
 
-    by_months: Sequence[Month] | None
+    by_months: AbstractSet[Month] | None
     """Months of the recurrence."""
 
-    by_set_positions: Sequence[Yearday] | None
+    by_set_positions: AbstractSet[Yearday] | None
     """Set positions of the recurrence."""
 
     week_start: em.Weekday | None

@@ -146,7 +146,7 @@ class Service:
 
         if "by_weekdays" in data:
             edata["by_weekdays"] = (
-                [w.emap() for w in by_weekdays]
+                {w.emap() for w in by_weekdays}
                 if (by_weekdays := data["by_weekdays"]) is not None
                 else None
             )

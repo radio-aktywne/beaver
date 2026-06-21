@@ -186,31 +186,31 @@ class RecurrenceUpdateInput(TypedDict, total=False):
     interval: int | None
     """Interval of the recurrence."""
 
-    by_seconds: Sequence[int] | None
+    by_seconds: AbstractSet[int] | None
     """Seconds of the recurrence."""
 
-    by_minutes: Sequence[int] | None
+    by_minutes: AbstractSet[int] | None
     """Minutes of the recurrence."""
 
-    by_hours: Sequence[int] | None
+    by_hours: AbstractSet[int] | None
     """Hours of the recurrence."""
 
-    by_weekdays: Sequence[WeekdayRule] | None
+    by_weekdays: AbstractSet[WeekdayRule] | None
     """Weekdays of the recurrence."""
 
-    by_monthdays: Sequence[int] | None
+    by_monthdays: AbstractSet[int] | None
     """Monthdays of the recurrence."""
 
-    by_yeardays: Sequence[int] | None
+    by_yeardays: AbstractSet[int] | None
     """Yeardays of the recurrence."""
 
-    by_weeks: Sequence[int] | None
+    by_weeks: AbstractSet[int] | None
     """Weeks of the recurrence."""
 
-    by_months: Sequence[int] | None
+    by_months: AbstractSet[int] | None
     """Months of the recurrence."""
 
-    by_set_positions: Sequence[int] | None
+    by_set_positions: AbstractSet[int] | None
     """Set positions of the recurrence."""
 
     week_start: Weekday | None
