@@ -300,6 +300,10 @@ type CreateRequestInclude = im.InstanceInclude | None
 
 type CreateResponseInstance = Instance
 
+type DeleteRequestEventId = UUID
+
+type DeleteRequestStart = NaiveDatetime
+
 
 @datamodel
 class ListRequest:
@@ -368,3 +372,19 @@ class CreateResponse:
 
     instance: CreateResponseInstance
     """Instance that was created."""
+
+
+@datamodel
+class DeleteRequest:
+    """Request to delete an instance."""
+
+    event_id: DeleteRequestEventId
+    """Identifier of the event that the instance to delete belongs to."""
+
+    start: DeleteRequestStart
+    """Start datetime of the instance to delete in event timezone."""
+
+
+@datamodel
+class DeleteResponse:
+    """Response for deleting an instance."""

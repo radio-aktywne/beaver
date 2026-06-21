@@ -245,3 +245,53 @@ class InstancesService:
                 event=event if include and include.get("event") else None,
             )
         )
+
+    async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
+        """Delete instance."""
+        where = request.where
+        include = request.include
+
+        event = await self._get_event(where={"id": where["event_id"]})
+
+        if event is None:
+            return m.DeleteResponse(instance=None)
+
+        utcstart = (
+            where["start"]
+            .replace(tzinfo=event.timezone)
+            .astimezone(UTC)
+            .replace(tzinfo=None)
+        )
+        instances = self._list_event_instances(
+            event, utcstart, utcstart + event.duration
+        )
+        instance = next((i for i in instances if i.start == where["start"]), None)
+
+        if instance is None:
+            return m.DeleteResponse(instance=None)
+
+        event = await self._update_event(
+            data={
+                "exclude": (event.exclude or set())
+                | {em.Exclusion(start=where["start"])}
+            },
+            where={"id": event.id},
+            include=include["event"]["include"]
+            if include
+            and "event" in include
+            and not isinstance(include["event"], bool)
+            and "include" in include["event"]
+            else None,
+        )
+
+        if event is None:
+            return m.DeleteResponse(instance=None)
+
+        return m.DeleteResponse(
+            instance=m.Instance(
+                start=instance.start,
+                duration=instance.duration,
+                event_id=event.id,
+                event=event if include and include.get("event") else None,
+            )
+        )
