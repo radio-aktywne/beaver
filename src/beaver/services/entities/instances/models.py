@@ -188,3 +188,22 @@ class CreateResponse:
 
     instance: Instance
     """Instance that was created."""
+
+
+@datamodel
+class DeleteRequest:
+    """Request to delete an instance."""
+
+    where: InstanceWhereUniqueInput
+    """Unique filter to apply to find an instance."""
+
+    include: InstanceInclude | None
+    """Relations to include in the response."""
+
+
+@datamodel
+class DeleteResponse:
+    """Response for deleting an instance."""
+
+    instance: Instance | None
+    """Instance that was deleted."""

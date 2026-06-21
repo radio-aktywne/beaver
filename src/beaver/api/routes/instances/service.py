@@ -73,3 +73,18 @@ class Service:
             create_response = await self._instances.create(create_request)
 
         return m.CreateResponse(instance=m.Instance.map(create_response.instance))
+
+    async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
+        """Delete instance."""
+        delete_request = im.DeleteRequest(
+            where={"event_id": str(request.event_id), "start": request.start},
+            include=None,
+        )
+
+        with self._handle_errors():
+            delete_response = await self._instances.delete(delete_request)
+
+        if delete_response.instance is None:
+            raise e.NotFoundError
+
+        return m.DeleteResponse()

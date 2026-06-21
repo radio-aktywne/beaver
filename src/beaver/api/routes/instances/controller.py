@@ -177,3 +177,37 @@ class Controller(BaseController):
             raise BadRequestException from ex
 
         return Response(Serializable(response.instance))
+
+    @handlers.delete(
+        path="/{eventId:str}/{start:str}",
+        summary="Delete instance",
+        raises=[BadRequestException, NotFoundException],
+    )
+    async def delete(
+        self,
+        service: Service,
+        eventId: Annotated[  # noqa: N803
+            Serializable[m.GetRequestEventId],
+            Parameter(
+                description="Identifier of the event that the instance to delete belongs to.",
+            ),
+        ],
+        start: Annotated[
+            Serializable[m.GetRequestStart],
+            Parameter(
+                description="Start datetime of the instance to delete in event timezone.",
+            ),
+        ],
+    ) -> None:
+        """Delete an instance by event ID and start datetime."""
+        request = m.DeleteRequest(
+            event_id=eventId.root,
+            start=start.root,
+        )
+
+        try:
+            await service.delete(request)
+        except e.ValidationError as ex:
+            raise BadRequestException from ex
+        except e.NotFoundError as ex:
+            raise NotFoundException from ex
