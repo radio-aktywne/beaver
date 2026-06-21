@@ -43,7 +43,7 @@ class WeekdayRule(SerializableModel):
         return cls(day=rule.day, occurrence=rule.occurrence)
 
 
-class RecurrenceRule(SerializableModel):
+class Recurrence(SerializableModel):
     """Recurrence rule data."""
 
     frequency: im.Frequency
@@ -89,7 +89,7 @@ class RecurrenceRule(SerializableModel):
     """Start day of the week."""
 
     @classmethod
-    def map(cls, rule: im.RecurrenceRule) -> Self:
+    def map(cls, rule: im.Recurrence) -> Self:
         """Map from internal representation."""
         return cls(
             frequency=rule.frequency,
@@ -133,32 +133,6 @@ class Exclusion(SerializableModel):
     def map(cls, instance: im.Exclusion) -> Self:
         """Map from internal representation."""
         return cls(start=instance.start)
-
-
-class Recurrence(SerializableModel):
-    """Recurrence data."""
-
-    rule: RecurrenceRule
-    """Rule of the recurrence."""
-
-    include: AbstractSet[Inclusion] | None = None
-    """Included instances of the recurrence."""
-
-    exclude: AbstractSet[Exclusion] | None = None
-    """Excluded instances of the recurrence."""
-
-    @classmethod
-    def map(cls, recurrence: im.Recurrence) -> Self:
-        """Map from internal representation."""
-        return cls(
-            rule=RecurrenceRule.map(recurrence.rule),
-            include={Inclusion.map(i) for i in recurrence.include}  # pyright: ignore[reportUnhashable]
-            if recurrence.include is not None
-            else None,
-            exclude={Exclusion.map(e) for e in recurrence.exclude}  # pyright: ignore[reportUnhashable]
-            if recurrence.exclude is not None
-            else None,
-        )
 
 
 class Show(SerializableModel):
@@ -213,8 +187,14 @@ class Event(SerializableModel):
     timezone: Timezone
     """Timezone of the event."""
 
-    recurrence: Recurrence | None
+    recurrence: Recurrence | None = None
     """Recurrence rule of the event."""
+
+    include: AbstractSet[Inclusion] | None = None
+    """Included instances of the event."""
+
+    exclude: AbstractSet[Exclusion] | None = None
+    """Excluded instances of the event."""
 
     @classmethod
     def map(cls, event: im.Event) -> Self:
@@ -229,6 +209,12 @@ class Event(SerializableModel):
             timezone=event.timezone,
             recurrence=Recurrence.map(event.recurrence)
             if event.recurrence is not None
+            else None,
+            include={Inclusion.map(i) for i in event.include}  # pyright: ignore[reportUnhashable]
+            if event.include is not None
+            else None,
+            exclude={Exclusion.map(e) for e in event.exclude}  # pyright: ignore[reportUnhashable]
+            if event.exclude is not None
             else None,
         )
 
@@ -294,7 +280,9 @@ type ListRequestWhere = im.InstanceWhereInput | None
 
 type ListRequestInclude = im.InstanceInclude | None
 
-type ListRequestOrder = im.InstanceOrderByInput | None
+type ListRequestOrder = (
+    im.InstanceOrderByInput | Sequence[im.InstanceOrderByInput] | None
+)
 
 type ListResponseResults = InstanceList
 

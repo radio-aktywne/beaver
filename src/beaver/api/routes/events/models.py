@@ -47,7 +47,7 @@ class WeekdayRule(SerializableModel):
         return em.WeekdayRule(day=self.day, occurrence=self.occurrence)
 
 
-class RecurrenceRule(SerializableModel):
+class Recurrence(SerializableModel):
     """Recurrence rule data."""
 
     frequency: em.Frequency
@@ -93,7 +93,7 @@ class RecurrenceRule(SerializableModel):
     """Start day of the week."""
 
     @classmethod
-    def imap(cls, rule: em.RecurrenceRule) -> Self:
+    def imap(cls, rule: em.Recurrence) -> Self:
         """Map from internal representation."""
         return cls(
             frequency=rule.frequency,
@@ -114,9 +114,9 @@ class RecurrenceRule(SerializableModel):
             week_start=rule.week_start,
         )
 
-    def emap(self) -> em.RecurrenceRule:
+    def emap(self) -> em.Recurrence:
         """Map to internal representation."""
-        return em.RecurrenceRule(
+        return em.Recurrence(
             frequency=self.frequency,
             until=self.until,
             count=self.count,
@@ -166,44 +166,6 @@ class Exclusion(SerializableModel):
     def emap(self) -> em.Exclusion:
         """Map to internal representation."""
         return em.Exclusion(start=self.start)
-
-
-class Recurrence(SerializableModel):
-    """Recurrence data."""
-
-    rule: RecurrenceRule
-    """Rule of the recurrence."""
-
-    include: AbstractSet[Inclusion] | None = None
-    """Included instances of the recurrence."""
-
-    exclude: AbstractSet[Exclusion] | None = None
-    """Excluded instances of the recurrence."""
-
-    @classmethod
-    def imap(cls, recurrence: em.Recurrence) -> Self:
-        """Map from internal representation."""
-        return cls(
-            rule=RecurrenceRule.imap(recurrence.rule),
-            include={Inclusion.imap(i) for i in recurrence.include}  # pyright: ignore[reportUnhashable]
-            if recurrence.include is not None
-            else None,
-            exclude={Exclusion.imap(e) for e in recurrence.exclude}  # pyright: ignore[reportUnhashable]
-            if recurrence.exclude is not None
-            else None,
-        )
-
-    def emap(self) -> em.Recurrence:
-        """Map to internal representation."""
-        return em.Recurrence(
-            rule=self.rule.emap(),
-            include={i.emap() for i in self.include}
-            if self.include is not None
-            else None,
-            exclude={e.emap() for e in self.exclude}
-            if self.exclude is not None
-            else None,
-        )
 
 
 class Show(SerializableModel):
@@ -258,8 +220,14 @@ class Event(SerializableModel):
     timezone: Timezone
     """Timezone of the event."""
 
-    recurrence: Recurrence | None
+    recurrence: Recurrence | None = None
     """Recurrence rule of the event."""
+
+    include: AbstractSet[Inclusion] | None = None
+    """Included instances of the event."""
+
+    exclude: AbstractSet[Exclusion] | None = None
+    """Excluded instances of the event."""
 
     @classmethod
     def map(cls, event: em.Event) -> Self:
@@ -274,6 +242,12 @@ class Event(SerializableModel):
             timezone=event.timezone,
             recurrence=Recurrence.imap(event.recurrence)
             if event.recurrence is not None
+            else None,
+            include={Inclusion.imap(i) for i in event.include}  # pyright: ignore[reportUnhashable]
+            if event.include is not None
+            else None,
+            exclude={Exclusion.imap(e) for e in event.exclude}  # pyright: ignore[reportUnhashable]
+            if event.exclude is not None
             else None,
         )
 
@@ -341,10 +315,16 @@ class EventCreateInput(em.EventCreateInput):
     """Timezone of the event."""
 
     recurrence: NotRequired[Recurrence | None]  # pyright: ignore[reportIncompatibleVariableOverride]
-    """Recurrence of the event."""
+    """Recurrence rule of the event."""
+
+    include: NotRequired[AbstractSet[Inclusion] | None]  # pyright: ignore[reportIncompatibleVariableOverride]
+    """Included instances of the event."""
+
+    exclude: NotRequired[AbstractSet[Exclusion] | None]  # pyright: ignore[reportIncompatibleVariableOverride]
+    """Excluded instances of the event."""
 
 
-class RecurrenceRuleUpdateInput(TypedDict, total=False):
+class RecurrenceUpdateInput(TypedDict, total=False):
     """Input data to update a recurrence rule."""
 
     frequency: em.Frequency
@@ -390,19 +370,6 @@ class RecurrenceRuleUpdateInput(TypedDict, total=False):
     """Start day of the week."""
 
 
-class RecurrenceUpdateInput(TypedDict, total=False):
-    """Input data to update a recurrence."""
-
-    rule: RecurrenceRuleUpdateInput
-    """Rule of the recurrence."""
-
-    include: AbstractSet[Inclusion] | None
-    """Included instances of the recurrence."""
-
-    exclude: AbstractSet[Exclusion] | None
-    """Excluded instances of the recurrence."""
-
-
 class EventUpdateInput(em.EventUpdateInput, total=False):
     """Input data to update an event."""
 
@@ -416,7 +383,13 @@ class EventUpdateInput(em.EventUpdateInput, total=False):
     """Timezone of the event."""
 
     recurrence: RecurrenceUpdateInput | None  # pyright: ignore[reportIncompatibleVariableOverride]
-    """Recurrence of the event."""
+    """Recurrence rule of the event."""
+
+    include: AbstractSet[Inclusion] | None  # pyright: ignore[reportIncompatibleVariableOverride]
+    """Included instances of the event."""
+
+    exclude: AbstractSet[Exclusion] | None  # pyright: ignore[reportIncompatibleVariableOverride]
+    """Excluded instances of the event."""
 
 
 type ListRequestLimit = int | None

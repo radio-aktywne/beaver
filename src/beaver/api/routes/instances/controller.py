@@ -90,7 +90,7 @@ class Controller(BaseController):
             end=end.root if end else naiveutcnow(),
             where=where.root if where else None,
             include=include.root if include else None,
-            order=order.root if order else None,
+            order=order.root if order else {"start": "asc"},
         )
 
         try:

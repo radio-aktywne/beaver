@@ -176,8 +176,8 @@ class ICalendarParser:
 
         return results
 
-    def recurrence_rule_to_ical(self, rule: m.RecurrenceRule) -> icalendar.vRecur:  # noqa: PLR0912, C901
-        """Convert a RecurrenceRule object to an icalendar.vRecur object."""
+    def recurrence_to_ical(self, rule: m.Recurrence) -> icalendar.vRecur:  # noqa: PLR0912, C901
+        """Convert a Recurrence object to an icalendar.vRecur object."""
         parts = OrderedDict()
         parts["FREQ"] = self.frequency_to_ical(rule.frequency).to_ical().decode("utf-8")
 
@@ -274,8 +274,8 @@ class ICalendarParser:
 
         return icalendar.vRecur.from_ical(ical)
 
-    def ical_to_recurrence_rule(self, vrecur: icalendar.vRecur) -> m.RecurrenceRule:  # noqa: PLR0912, PLR0915, C901
-        """Convert an icalendar.vRecur object to a RecurrenceRule object."""
+    def ical_to_recurrence(self, vrecur: icalendar.vRecur) -> m.Recurrence:  # noqa: PLR0912, PLR0915, C901
+        """Convert an icalendar.vRecur object to a Recurrence object."""
         frequency = self.ical_to_frequency(
             icalendar.vFrequency(next(iter(vrecur["FREQ"])))
         )
@@ -346,7 +346,7 @@ class ICalendarParser:
                 icalendar.vWeekday(next(iter(week_start)))
             )
 
-        return m.RecurrenceRule(
+        return m.Recurrence(
             frequency=frequency,
             until=until,
             count=count,
@@ -450,20 +450,16 @@ class ICalendarParser:
         duration = event.duration
         ical.add("DURATION", self.timedelta_to_ical(duration), encode=False)
 
-        recurrence = event.recurrence
-        if recurrence is not None:
-            rrule = recurrence.rule
-            ical.add("RRULE", self.recurrence_rule_to_ical(rrule), encode=False)
+        if event.recurrence is not None:
+            ical.add("RRULE", self.recurrence_to_ical(event.recurrence), encode=False)
 
-            timezone = event.timezone
+        if event.include is not None:
+            rdate = self.inclusions_to_ical(event.include, event.timezone)
+            ical.add("RDATE", rdate, encode=False)
 
-            if recurrence.include is not None:
-                rdate = self.inclusions_to_ical(recurrence.include, timezone)
-                ical.add("RDATE", rdate, encode=False)
-
-            if recurrence.exclude is not None:
-                exdate = self.exclusions_to_ical(recurrence.exclude, timezone)
-                ical.add("EXDATE", exdate, encode=False)
+        if event.exclude is not None:
+            exdate = self.exclusions_to_ical(event.exclude, event.timezone)
+            ical.add("EXDATE", exdate, encode=False)
 
         return ical
 
@@ -492,13 +488,9 @@ class ICalendarParser:
         exdate = event.get("EXDATE")
         exdate = [exdate] if isinstance(exdate, icalendar.vDDDLists) else exdate
 
-        if rrule is None:
-            recurrence = None
-        else:
-            rule = self.ical_to_recurrence_rule(rrule)
-            include = self.ical_to_inclusions(rdate, tz) if rdate else None
-            exclude = self.ical_to_exclusions(exdate, tz) if exdate else None
-            recurrence = m.Recurrence(rule=rule, include=include, exclude=exclude)
+        recurrence = self.ical_to_recurrence(rrule) if rrule else None
+        include = self.ical_to_inclusions(rdate, tz) if rdate else None
+        exclude = self.ical_to_exclusions(exdate, tz) if exdate else None
 
         return m.Event(
             id=event_id,
@@ -506,6 +498,8 @@ class ICalendarParser:
             duration=duration,
             timezone=tz,
             recurrence=recurrence,
+            include=include,
+            exclude=exclude,
         )
 
     def calendar_to_ical(self, calendar: m.Calendar) -> icalendar.Calendar:
