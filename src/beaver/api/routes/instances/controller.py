@@ -178,6 +178,58 @@ class Controller(BaseController):
 
         return Response(Serializable(response.instance))
 
+    @handlers.patch(
+        path="/{eventId:str}/{start:str}",
+        summary="Update instance",
+        raises=[BadRequestException, NotFoundException, ConflictException],
+    )
+    async def update(
+        self,
+        service: Service,
+        eventId: Annotated[  # noqa: N803
+            Serializable[m.UpdateRequestEventId],
+            Parameter(
+                description="Identifier of the event that the instance to update belongs to.",
+            ),
+        ],
+        start: Annotated[
+            Serializable[m.UpdateRequestStart],
+            Parameter(
+                description="Start datetime of the instance to update in event timezone.",
+            ),
+        ],
+        data: Annotated[
+            Serializable[m.UpdateRequestData],
+            Body(
+                description="Data to update an instance.",
+            ),
+        ],
+        include: Annotated[
+            Jsonable[m.UpdateRequestInclude] | None,
+            Parameter(
+                description="Relations to include in the response.",
+            ),
+        ] = None,
+    ) -> Response[Serializable[m.UpdateResponseInstance]]:
+        """Update an instance by event ID and start datetime."""
+        request = m.UpdateRequest(
+            data=data.root,
+            event_id=eventId.root,
+            start=start.root,
+            include=include.root if include else None,
+        )
+
+        try:
+            response = await service.update(request)
+        except e.ConflictError as ex:
+            raise ConflictException from ex
+        except e.ValidationError as ex:
+            raise BadRequestException from ex
+        except e.NotFoundError as ex:
+            raise NotFoundException from ex
+
+        return Response(Serializable(response.instance))
+
     @handlers.delete(
         path="/{eventId:str}/{start:str}",
         summary="Delete instance",
@@ -187,13 +239,13 @@ class Controller(BaseController):
         self,
         service: Service,
         eventId: Annotated[  # noqa: N803
-            Serializable[m.GetRequestEventId],
+            Serializable[m.DeleteRequestEventId],
             Parameter(
                 description="Identifier of the event that the instance to delete belongs to.",
             ),
         ],
         start: Annotated[
-            Serializable[m.GetRequestStart],
+            Serializable[m.DeleteRequestStart],
             Parameter(
                 description="Start datetime of the instance to delete in event timezone.",
             ),

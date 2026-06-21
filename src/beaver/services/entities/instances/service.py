@@ -107,12 +107,13 @@ class InstancesService:
         if not isinstance(order, Sequence):
             order = [order]
 
-        for key, direction in reversed(order):
-            instances = sorted(
-                instances,
-                key=lambda instance: getattr(instance, key),
-                reverse=direction == "desc",
-            )
+        for item in reversed(order):
+            for key, direction in item.items():
+                instances = sorted(
+                    instances,
+                    key=lambda instance: getattr(instance, key),
+                    reverse=direction == "desc",
+                )
 
         return list(instances)
 
@@ -212,7 +213,7 @@ class InstancesService:
             event, utcstart, utcstart + event.duration
         )
 
-        if any(instance.start == data.start for instance in instances):
+        if any(i.start == data.start for i in instances):
             raise e.InstanceAlreadyExistsError(event.id, data.start)
 
         event = await self._update_event(
@@ -238,6 +239,84 @@ class InstancesService:
         instance = next(i for i in instances if i.start == data.start)
 
         return m.CreateResponse(
+            instance=m.Instance(
+                start=instance.start,
+                duration=instance.duration,
+                event_id=event.id,
+                event=event if include and include.get("event") else None,
+            )
+        )
+
+    async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
+        """Update instance."""
+        data = request.data
+        where = request.where
+        include = request.include
+
+        event = await self._get_event(where={"id": where["event_id"]})
+
+        if event is None:
+            return m.UpdateResponse(instance=None)
+
+        utcstart = (
+            where["start"]
+            .replace(tzinfo=event.timezone)
+            .astimezone(UTC)
+            .replace(tzinfo=None)
+        )
+        instances = self._list_event_instances(
+            event, utcstart, utcstart + event.duration
+        )
+        instance = next((i for i in instances if i.start == where["start"]), None)
+
+        if instance is None:
+            return m.UpdateResponse(instance=None)
+
+        edata: em.EventUpdateInput = {}
+
+        if "start" in data:
+            utcstart = (
+                data["start"]
+                .replace(tzinfo=event.timezone)
+                .astimezone(UTC)
+                .replace(tzinfo=None)
+            )
+            instances = self._list_event_instances(
+                event, utcstart, utcstart + event.duration
+            )
+
+            if any(i.start == data["start"] for i in instances):
+                raise e.InstanceAlreadyExistsError(event.id, data["start"])
+
+            edata["include"] = (event.include or set()) | {
+                em.Inclusion(start=data["start"])
+            }
+            edata["exclude"] = (
+                (event.exclude or set()) | {em.Exclusion(start=instance.start)}
+            ) - {em.Exclusion(start=data["start"])}
+
+        event = await self._update_event(
+            data=edata,
+            where={"id": event.id},
+            include=include["event"]["include"]
+            if include
+            and "event" in include
+            and not isinstance(include["event"], bool)
+            and "include" in include["event"]
+            else None,
+        )
+
+        if event is None:
+            return m.UpdateResponse(instance=None)
+
+        instances = self._list_event_instances(
+            event, utcstart, utcstart + event.duration
+        )
+        instance = next(
+            i for i in instances if i.start == data.get("start", where["start"])
+        )
+
+        return m.UpdateResponse(
             instance=m.Instance(
                 start=instance.start,
                 duration=instance.duration,

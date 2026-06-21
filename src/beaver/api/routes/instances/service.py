@@ -74,6 +74,33 @@ class Service:
 
         return m.CreateResponse(instance=m.Instance.map(create_response.instance))
 
+    def _map_instance_update_input(
+        self, data: m.InstanceUpdateInput
+    ) -> im.InstanceUpdateInput:
+        """Map instance update input to internal representation."""
+        idata: im.InstanceUpdateInput = {}
+
+        if "start" in data:
+            idata["start"] = data["start"]
+
+        return idata
+
+    async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
+        """Update instance."""
+        update_request = im.UpdateRequest(
+            data=self._map_instance_update_input(request.data),
+            where={"event_id": str(request.event_id), "start": request.start},
+            include=request.include,
+        )
+
+        with self._handle_errors():
+            update_response = await self._instances.update(update_request)
+
+        if update_response.instance is None:
+            raise e.NotFoundError
+
+        return m.UpdateResponse(instance=m.Instance.map(update_response.instance))
+
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete instance."""
         delete_request = im.DeleteRequest(

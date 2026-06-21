@@ -150,7 +150,7 @@ type EventOrderByInput = (
 
 
 class EventCreateInput(st.EventCreateWithoutRelationsInput):
-    """Input data to create an event."""
+    """Data to create an event."""
 
     start: datetime
     """Start datetime of the event in event timezone."""
@@ -172,7 +172,7 @@ class EventCreateInput(st.EventCreateWithoutRelationsInput):
 
 
 class RecurrenceUpdateInput(TypedDict, total=False):
-    """Input data to update a recurrence rule."""
+    """Data to update a recurrence rule."""
 
     frequency: Frequency
     """Frequency of the recurrence."""
@@ -218,7 +218,7 @@ class RecurrenceUpdateInput(TypedDict, total=False):
 
 
 class EventUpdateInput(st.EventUpdateManyMutationInput, total=False):
-    """Input data to update an event."""
+    """Data to update an event."""
 
     start: datetime
     """Start datetime of the event in event timezone."""

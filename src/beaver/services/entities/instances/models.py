@@ -124,6 +124,13 @@ class InstanceCreateInput:
     """Identifier of the event that the instance belongs to."""
 
 
+class InstanceUpdateInput(TypedDict, total=False):
+    """Data to update an instance."""
+
+    start: datetime
+    """Start datetime of the instance in event timezone."""
+
+
 @datamodel
 class ListRequest:
     """Request to list instances."""
@@ -188,6 +195,28 @@ class CreateResponse:
 
     instance: Instance
     """Instance that was created."""
+
+
+@datamodel
+class UpdateRequest:
+    """Request to update an instance."""
+
+    data: InstanceUpdateInput
+    """Data to update an instance."""
+
+    where: InstanceWhereUniqueInput
+    """Unique filter to apply to find an instance."""
+
+    include: InstanceInclude | None
+    """Relations to include in the response."""
+
+
+@datamodel
+class UpdateResponse:
+    """Response for updating an instance."""
+
+    instance: Instance | None
+    """Instance that was updated."""
 
 
 @datamodel
