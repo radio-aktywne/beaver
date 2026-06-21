@@ -303,7 +303,7 @@ type Query = Annotated[TimeRangeQuery | RecurringQuery, Field(discriminator="typ
 
 
 class EventCreateInput(em.EventCreateInput):
-    """Input data to create an event."""
+    """Data to create an event."""
 
     start: NaiveDatetime
     """Start datetime of the event in event timezone."""
@@ -325,7 +325,7 @@ class EventCreateInput(em.EventCreateInput):
 
 
 class RecurrenceUpdateInput(TypedDict, total=False):
-    """Input data to update a recurrence rule."""
+    """Data to update a recurrence rule."""
 
     frequency: em.Frequency
     """Frequency of the recurrence."""
@@ -371,7 +371,7 @@ class RecurrenceUpdateInput(TypedDict, total=False):
 
 
 class EventUpdateInput(em.EventUpdateInput, total=False):
-    """Input data to update an event."""
+    """Data to update an event."""
 
     start: NaiveDatetime
     """Start datetime of the event in event timezone."""

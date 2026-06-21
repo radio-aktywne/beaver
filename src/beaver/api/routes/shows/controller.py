@@ -179,7 +179,7 @@ class Controller(BaseController):
         data: Annotated[
             Serializable[m.UpdateRequestData],
             Body(
-                description="Data to update the show.",
+                description="Data to update a show.",
             ),
         ],
         include: Annotated[

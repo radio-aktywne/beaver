@@ -272,6 +272,13 @@ class InstanceCreateInput(SerializableModel):
         return im.InstanceCreateInput(start=self.start, event_id=self.event_id)
 
 
+class InstanceUpdateInput(im.InstanceUpdateInput, total=False):
+    """Data to update an instance."""
+
+    start: NaiveDatetime
+    """Start datetime of the instance in event timezone."""
+
+
 type ListRequestStart = NaiveDatetime
 
 type ListRequestEnd = NaiveDatetime
@@ -299,6 +306,16 @@ type CreateRequestData = InstanceCreateInput
 type CreateRequestInclude = im.InstanceInclude | None
 
 type CreateResponseInstance = Instance
+
+type UpdateRequestData = InstanceUpdateInput
+
+type UpdateRequestEventId = UUID
+
+type UpdateRequestStart = NaiveDatetime
+
+type UpdateRequestInclude = im.InstanceInclude | None
+
+type UpdateResponseInstance = Instance
 
 type DeleteRequestEventId = UUID
 
@@ -360,7 +377,7 @@ class CreateRequest:
     """Request to create an instance."""
 
     data: CreateRequestData
-    """Data to create the instance."""
+    """Data to create an instance."""
 
     include: CreateRequestInclude
     """Relations to include in the response."""
@@ -372,6 +389,31 @@ class CreateResponse:
 
     instance: CreateResponseInstance
     """Instance that was created."""
+
+
+@datamodel
+class UpdateRequest:
+    """Request to update an instance."""
+
+    data: UpdateRequestData
+    """Data to update an instance."""
+
+    event_id: UpdateRequestEventId
+    """Identifier of the event that the instance to update belongs to."""
+
+    start: UpdateRequestStart
+    """Start datetime of the instance to update in event timezone."""
+
+    include: UpdateRequestInclude
+    """Relations to include in the response."""
+
+
+@datamodel
+class UpdateResponse:
+    """Response for updating an instance."""
+
+    instance: UpdateResponseInstance
+    """Instance that was updated."""
 
 
 @datamodel

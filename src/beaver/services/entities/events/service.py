@@ -136,12 +136,13 @@ class EventsService:
         if not isinstance(order, Sequence):
             order = [order]
 
-        for key, direction in reversed(order):
-            events = sorted(
-                events,
-                key=lambda event: getattr(event, key),
-                reverse=direction == "desc",
-            )
+        for item in reversed(order):
+            for key, direction in item.items():
+                events = sorted(
+                    events,
+                    key=lambda event: getattr(event, key),
+                    reverse=direction == "desc",
+                )
 
         return list(events)
 
