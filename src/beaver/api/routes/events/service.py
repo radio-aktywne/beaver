@@ -90,6 +90,20 @@ class Service:
                 data["recurrence"].emap() if data["recurrence"] is not None else None
             )
 
+        if "include" in data:
+            edata["include"] = (
+                {i.emap() for i in include}
+                if (include := data["include"]) is not None
+                else None
+            )
+
+        if "exclude" in data:
+            edata["exclude"] = (
+                {e.emap() for e in exclude}
+                if (exclude := data["exclude"]) is not None
+                else None
+            )
+
         return edata
 
     async def create(self, request: m.CreateRequest) -> m.CreateResponse:
@@ -103,11 +117,11 @@ class Service:
 
         return m.CreateResponse(event=m.Event.map(create_response.event))
 
-    def _map_recurrence_rule_update_input(  # noqa: C901, PLR0912
-        self, data: m.RecurrenceRuleUpdateInput
-    ) -> em.RecurrenceRuleUpdateInput:
+    def _map_recurrence_update_input(  # noqa: C901, PLR0912
+        self, data: m.RecurrenceUpdateInput
+    ) -> em.RecurrenceUpdateInput:
         """Map recurrence rule update input to internal representation."""
-        edata: em.RecurrenceRuleUpdateInput = {}
+        edata: em.RecurrenceUpdateInput = {}
 
         if "frequency" in data:
             edata["frequency"] = data["frequency"]
@@ -157,31 +171,6 @@ class Service:
 
         return edata
 
-    def _map_recurrence_update_input(
-        self, data: m.RecurrenceUpdateInput
-    ) -> em.RecurrenceUpdateInput:
-        """Map recurrence update input to internal representation."""
-        edata: em.RecurrenceUpdateInput | None = {}
-
-        if "rule" in data:
-            edata["rule"] = self._map_recurrence_rule_update_input(data["rule"])
-
-        if "include" in data:
-            edata["include"] = (
-                {i.emap() for i in include}
-                if (include := data["include"]) is not None
-                else None
-            )
-
-        if "exclude" in data:
-            edata["exclude"] = (
-                {e.emap() for e in exclude}
-                if (exclude := data["exclude"]) is not None
-                else None
-            )
-
-        return edata
-
     def _map_event_update_input(self, data: m.EventUpdateInput) -> em.EventUpdateInput:
         """Map event update input to internal representation."""
         edata: em.EventUpdateInput = {}
@@ -205,6 +194,20 @@ class Service:
             edata["recurrence"] = (
                 self._map_recurrence_update_input(data["recurrence"])
                 if data["recurrence"] is not None
+                else None
+            )
+
+        if "include" in data:
+            edata["include"] = (
+                {i.emap() for i in include}
+                if (include := data["include"]) is not None
+                else None
+            )
+
+        if "exclude" in data:
+            edata["exclude"] = (
+                {e.emap() for e in exclude}
+                if (exclude := data["exclude"]) is not None
                 else None
             )
 

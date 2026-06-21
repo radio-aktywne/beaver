@@ -15,13 +15,11 @@ Weekday = em.Weekday
 
 WeekdayRule = em.WeekdayRule
 
-RecurrenceRule = em.RecurrenceRule
+Recurrence = em.Recurrence
 
 Inclusion = em.Inclusion
 
 Exclusion = em.Exclusion
-
-Recurrence = em.Recurrence
 
 Event = em.Event
 
@@ -101,7 +99,18 @@ class InstanceOrderByDurationInput(TypedDict, total=True):
     """Order for duration of the instance."""
 
 
-type InstanceOrderByInput = InstanceOrderByStartInput | InstanceOrderByDurationInput
+class InstanceOrderByEventIdInput(TypedDict, total=True):
+    """Order by event ID of the instance."""
+
+    event_id: SortOrder
+    """Order for event ID of the instance."""
+
+
+type InstanceOrderByInput = (
+    InstanceOrderByStartInput
+    | InstanceOrderByDurationInput
+    | InstanceOrderByEventIdInput
+)
 
 
 @datamodel
@@ -131,7 +140,7 @@ class ListRequest:
     include: InstanceInclude | None
     """Relations to include in the response."""
 
-    order: InstanceOrderByInput | None
+    order: InstanceOrderByInput | Sequence[InstanceOrderByInput] | None
     """Order to apply to the results."""
 
 

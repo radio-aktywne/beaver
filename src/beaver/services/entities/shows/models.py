@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from collections.abc import Set as AbstractSet
 from datetime import datetime, timedelta
 from typing import Self
 from zoneinfo import ZoneInfo
@@ -17,13 +18,11 @@ Weekday = hm.Weekday
 
 WeekdayRule = hm.WeekdayRule
 
-RecurrenceRule = hm.RecurrenceRule
+Recurrence = hm.Recurrence
 
 Inclusion = hm.Inclusion
 
 Exclusion = hm.Exclusion
-
-Recurrence = hm.Recurrence
 
 
 @datamodel
@@ -52,7 +51,13 @@ class Event:
     """Timezone of the event."""
 
     recurrence: Recurrence | None
-    """Recurrence of the event."""
+    """Recurrence rule of the event."""
+
+    include: AbstractSet[Inclusion] | None
+    """Included instances of the event."""
+
+    exclude: AbstractSet[Exclusion] | None
+    """Excluded instances of the event."""
 
     @classmethod
     def map(cls, ds: sm.Event, dt: hm.Event, show: "Show | None") -> "Event":
@@ -66,6 +71,8 @@ class Event:
             duration=dt.duration,
             timezone=dt.timezone,
             recurrence=dt.recurrence,
+            include=dt.include,
+            exclude=dt.exclude,
         )
 
 

@@ -18,13 +18,11 @@ Weekday = hm.Weekday
 
 WeekdayRule = hm.WeekdayRule
 
-RecurrenceRule = hm.RecurrenceRule
+Recurrence = hm.Recurrence
 
 Inclusion = hm.Inclusion
 
 Exclusion = hm.Exclusion
-
-Recurrence = hm.Recurrence
 
 
 @datamodel
@@ -77,7 +75,13 @@ class Event:
     """Timezone of the event."""
 
     recurrence: Recurrence | None
-    """Recurrence of the event."""
+    """Recurrence rule of the event."""
+
+    include: AbstractSet[Inclusion] | None
+    """Included instances of the event."""
+
+    exclude: AbstractSet[Exclusion] | None
+    """Excluded instances of the event."""
 
     @classmethod
     def map(cls, ds: sm.Event, dt: hm.Event, show: Show | None) -> "Event":
@@ -91,6 +95,8 @@ class Event:
             duration=dt.duration,
             timezone=dt.timezone,
             recurrence=dt.recurrence,
+            include=dt.include,
+            exclude=dt.exclude,
         )
 
 
@@ -156,10 +162,16 @@ class EventCreateInput(st.EventCreateWithoutRelationsInput):
     """Timezone of the event."""
 
     recurrence: NotRequired[Recurrence | None]
-    """Recurrence of the event."""
+    """Recurrence rule of the event."""
+
+    include: NotRequired[AbstractSet[Inclusion] | None]
+    """Included instances of the event."""
+
+    exclude: NotRequired[AbstractSet[Exclusion] | None]
+    """Excluded instances of the event."""
 
 
-class RecurrenceRuleUpdateInput(TypedDict, total=False):
+class RecurrenceUpdateInput(TypedDict, total=False):
     """Input data to update a recurrence rule."""
 
     frequency: Frequency
@@ -205,19 +217,6 @@ class RecurrenceRuleUpdateInput(TypedDict, total=False):
     """Start day of the week."""
 
 
-class RecurrenceUpdateInput(TypedDict, total=False):
-    """Input data to update a recurrence."""
-
-    rule: RecurrenceRuleUpdateInput
-    """Rule of the recurrence."""
-
-    include: AbstractSet[Inclusion] | None
-    """Included instances of the recurrence."""
-
-    exclude: AbstractSet[Exclusion] | None
-    """Excluded instances of the recurrence."""
-
-
 class EventUpdateInput(st.EventUpdateManyMutationInput, total=False):
     """Input data to update an event."""
 
@@ -231,7 +230,13 @@ class EventUpdateInput(st.EventUpdateManyMutationInput, total=False):
     """Timezone of the event."""
 
     recurrence: RecurrenceUpdateInput | None
-    """Recurrence of the event."""
+    """Recurrence rule of the event."""
+
+    include: AbstractSet[Inclusion] | None
+    """Included instances of the event."""
+
+    exclude: AbstractSet[Exclusion] | None
+    """Excluded instances of the event."""
 
 
 @datamodel

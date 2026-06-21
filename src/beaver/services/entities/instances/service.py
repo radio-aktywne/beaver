@@ -67,6 +67,19 @@ class InstancesService:
 
         return get_response.event
 
+    async def _update_event(
+        self,
+        data: em.EventUpdateInput,
+        where: em.EventWhereUniqueInput,
+        include: em.EventInclude | None = None,
+    ) -> em.Event | None:
+        update_request = em.UpdateRequest(data=data, where=where, include=include)
+
+        with self._handle_errors():
+            update_response = await self._events.update(update_request)
+
+        return update_response.event
+
     def _list_event_instances(
         self, event: em.Event, start: datetime, end: datetime
     ) -> Sequence[im.Instance]:
@@ -76,29 +89,32 @@ class InstancesService:
             duration=event.duration,
             timezone=event.timezone,
             recurrence=event.recurrence,
+            include=event.include,
+            exclude=event.exclude,
         )
 
         with self._handle_errors():
             return self._icalendar.expander.expand(ievent, start, end)
 
     def _sort_instances(
-        self, instances: list[m.Instance], order: m.InstanceOrderByInput | None
-    ) -> list[m.Instance]:
-        if order and "start" in order:
-            return sorted(
+        self,
+        instances: Sequence[m.Instance],
+        order: m.InstanceOrderByInput | Sequence[m.InstanceOrderByInput] | None,
+    ) -> Sequence[m.Instance]:
+        if order is None:
+            return list(instances)
+
+        if not isinstance(order, Sequence):
+            order = [order]
+
+        for key, direction in reversed(order):
+            instances = sorted(
                 instances,
-                key=lambda instance: instance.start,
-                reverse=order["start"] == "desc",
+                key=lambda instance: getattr(instance, key),
+                reverse=direction == "desc",
             )
 
-        if order and "duration" in order:
-            return sorted(
-                instances,
-                key=lambda instance: instance.duration,
-                reverse=order["duration"] == "desc",
-            )
-
-        return instances
+        return list(instances)
 
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List instances."""
@@ -197,32 +213,21 @@ class InstancesService:
         )
 
         if any(instance.start == data.start for instance in instances):
-            raise e.InstanceAlreadyExistsError(data.event_id, data.start)
+            raise e.InstanceAlreadyExistsError(event.id, data.start)
 
-        with self._handle_errors():
-            update_request = em.UpdateRequest(
-                data={
-                    "recurrence": {
-                        "include": {em.Inclusion(start=data.start)}
-                        | (
-                            event.recurrence.include
-                            if event.recurrence and event.recurrence.include
-                            else set()
-                        )
-                    }
-                },
-                where={"id": event.id},
-                include=include["event"]["include"]
-                if include
-                and "event" in include
-                and not isinstance(include["event"], bool)
-                and "include" in include["event"]
-                else None,
-            )
-
-            update_response = await self._events.update(update_request)
-
-        event = update_response.event
+        event = await self._update_event(
+            data={
+                "include": (event.include or set()) | {em.Inclusion(start=data.start)},
+                "exclude": (event.exclude or set()) - {em.Exclusion(start=data.start)},
+            },
+            where={"id": event.id},
+            include=include["event"]["include"]
+            if include
+            and "event" in include
+            and not isinstance(include["event"], bool)
+            and "include" in include["event"]
+            else None,
+        )
 
         if event is None:
             raise e.EventDoesNotExistError(data.event_id)

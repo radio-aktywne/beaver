@@ -212,6 +212,8 @@ class EventsService:
             duration=data["duration"],
             timezone=data["timezone"],
             recurrence=data.get("recurrence"),
+            include=data.get("include"),
+            exclude=data.get("exclude"),
         )
         request = hm.UpsertEventRequest(event=hevent)
 
@@ -255,70 +257,63 @@ class EventsService:
             response = await self._howlite.get_event(request)
             ohevent = response.event
 
+        ohrec = ohevent.recurrence
+
         if "recurrence" not in data:
-            recurrence = ohevent.recurrence
-        elif data["recurrence"] is None:
-            recurrence = None
-        elif ohevent.recurrence is not None:
-            orr = ohevent.recurrence.rule
-            recurrence = hm.Recurrence(
-                rule=hm.RecurrenceRule(
-                    frequency=rule.get("frequency", orr.frequency),
-                    until=rule.get("until", orr.until),
-                    count=rule.get("count", orr.count),
-                    interval=rule.get("interval", orr.interval),
-                    by_seconds=rule.get("by_seconds", orr.by_seconds),
-                    by_minutes=rule.get("by_minutes", orr.by_minutes),
-                    by_hours=rule.get("by_hours", orr.by_hours),
-                    by_weekdays=rule.get("by_weekdays", orr.by_weekdays),
-                    by_monthdays=rule.get("by_monthdays", orr.by_monthdays),
-                    by_yeardays=rule.get("by_yeardays", orr.by_yeardays),
-                    by_weeks=rule.get("by_weeks", orr.by_weeks),
-                    by_months=rule.get("by_months", orr.by_months),
-                    by_set_positions=rule.get("by_set_positions", orr.by_set_positions),
-                    week_start=rule.get("week_start", orr.week_start),
-                )
-                if "rule" in data["recurrence"] and (rule := data["recurrence"]["rule"])
-                else orr,
-                include=data["recurrence"].get("include", ohevent.recurrence.include),
-                exclude=data["recurrence"].get("exclude", ohevent.recurrence.exclude),
-            )
+            nhrec = ohrec
         else:
-            if "rule" not in data["recurrence"]:
-                raise e.PartialUpdateInsufficientDataError
+            rec = data["recurrence"]
 
-            rule = data["recurrence"]["rule"]
+            if rec is None:
+                nhrec = None
+            elif ohrec is not None:
+                nhrec = hm.Recurrence(
+                    frequency=rec.get("frequency", ohrec.frequency),
+                    until=rec.get("until", ohrec.until),
+                    count=rec.get("count", ohrec.count),
+                    interval=rec.get("interval", ohrec.interval),
+                    by_seconds=rec.get("by_seconds", ohrec.by_seconds),
+                    by_minutes=rec.get("by_minutes", ohrec.by_minutes),
+                    by_hours=rec.get("by_hours", ohrec.by_hours),
+                    by_weekdays=rec.get("by_weekdays", ohrec.by_weekdays),
+                    by_monthdays=rec.get("by_monthdays", ohrec.by_monthdays),
+                    by_yeardays=rec.get("by_yeardays", ohrec.by_yeardays),
+                    by_weeks=rec.get("by_weeks", ohrec.by_weeks),
+                    by_months=rec.get("by_months", ohrec.by_months),
+                    by_set_positions=rec.get(
+                        "by_set_positions", ohrec.by_set_positions
+                    ),
+                    week_start=rec.get("week_start", ohrec.week_start),
+                )
+            else:
+                if "frequency" not in rec:
+                    raise e.PartialUpdateInsufficientDataError
 
-            if "frequency" not in rule:
-                raise e.PartialUpdateInsufficientDataError
-
-            recurrence = hm.Recurrence(
-                rule=hm.RecurrenceRule(
-                    frequency=rule["frequency"],
-                    until=rule.get("until"),
-                    count=rule.get("count"),
-                    interval=rule.get("interval"),
-                    by_seconds=rule.get("by_seconds"),
-                    by_minutes=rule.get("by_minutes"),
-                    by_hours=rule.get("by_hours"),
-                    by_weekdays=rule.get("by_weekdays"),
-                    by_monthdays=rule.get("by_monthdays"),
-                    by_yeardays=rule.get("by_yeardays"),
-                    by_weeks=rule.get("by_weeks"),
-                    by_months=rule.get("by_months"),
-                    by_set_positions=rule.get("by_set_positions"),
-                    week_start=rule.get("week_start"),
-                ),
-                include=data["recurrence"].get("include"),
-                exclude=data["recurrence"].get("exclude"),
-            )
+                nhrec = hm.Recurrence(
+                    frequency=rec["frequency"],
+                    until=rec.get("until"),
+                    count=rec.get("count"),
+                    interval=rec.get("interval"),
+                    by_seconds=rec.get("by_seconds"),
+                    by_minutes=rec.get("by_minutes"),
+                    by_hours=rec.get("by_hours"),
+                    by_weekdays=rec.get("by_weekdays"),
+                    by_monthdays=rec.get("by_monthdays"),
+                    by_yeardays=rec.get("by_yeardays"),
+                    by_weeks=rec.get("by_weeks"),
+                    by_months=rec.get("by_months"),
+                    by_set_positions=rec.get("by_set_positions"),
+                    week_start=rec.get("week_start"),
+                )
 
         nhevent = hm.Event(
             id=UUID(nsevent.id),
             start=data.get("start", ohevent.start),
             duration=data.get("duration", ohevent.duration),
             timezone=data.get("timezone", ohevent.timezone),
-            recurrence=recurrence,
+            recurrence=nhrec,
+            include=data.get("include", ohevent.include),
+            exclude=data.get("exclude", ohevent.exclude),
         )
 
         if ohevent.id != nhevent.id:

@@ -44,7 +44,7 @@ class WeekdayRule:
 
 
 @datamodel
-class RecurrenceRule:
+class Recurrence:
     """Recurrence rule data."""
 
     frequency: Frequency
@@ -107,20 +107,6 @@ class Exclusion:
 
 
 @datamodel
-class Recurrence:
-    """Recurrence data."""
-
-    rule: RecurrenceRule
-    """Rule of the recurrence."""
-
-    include: AbstractSet[Inclusion] | None = None
-    """Included instances of the recurrence."""
-
-    exclude: AbstractSet[Exclusion] | None = None
-    """Excluded instances of the recurrence."""
-
-
-@datamodel
 class Event:
     """Event data."""
 
@@ -137,7 +123,13 @@ class Event:
     """Timezone of the event."""
 
     recurrence: Recurrence | None = None
-    """Recurrence of the event."""
+    """Recurrence rule of the event."""
+
+    include: AbstractSet[Inclusion] | None = None
+    """Included instances of the event."""
+
+    exclude: AbstractSet[Exclusion] | None = None
+    """Excluded instances of the event."""
 
 
 @datamodel

@@ -11,13 +11,11 @@ Weekday = im.Weekday
 
 WeekdayRule = im.WeekdayRule
 
-RecurrenceRule = im.RecurrenceRule
+Recurrence = im.Recurrence
 
 Inclusion = im.Inclusion
 
 Exclusion = im.Exclusion
-
-Recurrence = im.Recurrence
 
 Event = im.Event
 
