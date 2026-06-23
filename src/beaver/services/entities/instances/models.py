@@ -13,6 +13,12 @@ Frequency = em.Frequency
 
 Weekday = em.Weekday
 
+CountTermination = em.CountTermination
+
+UntilTermination = em.UntilTermination
+
+type Termination = em.Termination
+
 WeekdayRule = em.WeekdayRule
 
 Recurrence = em.Recurrence

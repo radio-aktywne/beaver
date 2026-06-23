@@ -81,17 +81,9 @@ class EventsService:
 
         return m.Show.map(sshow, events)
 
-    async def count(self, request: m.CountRequest) -> m.CountResponse:
-        """Count events."""
-        where = await self._where_with_query(request.where, request.query)
-
-        with self._handle_errors():
-            count = await self._sapphire.event.count(where=where)
-
-        return m.CountResponse(count=count)
-
-    async def _list_sapphire_events(
+    async def _list_sapphire_events(  # noqa: PLR0913
         self,
+        transaction: SapphireService,
         limit: int | None,
         offset: int | None,
         where: m.EventWhereInput | None,
@@ -99,7 +91,7 @@ class EventsService:
         order: m.EventOrderByInput | Sequence[m.EventOrderByInput] | None,
     ) -> Sequence[sm.Event]:
         with self._handle_errors():
-            return await self._sapphire.event.find_many(
+            return await transaction.event.find_many(
                 take=limit,
                 skip=offset,
                 where=where,
@@ -108,6 +100,55 @@ class EventsService:
                 if isinstance(order, Sequence)
                 else cast("st.EventOrderByInput | None", order),
             )
+
+    async def _get_sapphire_event(
+        self,
+        transaction: SapphireService,
+        where: m.EventWhereUniqueInput,
+        include: m.EventInclude | None,
+    ) -> sm.Event | None:
+        with self._handle_errors():
+            return await transaction.event.find_unique(where=where, include=include)
+
+    async def _create_sapphire_event(
+        self,
+        transaction: SapphireService,
+        data: m.EventCreateInput,
+        include: m.EventInclude | None,
+    ) -> sm.Event:
+        d: st.EventCreateInput = {"type": data["type"]}
+        if "id" in data:
+            d["id"] = data["id"]
+        if "showId" in data:
+            d["showId"] = data["showId"]
+
+        with self._handle_errors():
+            return await transaction.event.create(data=d, include=include)
+
+    async def _update_sapphire_event(
+        self,
+        transaction: SapphireService,
+        data: m.EventUpdateInput,
+        where: m.EventWhereUniqueInput,
+        include: m.EventInclude | None,
+    ) -> sm.Event | None:
+        d: st.EventUpdateInput = {}
+        if "id" in data:
+            d["id"] = data["id"]
+        if "type" in data:
+            d["type"] = data["type"]
+
+        with self._handle_errors():
+            return await transaction.event.update(data=d, where=where, include=include)
+
+    async def _delete_sapphire_event(
+        self,
+        transaction: SapphireService,
+        where: m.EventWhereUniqueInput,
+        include: m.EventInclude | None,
+    ) -> sm.Event | None:
+        with self._handle_errors():
+            return await transaction.event.delete(where=where, include=include)
 
     async def _list_howlite_events(
         self, sevents: Sequence[sm.Event]
@@ -125,50 +166,6 @@ class EventsService:
 
         return hevents
 
-    async def _list_sort_events(
-        self,
-        events: Sequence[m.Event],
-        order: m.EventOrderByInput | Sequence[m.EventOrderByInput] | None,
-    ) -> Sequence[m.Event]:
-        if order is None:
-            return list(events)
-
-        if not isinstance(order, Sequence):
-            order = [order]
-
-        for item in reversed(order):
-            for key, direction in item.items():
-                events = sorted(
-                    events,
-                    key=lambda event: getattr(event, key),
-                    reverse=direction == "desc",
-                )
-
-        return list(events)
-
-    async def list(self, request: m.ListRequest) -> m.ListResponse:
-        """List events."""
-        where = await self._where_with_query(request.where, request.query)
-
-        sevents = await self._list_sapphire_events(
-            request.limit, request.offset, where, request.include, request.order
-        )
-        hevents = await self._list_howlite_events(sevents)
-
-        events = [
-            await self._merge_event(dsevent, dtevent)
-            for dsevent, dtevent in zip(sevents, hevents, strict=False)
-        ]
-        events = await self._list_sort_events(events, request.order)
-
-        return m.ListResponse(events=events)
-
-    async def _get_sapphire_event(
-        self, where: m.EventWhereUniqueInput, include: m.EventInclude | None
-    ) -> sm.Event | None:
-        with self._handle_errors():
-            return await self._sapphire.event.find_unique(where=where, include=include)
-
     async def _get_howlite_event(self, sevent: sm.Event) -> hm.Event:
         request = hm.GetEventRequest(id=UUID(sevent.id))
 
@@ -176,33 +173,6 @@ class EventsService:
             response = await self._howlite.get_event(request)
 
         return response.event
-
-    async def get(self, request: m.GetRequest) -> m.GetResponse:
-        """Get event."""
-        sevent = await self._get_sapphire_event(request.where, request.include)
-
-        if sevent is None:
-            return m.GetResponse(event=None)
-
-        hevent = await self._get_howlite_event(sevent)
-        event = await self._merge_event(sevent, hevent)
-
-        return m.GetResponse(event=event)
-
-    async def _create_sapphire_event(
-        self,
-        data: m.EventCreateInput,
-        include: m.EventInclude | None,
-        transaction: SapphireService,
-    ) -> sm.Event:
-        d: st.EventCreateInput = {"type": data["type"]}
-        if "id" in data:
-            d["id"] = data["id"]
-        if "showId" in data:
-            d["showId"] = data["showId"]
-
-        with self._handle_errors():
-            return await transaction.event.create(data=d, include=include)
 
     async def _create_howlite_event(
         self, data: m.EventCreateInput, sevent: sm.Event
@@ -222,33 +192,6 @@ class EventsService:
             response = await self._howlite.upsert_event(request)
 
         return response.event
-
-    async def create(self, request: m.CreateRequest) -> m.CreateResponse:
-        """Create event."""
-        async with self._sapphire.tx() as transaction:
-            sevent = await self._create_sapphire_event(
-                request.data, request.include, transaction
-            )
-            hevent = await self._create_howlite_event(request.data, sevent)
-
-        event = await self._merge_event(sevent, hevent)
-        return m.CreateResponse(event=event)
-
-    async def _update_sapphire_event(
-        self,
-        data: m.EventUpdateInput,
-        where: m.EventWhereUniqueInput,
-        include: m.EventInclude | None,
-        transaction: SapphireService,
-    ) -> sm.Event | None:
-        d: st.EventUpdateInput = {}
-        if "id" in data:
-            d["id"] = data["id"]
-        if "type" in data:
-            d["type"] = data["type"]
-
-        with self._handle_errors():
-            return await transaction.event.update(data=d, where=where, include=include)
 
     async def _update_howlite_event(
         self, data: m.EventUpdateInput, osevent: sm.Event, nsevent: sm.Event
@@ -270,8 +213,7 @@ class EventsService:
             elif ohrec is not None:
                 nhrec = hm.Recurrence(
                     frequency=rec.get("frequency", ohrec.frequency),
-                    until=rec.get("until", ohrec.until),
-                    count=rec.get("count", ohrec.count),
+                    termination=rec.get("termination", ohrec.termination),
                     interval=rec.get("interval", ohrec.interval),
                     by_seconds=rec.get("by_seconds", ohrec.by_seconds),
                     by_minutes=rec.get("by_minutes", ohrec.by_minutes),
@@ -292,8 +234,7 @@ class EventsService:
 
                 nhrec = hm.Recurrence(
                     frequency=rec["frequency"],
-                    until=rec.get("until"),
-                    count=rec.get("count"),
+                    termination=rec.get("termination"),
                     interval=rec.get("interval"),
                     by_seconds=rec.get("by_seconds"),
                     by_minutes=rec.get("by_minutes"),
@@ -330,31 +271,6 @@ class EventsService:
 
         return response.event
 
-    async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
-        """Update event."""
-        async with self._sapphire.tx() as transaction:
-            osevent = await self._get_sapphire_event(request.where, None)
-            nsevent = await self._update_sapphire_event(
-                request.data, request.where, request.include, transaction
-            )
-
-            if osevent is None or nsevent is None:
-                return m.UpdateResponse(event=None)
-
-            hevent = await self._update_howlite_event(request.data, osevent, nsevent)
-
-        event = await self._merge_event(nsevent, hevent)
-        return m.UpdateResponse(event=event)
-
-    async def _delete_sapphire_event(
-        self,
-        where: m.EventWhereUniqueInput,
-        include: m.EventInclude | None,
-        transaction: SapphireService,
-    ) -> sm.Event | None:
-        with self._handle_errors():
-            return await transaction.event.delete(where=where, include=include)
-
     async def _delete_howlite_event(self, dsevent: sm.Event) -> hm.Event:
         get_event_request = hm.GetEventRequest(id=UUID(dsevent.id))
 
@@ -369,12 +285,120 @@ class EventsService:
 
         return hevent
 
+    async def _sort_events(
+        self,
+        events: Sequence[m.Event],
+        order: m.EventOrderByInput | Sequence[m.EventOrderByInput] | None,
+    ) -> Sequence[m.Event]:
+        if order is None:
+            return list(events)
+
+        if not isinstance(order, Sequence):
+            order = [order]
+
+        for item in reversed(order):
+            for key, direction in item.items():
+                events = sorted(
+                    events,
+                    key=lambda event: getattr(event, key),
+                    reverse=direction == "desc",
+                )
+
+        return list(events)
+
+    async def count(self, request: m.CountRequest) -> m.CountResponse:
+        """Count events."""
+        where = request.where
+        query = request.query
+
+        where = await self._where_with_query(where, query)
+
+        with self._handle_errors():
+            count = await self._sapphire.event.count(where=where)
+
+        return m.CountResponse(count=count)
+
+    async def list(self, request: m.ListRequest) -> m.ListResponse:
+        """List events."""
+        limit = request.limit
+        offset = request.offset
+        where = request.where
+        query = request.query
+        include = request.include
+        order = request.order
+
+        where = await self._where_with_query(where, query)
+
+        async with self._sapphire.tx() as transaction:
+            sevents = await self._list_sapphire_events(
+                transaction, limit, offset, where, include, order
+            )
+
+        hevents = await self._list_howlite_events(sevents)
+
+        events = [
+            await self._merge_event(dsevent, dtevent)
+            for dsevent, dtevent in zip(sevents, hevents, strict=False)
+        ]
+        events = await self._sort_events(events, order)
+
+        return m.ListResponse(events=events)
+
+    async def get(self, request: m.GetRequest) -> m.GetResponse:
+        """Get event."""
+        where = request.where
+        include = request.include
+
+        async with self._sapphire.tx() as transaction:
+            sevent = await self._get_sapphire_event(transaction, where, include)
+
+        if sevent is None:
+            return m.GetResponse(event=None)
+
+        hevent = await self._get_howlite_event(sevent)
+        event = await self._merge_event(sevent, hevent)
+
+        return m.GetResponse(event=event)
+
+    async def create(self, request: m.CreateRequest) -> m.CreateResponse:
+        """Create event."""
+        data = request.data
+        include = request.include
+
+        async with self._sapphire.tx() as transaction:
+            sevent = await self._create_sapphire_event(transaction, data, include)
+            hevent = await self._create_howlite_event(data, sevent)
+
+        event = await self._merge_event(sevent, hevent)
+        return m.CreateResponse(event=event)
+
+    async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
+        """Update event."""
+        data = request.data
+        where = request.where
+        include = request.include
+
+        async with self._sapphire.tx() as transaction:
+            osevent = await self._get_sapphire_event(transaction, where, None)
+            nsevent = await self._update_sapphire_event(
+                transaction, data, where, include
+            )
+
+            if osevent is None or nsevent is None:
+                return m.UpdateResponse(event=None)
+
+            hevent = await self._update_howlite_event(data, osevent, nsevent)
+
+        event = await self._merge_event(nsevent, hevent)
+        return m.UpdateResponse(event=event)
+
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete event."""
+        where = request.where
+        include = request.include
+
         async with self._sapphire.tx() as transaction:
-            sevent = await self._delete_sapphire_event(
-                request.where, request.include, transaction
-            )
+            sevent = await self._delete_sapphire_event(transaction, where, include)
 
             if sevent is None:
                 return m.DeleteResponse(event=None)

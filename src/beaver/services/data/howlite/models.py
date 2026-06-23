@@ -9,6 +9,12 @@ Frequency = im.Frequency
 
 Weekday = im.Weekday
 
+CountTermination = im.CountTermination
+
+UntilTermination = im.UntilTermination
+
+type Termination = im.Termination
+
 WeekdayRule = im.WeekdayRule
 
 Recurrence = im.Recurrence
