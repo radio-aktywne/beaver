@@ -25,51 +25,6 @@ class Service:
         except ee.ServiceError as ex:
             raise e.ServiceError from ex
 
-    async def list(self, request: m.ListRequest) -> m.ListResponse:
-        """List events."""
-        count_request = em.CountRequest(
-            where=request.where,
-            query=request.query.map() if request.query is not None else None,
-        )
-
-        with self._handle_errors():
-            count_response = await self._events.count(count_request)
-
-        list_request = em.ListRequest(
-            limit=request.limit,
-            offset=request.offset,
-            where=request.where,
-            query=request.query.map() if request.query is not None else None,
-            include=request.include,
-            order=request.order,
-        )
-
-        with self._handle_errors():
-            list_response = await self._events.list(list_request)
-
-        return m.ListResponse(
-            results=m.EventList(
-                count=count_response.count,
-                limit=request.limit,
-                offset=request.offset,
-                events=[m.Event.map(event) for event in list_response.events],
-            )
-        )
-
-    async def get(self, request: m.GetRequest) -> m.GetResponse:
-        """Get event."""
-        get_request = em.GetRequest(
-            where={"id": str(request.id)}, include=request.include
-        )
-
-        with self._handle_errors():
-            get_response = await self._events.get(get_request)
-
-        if get_response.event is None:
-            raise e.NotFoundError
-
-        return m.GetResponse(event=m.Event.map(get_response.event))
-
     def _map_event_create_input(self, data: m.EventCreateInput) -> em.EventCreateInput:
         """Map event create input to internal representation."""
         edata: em.EventCreateInput = {
@@ -106,17 +61,6 @@ class Service:
 
         return edata
 
-    async def create(self, request: m.CreateRequest) -> m.CreateResponse:
-        """Create event."""
-        create_request = em.CreateRequest(
-            data=self._map_event_create_input(request.data), include=request.include
-        )
-
-        with self._handle_errors():
-            create_response = await self._events.create(create_request)
-
-        return m.CreateResponse(event=m.Event.map(create_response.event))
-
     def _map_recurrence_update_input(  # noqa: C901, PLR0912
         self, data: m.RecurrenceUpdateInput
     ) -> em.RecurrenceUpdateInput:
@@ -126,11 +70,10 @@ class Service:
         if "frequency" in data:
             edata["frequency"] = data["frequency"]
 
-        if "until" in data:
-            edata["until"] = data["until"]
-
-        if "count" in data:
-            edata["count"] = data["count"]
+        if "termination" in data:
+            edata["termination"] = (
+                data["termination"].emap() if data["termination"] is not None else None
+            )
 
         if "interval" in data:
             edata["interval"] = data["interval"]
@@ -212,6 +155,62 @@ class Service:
             )
 
         return edata
+
+    async def list(self, request: m.ListRequest) -> m.ListResponse:
+        """List events."""
+        count_request = em.CountRequest(
+            where=request.where,
+            query=request.query.map() if request.query is not None else None,
+        )
+
+        with self._handle_errors():
+            count_response = await self._events.count(count_request)
+
+        list_request = em.ListRequest(
+            limit=request.limit,
+            offset=request.offset,
+            where=request.where,
+            query=request.query.map() if request.query is not None else None,
+            include=request.include,
+            order=request.order,
+        )
+
+        with self._handle_errors():
+            list_response = await self._events.list(list_request)
+
+        return m.ListResponse(
+            results=m.EventList(
+                count=count_response.count,
+                limit=request.limit,
+                offset=request.offset,
+                events=[m.Event.map(event) for event in list_response.events],
+            )
+        )
+
+    async def get(self, request: m.GetRequest) -> m.GetResponse:
+        """Get event."""
+        get_request = em.GetRequest(
+            where={"id": str(request.id)}, include=request.include
+        )
+
+        with self._handle_errors():
+            get_response = await self._events.get(get_request)
+
+        if get_response.event is None:
+            raise e.NotFoundError
+
+        return m.GetResponse(event=m.Event.map(get_response.event))
+
+    async def create(self, request: m.CreateRequest) -> m.CreateResponse:
+        """Create event."""
+        create_request = em.CreateRequest(
+            data=self._map_event_create_input(request.data), include=request.include
+        )
+
+        with self._handle_errors():
+            create_response = await self._events.create(create_request)
+
+        return m.CreateResponse(event=m.Event.map(create_response.event))
 
     async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
         """Update event."""

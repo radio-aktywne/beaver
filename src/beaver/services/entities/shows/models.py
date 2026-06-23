@@ -16,6 +16,12 @@ Frequency = hm.Frequency
 
 Weekday = hm.Weekday
 
+CountTermination = hm.CountTermination
+
+UntilTermination = hm.UntilTermination
+
+type Termination = hm.Termination
+
 WeekdayRule = hm.WeekdayRule
 
 Recurrence = hm.Recurrence
@@ -60,19 +66,19 @@ class Event:
     """Excluded instances of the event."""
 
     @classmethod
-    def map(cls, ds: sm.Event, dt: hm.Event, show: "Show | None") -> "Event":
+    def map(cls, sevent: sm.Event, hevent: hm.Event, show: "Show | None") -> "Event":
         """Map from internal representation."""
         return Event(
-            id=ds.id,
-            type=ds.type,
-            show_id=ds.showId,
+            id=sevent.id,
+            type=sevent.type,
+            show_id=sevent.showId,
             show=show,
-            start=dt.start,
-            duration=dt.duration,
-            timezone=dt.timezone,
-            recurrence=dt.recurrence,
-            include=dt.include,
-            exclude=dt.exclude,
+            start=hevent.start,
+            duration=hevent.duration,
+            timezone=hevent.timezone,
+            recurrence=hevent.recurrence,
+            include=hevent.include,
+            exclude=hevent.exclude,
         )
 
 

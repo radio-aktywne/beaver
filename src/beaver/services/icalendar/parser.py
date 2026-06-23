@@ -181,12 +181,19 @@ class ICalendarParser:
         parts = OrderedDict()
         parts["FREQ"] = self.frequency_to_ical(rule.frequency).to_ical().decode("utf-8")
 
-        if rule.until is not None:
-            until = rule.until.replace(tzinfo=UTC)
-            parts["UNTIL"] = self.datetime_to_ical(until).to_ical().decode("utf-8")
-
-        if rule.count is not None:
-            parts["COUNT"] = self.int_to_ical(rule.count).to_ical().decode("utf-8")
+        if rule.termination is not None:
+            match rule.termination.type:
+                case "until":
+                    until = rule.termination.until.replace(tzinfo=UTC)
+                    parts["UNTIL"] = (
+                        self.datetime_to_ical(until).to_ical().decode("utf-8")
+                    )
+                case "count":
+                    parts["COUNT"] = (
+                        self.int_to_ical(rule.termination.count)
+                        .to_ical()
+                        .decode("utf-8")
+                    )
 
         if rule.interval is not None:
             parts["INTERVAL"] = (
@@ -280,14 +287,18 @@ class ICalendarParser:
             icalendar.vFrequency(next(iter(vrecur["FREQ"])))
         )
 
+        termination = None
+
         until = vrecur.get("UNTIL")
         if until is not None:
             until = self.ical_to_datetime(icalendar.vDatetime(next(iter(until))))
             until = until.astimezone(UTC).replace(tzinfo=None)
+            termination = m.UntilTermination(until=until)
 
         count = vrecur.get("COUNT")
         if count is not None:
             count = self.ical_to_int(icalendar.vInt(next(iter(count))))
+            termination = m.CountTermination(count=count)
 
         interval = vrecur.get("INTERVAL")
         if interval is not None:
@@ -348,8 +359,7 @@ class ICalendarParser:
 
         return m.Recurrence(
             frequency=frequency,
-            until=until,
-            count=count,
+            termination=termination,
             interval=interval,
             by_seconds=by_seconds,
             by_minutes=by_minutes,

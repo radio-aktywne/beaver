@@ -28,6 +28,49 @@ type Week = Annotated[int, Field(ge=-53, le=-1)] | Annotated[int, Field(ge=1, le
 type Month = Annotated[int, Field(ge=1, le=12)]
 
 
+class CountTermination(SerializableModel):
+    """Count termination data."""
+
+    type: Literal["count"] = "count"
+    """Type of the termination."""
+
+    count: PositiveInt
+    """Number of instances of recurring event."""
+
+    @classmethod
+    def imap(cls, termination: em.CountTermination) -> Self:
+        """Map from internal representation."""
+        return cls(count=termination.count)
+
+    def emap(self) -> em.CountTermination:
+        """Map to internal representation."""
+        return em.CountTermination(count=self.count)
+
+
+class UntilTermination(SerializableModel):
+    """Until termination data."""
+
+    type: Literal["until"] = "until"
+    """Type of the termination."""
+
+    until: NaiveDatetime
+    """End datetime of the recurrence in UTC."""
+
+    @classmethod
+    def imap(cls, termination: em.UntilTermination) -> Self:
+        """Map from internal representation."""
+        return cls(until=termination.until)
+
+    def emap(self) -> em.UntilTermination:
+        """Map to internal representation."""
+        return em.UntilTermination(until=self.until)
+
+
+type Termination = Annotated[
+    CountTermination | UntilTermination, Field(discriminator="type")
+]
+
+
 class WeekdayRule(SerializableModel):
     """Day rule data."""
 
@@ -53,11 +96,8 @@ class Recurrence(SerializableModel):
     frequency: em.Frequency
     """Frequency of the recurrence."""
 
-    until: NaiveDatetime | None = None
-    """End datetime of the recurrence in UTC."""
-
-    count: PositiveInt | None = None
-    """Number of occurrences of the recurrence."""
+    termination: Termination | None = None
+    """Termination of the recurrence."""
 
     interval: PositiveInt | None = None
     """Interval of the recurrence."""
@@ -97,8 +137,11 @@ class Recurrence(SerializableModel):
         """Map from internal representation."""
         return cls(
             frequency=rule.frequency,
-            until=rule.until,
-            count=rule.count,
+            termination=None
+            if rule.termination is None
+            else CountTermination.imap(rule.termination)
+            if rule.termination.type == "count"
+            else UntilTermination.imap(rule.termination),
             interval=rule.interval,
             by_seconds=rule.by_seconds,
             by_minutes=rule.by_minutes,
@@ -118,8 +161,11 @@ class Recurrence(SerializableModel):
         """Map to internal representation."""
         return em.Recurrence(
             frequency=self.frequency,
-            until=self.until,
-            count=self.count,
+            termination=None
+            if self.termination is None
+            else CountTermination.emap(self.termination)
+            if self.termination.type == "count"
+            else UntilTermination.emap(self.termination),
             interval=self.interval,
             by_seconds=self.by_seconds,
             by_minutes=self.by_minutes,
@@ -330,11 +376,8 @@ class RecurrenceUpdateInput(TypedDict, total=False):
     frequency: em.Frequency
     """Frequency of the recurrence."""
 
-    until: NaiveDatetime | None
-    """End datetime of the recurrence in UTC."""
-
-    count: PositiveInt | None
-    """Number of occurrences of the recurrence."""
+    termination: Termination | None
+    """Termination of the recurrence."""
 
     interval: PositiveInt | None
     """Interval of the recurrence."""

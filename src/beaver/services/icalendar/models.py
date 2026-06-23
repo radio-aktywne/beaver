@@ -2,6 +2,7 @@ from collections.abc import Sequence
 from collections.abc import Set as AbstractSet
 from datetime import datetime, timedelta
 from enum import StrEnum
+from typing import Literal
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
@@ -33,6 +34,31 @@ class Weekday(StrEnum):
 
 
 @datamodel
+class CountTermination:
+    """Count termination data."""
+
+    type: Literal["count"] = "count"
+    """Type of the termination."""
+
+    count: int
+    """Number of instances of recurring event."""
+
+
+@datamodel
+class UntilTermination:
+    """Until termination data."""
+
+    type: Literal["until"] = "until"
+    """Type of the termination."""
+
+    until: datetime
+    """End datetime of the recurrence in UTC."""
+
+
+type Termination = CountTermination | UntilTermination
+
+
+@datamodel
 class WeekdayRule:
     """Day rule data."""
 
@@ -50,11 +76,8 @@ class Recurrence:
     frequency: Frequency
     """Frequency of the recurrence."""
 
-    until: datetime | None = None
-    """End datetime of the recurrence in UTC."""
-
-    count: int | None = None
-    """Number of occurrences of the recurrence."""
+    termination: Termination | None = None
+    """Termination of the recurrence."""
 
     interval: int | None = None
     """Interval of the recurrence."""
