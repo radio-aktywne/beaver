@@ -242,6 +242,27 @@ class EventUpdateInput(st.EventUpdateManyMutationInput, total=False):
     """Excluded instances of the event."""
 
 
+class EventSplitInput(TypedDict):
+    """Data to split an event."""
+
+    at: datetime
+    """Datetime in event timezone of the instance to split the event at."""
+
+    update: NotRequired[EventUpdateInput | None]
+    """Data to update the event after the split."""
+
+
+@datamodel
+class SplitResult:
+    """Result of splitting an event."""
+
+    before: Event
+    """Event before the split."""
+
+    after: Event
+    """Event after the split."""
+
+
 @datamodel
 class CountRequest:
     """Request to count events."""
@@ -350,6 +371,28 @@ class UpdateResponse:
 
     event: Event | None
     """Event that was updated."""
+
+
+@datamodel
+class SplitRequest:
+    """Request to split an event."""
+
+    data: EventSplitInput
+    """Data to split an event."""
+
+    where: EventWhereUniqueInput
+    """Unique filter to apply to find an event."""
+
+    include: EventInclude | None
+    """Relations to include in the response."""
+
+
+@datamodel
+class SplitResponse:
+    """Response for splitting an event."""
+
+    result: SplitResult | None
+    """Result of splitting the event."""
 
 
 @datamodel

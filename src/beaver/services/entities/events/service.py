@@ -1,5 +1,7 @@
 from collections.abc import Generator, Sequence
 from contextlib import contextmanager
+from dataclasses import replace
+from datetime import UTC, datetime, timedelta
 from typing import cast
 from uuid import UUID
 
@@ -12,13 +14,22 @@ from beaver.services.data.sapphire import types as st
 from beaver.services.data.sapphire.service import SapphireService
 from beaver.services.entities.events import errors as e
 from beaver.services.entities.events import models as m
+from beaver.services.icalendar import errors as ie
+from beaver.services.icalendar import models as im
+from beaver.services.icalendar.service import ICalendarService
 
 
 class EventsService:
     """Service to manage events."""
 
-    def __init__(self, howlite: HowliteService, sapphire: SapphireService) -> None:
+    def __init__(
+        self,
+        howlite: HowliteService,
+        icalendar: ICalendarService,
+        sapphire: SapphireService,
+    ) -> None:
         self._howlite = howlite
+        self._icalendar = icalendar
         self._sapphire = sapphire
 
     @contextmanager
@@ -29,7 +40,7 @@ class EventsService:
             raise e.ConflictError from ex
         except se.DataError as ex:
             raise e.ValidationError from ex
-        except (he.ServiceError, se.ServiceError) as ex:
+        except (he.ServiceError, ie.ServiceError, se.ServiceError) as ex:
             raise e.ServiceError from ex
 
     async def _where_with_query(
@@ -306,6 +317,107 @@ class EventsService:
 
         return list(events)
 
+    def _list_event_instances(
+        self, event: m.Event, start: datetime, end: datetime, *, exceptions: bool
+    ) -> Sequence[im.Instance]:
+        ievent = im.Event(
+            id=UUID(event.id),
+            start=event.start,
+            duration=event.duration,
+            timezone=event.timezone,
+            recurrence=event.recurrence,
+            include=event.include if exceptions else None,
+            exclude=event.exclude if exceptions else None,
+        )
+
+        with self._handle_errors():
+            return self._icalendar.expander.expand(ievent, start, end)
+
+    def _find_event_instance(
+        self, event: m.Event, at: datetime, *, exceptions: bool
+    ) -> tuple[im.Instance, int] | None:
+        instances = self._list_event_instances(
+            event,
+            event.start.replace(tzinfo=event.timezone)
+            .astimezone(UTC)
+            .replace(tzinfo=None),
+            at.replace(tzinfo=event.timezone).astimezone(UTC).replace(tzinfo=None)
+            + event.duration,
+            exceptions=exceptions,
+        )
+
+        return next(((i, p) for p, i in enumerate(instances) if i.start == at), None)
+
+    def _create_split_event_create_input(
+        self,
+        event: m.Event,
+        recurrence: m.Recurrence,
+        instance: im.Instance,
+        position: int,
+        update: m.EventUpdateInput | None,
+    ) -> m.EventCreateInput:
+        update = update or {}
+
+        rec: m.Recurrence | None = recurrence
+
+        if rec.termination and rec.termination.type == "count":
+            rec = replace(
+                rec,
+                termination=m.CountTermination(count=rec.termination.count - position),
+            )
+
+        if "recurrence" in update:
+            if update["recurrence"] is not None:
+                rec = replace(rec, **update["recurrence"])
+            else:
+                rec = None
+
+        data: m.EventCreateInput = {
+            "showId": event.show_id,
+            "type": update.get("type", event.type),
+            "start": update.get("start", instance.start),
+            "duration": update.get("duration", event.duration),
+            "timezone": update.get("timezone", event.timezone),
+            "recurrence": rec,
+            "include": update.get(
+                "include",
+                {i for i in event.include if i.start >= instance.start}
+                if event.include is not None
+                else None,
+            ),
+            "exclude": update.get(
+                "exclude",
+                {e for e in event.exclude if e.start >= instance.start}
+                if event.exclude is not None
+                else None,
+            ),
+        }
+
+        if "id" in update:
+            data["id"] = update["id"]
+
+        return data
+
+    def _create_split_event_update_input(
+        self, event: m.Event, instance: im.Instance
+    ) -> m.EventUpdateInput:
+        return {
+            "recurrence": {
+                "termination": m.UntilTermination(
+                    until=instance.start.replace(tzinfo=event.timezone)
+                    .astimezone(UTC)
+                    .replace(tzinfo=None)
+                    - timedelta(seconds=1)
+                )
+            },
+            "include": {i for i in event.include if i.start < instance.start}
+            if event.include is not None
+            else None,
+            "exclude": {e for e in event.exclude if e.start < instance.start}
+            if event.exclude is not None
+            else None,
+        }
+
     async def count(self, request: m.CountRequest) -> m.CountResponse:
         """Count events."""
         where = request.where
@@ -391,6 +503,47 @@ class EventsService:
 
         event = await self._merge_event(nsevent, hevent)
         return m.UpdateResponse(event=event)
+
+    async def split(self, request: m.SplitRequest) -> m.SplitResponse:
+        """Split event."""
+        where = request.where
+        data = request.data
+        include = request.include
+
+        async with self._sapphire.tx() as transaction:
+            bsevent = await self._get_sapphire_event(transaction, where, include)
+
+            if bsevent is None:
+                return m.SplitResponse(result=None)
+
+            bhevent = await self._get_howlite_event(bsevent)
+            bevent = await self._merge_event(bsevent, bhevent)
+
+            if bevent.recurrence is None:
+                raise e.SplitOneTimeEventError
+
+            result = self._find_event_instance(bevent, data["at"], exceptions=False)
+
+            if result is None:
+                raise e.SplitInstanceMatchError(bevent.id, data["at"])
+
+            instance, position = result
+
+            if position == 0:
+                raise e.SplitFirstInstanceError(bevent.id, data["at"])
+
+            cdata = self._create_split_event_create_input(
+                bevent, bevent.recurrence, instance, position, data.get("update")
+            )
+            udata = self._create_split_event_update_input(bevent, instance)
+
+            asevent = await self._create_sapphire_event(transaction, cdata, include)
+            ahevent = await self._create_howlite_event(cdata, asevent)
+            bhevent = await self._update_howlite_event(udata, bsevent, bsevent)
+
+        bevent = await self._merge_event(bsevent, bhevent)
+        aevent = await self._merge_event(asevent, ahevent)
+        return m.SplitResponse(result=m.SplitResult(before=bevent, after=aevent))
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete event."""

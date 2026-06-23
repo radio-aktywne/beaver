@@ -156,6 +156,19 @@ class Service:
 
         return edata
 
+    def _map_event_split_input(self, data: m.EventSplitInput) -> em.EventSplitInput:
+        """Map event split input to internal representation."""
+        edata: em.EventSplitInput = {"at": data["at"]}
+
+        if "update" in data:
+            edata["update"] = (
+                self._map_event_update_input(data["update"])
+                if data["update"] is not None
+                else None
+            )
+
+        return edata
+
     async def list(self, request: m.ListRequest) -> m.ListResponse:
         """List events."""
         count_request = em.CountRequest(
@@ -227,6 +240,22 @@ class Service:
             raise e.NotFoundError
 
         return m.UpdateResponse(event=m.Event.map(update_response.event))
+
+    async def split(self, request: m.SplitRequest) -> m.SplitResponse:
+        """Split event."""
+        split_request = em.SplitRequest(
+            data=self._map_event_split_input(request.data),
+            where={"id": str(request.id)},
+            include=request.include,
+        )
+
+        with self._handle_errors():
+            split_response = await self._events.split(split_request)
+
+        if split_response.result is None:
+            raise e.NotFoundError
+
+        return m.SplitResponse(result=m.SplitResult.map(split_response.result))
 
     async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
         """Delete event."""

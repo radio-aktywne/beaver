@@ -17,6 +17,7 @@ from beaver.api.routes.events import models as m
 from beaver.api.routes.events.service import Service
 from beaver.models.base import Jsonable, Serializable
 from beaver.services.entities.events.service import EventsService
+from beaver.services.icalendar.service import ICalendarService
 from beaver.state import State
 
 
@@ -25,7 +26,11 @@ class DependenciesBuilder:
 
     async def _build_service(self, state: State) -> Service:
         return Service(
-            events=EventsService(howlite=state.howlite, sapphire=state.sapphire)
+            events=EventsService(
+                howlite=state.howlite,
+                icalendar=ICalendarService(),
+                sapphire=state.sapphire,
+            )
         )
 
     def build(self) -> Mapping[str, Provide]:
@@ -214,6 +219,51 @@ class Controller(BaseController):
             raise NotFoundException from ex
 
         return Response(Serializable(response.event))
+
+    @handlers.post(
+        "/{id:str}/split",
+        summary="Split event",
+        raises=[BadRequestException, NotFoundException, ConflictException],
+    )
+    async def split(
+        self,
+        service: Service,
+        id: Annotated[  # noqa: A002
+            Serializable[m.SplitRequestId],
+            Parameter(
+                description="Identifier of the event to split.",
+            ),
+        ],
+        data: Annotated[
+            Serializable[m.SplitRequestData],
+            Body(
+                description="Data to split an event.",
+            ),
+        ],
+        include: Annotated[
+            Jsonable[m.SplitRequestInclude] | None,
+            Parameter(
+                description="Relations to include in the response.",
+            ),
+        ] = None,
+    ) -> Response[Serializable[m.SplitResponseResult]]:
+        """Split an event by ID."""
+        request = m.SplitRequest(
+            data=data.root,
+            id=id.root,
+            include=include.root if include else None,
+        )
+
+        try:
+            response = await service.split(request)
+        except e.ConflictError as ex:
+            raise ConflictException from ex
+        except e.ValidationError as ex:
+            raise BadRequestException from ex
+        except e.NotFoundError as ex:
+            raise NotFoundException from ex
+
+        return Response(Serializable(response.result))
 
     @handlers.delete(
         "/{id:str}",
