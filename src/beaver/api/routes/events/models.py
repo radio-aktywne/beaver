@@ -435,6 +435,31 @@ class EventUpdateInput(em.EventUpdateInput, total=False):
     """Excluded instances of the event."""
 
 
+class EventSplitInput(TypedDict):
+    """Data to split an event."""
+
+    at: NaiveDatetime
+    """Datetime in event timezone of the instance to split the event at."""
+
+    update: NotRequired[EventUpdateInput | None]
+    """Data to update the event after the split."""
+
+
+class SplitResult(SerializableModel):
+    """Result of splitting an event."""
+
+    before: Event
+    """Event before the split."""
+
+    after: Event
+    """Event after the split."""
+
+    @classmethod
+    def map(cls, result: em.SplitResult) -> Self:
+        """Map from internal representation."""
+        return cls(before=Event.map(result.before), after=Event.map(result.after))
+
+
 type ListRequestLimit = int | None
 
 type ListRequestOffset = int | None
@@ -468,6 +493,14 @@ type UpdateRequestId = UUID
 type UpdateRequestInclude = em.EventInclude | None
 
 type UpdateResponseEvent = Event
+
+type SplitRequestData = EventSplitInput
+
+type SplitRequestId = UUID
+
+type SplitRequestInclude = em.EventInclude | None
+
+type SplitResponseResult = SplitResult
 
 type DeleteRequestId = UUID
 
@@ -561,6 +594,28 @@ class UpdateResponse:
 
     event: UpdateResponseEvent
     """Event that was updated."""
+
+
+@datamodel
+class SplitRequest:
+    """Request to split an event."""
+
+    data: SplitRequestData
+    """Data to split an event."""
+
+    id: SplitRequestId
+    """Identifier of the event to split."""
+
+    include: SplitRequestInclude
+    """Relations to include in the response."""
+
+
+@datamodel
+class SplitResponse:
+    """Response for splitting an event."""
+
+    result: SplitResponseResult
+    """Result of splitting the event."""
 
 
 @datamodel
