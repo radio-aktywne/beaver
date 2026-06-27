@@ -13,7 +13,7 @@ CREATE TABLE "shows" (
 CREATE TABLE "events" (
   "id" UUID NOT NULL,
   "type" "event_type" NOT NULL,
-  "show_id" UUID NOT NULL,
+  "show_id" UUID,
   CONSTRAINT "events_pkey" PRIMARY KEY ("id")
 );
 

@@ -46,10 +46,10 @@ model Event {
   /// Type of the event
   type   EventType @map("type")
   /// Identifier of the show the event belongs to
-  showId String    @map("show_id") @db.Uuid
+  showId String?   @map("show_id") @db.Uuid
 
   /// Show the event belongs to
-  show Show @relation(fields: [showId], references: [id], map: "show_id_fkey", onDelete: NoAction, onUpdate: NoAction)
+  show Show? @relation(fields: [showId], references: [id], map: "show_id_fkey", onDelete: NoAction, onUpdate: NoAction)
 
   @@map("events")
 }

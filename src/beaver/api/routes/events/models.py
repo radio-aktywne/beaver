@@ -251,8 +251,8 @@ class Event(SerializableModel):
     type: em.EventType
     """Type of the event."""
 
-    show_id: UUID
-    """Identifier of the show that the event belongs to."""
+    show_id: UUID | None
+    """Identifier of the show the event belongs to."""
 
     show: Show | None
     """Show that the event belongs to."""
@@ -281,7 +281,7 @@ class Event(SerializableModel):
         return cls(
             id=UUID(event.id),
             type=event.type,
-            show_id=UUID(event.show_id),
+            show_id=UUID(event.show_id) if event.show_id is not None else None,
             show=Show.map(event.show) if event.show is not None else None,
             start=event.start,
             duration=event.duration,
