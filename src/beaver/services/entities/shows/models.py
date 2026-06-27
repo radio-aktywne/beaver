@@ -41,8 +41,8 @@ class Event:
     type: EventType
     """Type of the event."""
 
-    show_id: str
-    """Identifier of the show."""
+    show_id: str | None
+    """Identifier of the show the event belongs to."""
 
     show: "Show | None"
     """Show the event belongs to."""
