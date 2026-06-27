@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from collections.abc import Mapping, Sequence
-from datetime import UTC
 from xml.etree import ElementTree as ET
 
 from beaver.services.data.howlite import models as m
@@ -72,13 +71,13 @@ class TimeRangeQueryBuilder(QueryBuilder):
         attrib = {}
 
         if self._query.start is not None:
-            start = self._query.start.replace(tzinfo=UTC)
+            start = self._query.start
             start = self._icalendar.parser.datetime_to_ical(start)
             start = start.to_ical().decode("utf-8")
             attrib["start"] = start
 
         if self._query.end is not None:
-            end = self._query.end.replace(tzinfo=UTC)
+            end = self._query.end
             end = self._icalendar.parser.datetime_to_ical(end)
             end = end.to_ical().decode("utf-8")
             attrib["end"] = end

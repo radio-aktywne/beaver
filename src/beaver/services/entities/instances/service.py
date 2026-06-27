@@ -171,12 +171,7 @@ class InstancesService:
         if event is None:
             return m.GetResponse(instance=None)
 
-        utcstart = (
-            where["start"]
-            .replace(tzinfo=event.timezone)
-            .astimezone(UTC)
-            .replace(tzinfo=None)
-        )
+        utcstart = where["start"].replace(tzinfo=event.timezone).astimezone(UTC)
         instances = self._list_event_instances(
             event, utcstart, utcstart + event.duration
         )
@@ -204,11 +199,7 @@ class InstancesService:
         if event is None:
             raise e.EventDoesNotExistError(data.event_id)
 
-        utcstart = (
-            data.start.replace(tzinfo=event.timezone)
-            .astimezone(UTC)
-            .replace(tzinfo=None)
-        )
+        utcstart = data.start.replace(tzinfo=event.timezone).astimezone(UTC)
         instances = self._list_event_instances(
             event, utcstart, utcstart + event.duration
         )
@@ -258,12 +249,7 @@ class InstancesService:
         if event is None:
             return m.UpdateResponse(instance=None)
 
-        utcstart = (
-            where["start"]
-            .replace(tzinfo=event.timezone)
-            .astimezone(UTC)
-            .replace(tzinfo=None)
-        )
+        utcstart = where["start"].replace(tzinfo=event.timezone).astimezone(UTC)
         instances = self._list_event_instances(
             event, utcstart, utcstart + event.duration
         )
@@ -275,12 +261,7 @@ class InstancesService:
         edata: em.EventUpdateInput = {}
 
         if "start" in data:
-            utcstart = (
-                data["start"]
-                .replace(tzinfo=event.timezone)
-                .astimezone(UTC)
-                .replace(tzinfo=None)
-            )
+            utcstart = data["start"].replace(tzinfo=event.timezone).astimezone(UTC)
             instances = self._list_event_instances(
                 event, utcstart, utcstart + event.duration
             )
@@ -335,12 +316,7 @@ class InstancesService:
         if event is None:
             return m.DeleteResponse(instance=None)
 
-        utcstart = (
-            where["start"]
-            .replace(tzinfo=event.timezone)
-            .astimezone(UTC)
-            .replace(tzinfo=None)
-        )
+        utcstart = where["start"].replace(tzinfo=event.timezone).astimezone(UTC)
         instances = self._list_event_instances(
             event, utcstart, utcstart + event.duration
         )

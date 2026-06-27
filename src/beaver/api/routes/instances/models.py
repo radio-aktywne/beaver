@@ -7,7 +7,7 @@ from pydantic import Field, PositiveInt
 
 from beaver.models.base import SerializableModel, datamodel
 from beaver.services.entities.instances import models as im
-from beaver.utils.time import NaiveDatetime, Timedelta, Timezone
+from beaver.utils.time import NaiveDatetime, Timedelta, Timezone, UTCDatetime
 
 type Second = Annotated[int, Field(ge=0, le=59)]
 
@@ -50,7 +50,7 @@ class UntilTermination(SerializableModel):
     """Type of the termination."""
 
     until: NaiveDatetime
-    """End datetime of the recurrence in UTC."""
+    """Last possible start datetime of an instance of the recurring event in event timezone."""
 
     @classmethod
     def map(cls, termination: im.UntilTermination) -> Self:
@@ -283,10 +283,10 @@ class Instance(SerializableModel):
 class InstanceList(SerializableModel):
     """List of instances."""
 
-    start: NaiveDatetime
+    start: UTCDatetime
     """Start datetime in UTC used to filter instances."""
 
-    end: NaiveDatetime
+    end: UTCDatetime
     """End datetime in UTC used to filter instances."""
 
     instances: Sequence[Instance]
@@ -314,9 +314,9 @@ class InstanceUpdateInput(im.InstanceUpdateInput, total=False):
     """Start datetime of the instance in event timezone."""
 
 
-type ListRequestStart = NaiveDatetime
+type ListRequestStart = UTCDatetime
 
-type ListRequestEnd = NaiveDatetime
+type ListRequestEnd = UTCDatetime
 
 type ListRequestWhere = im.InstanceWhereInput | None
 

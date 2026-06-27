@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 import recurring_ical_events
@@ -28,9 +28,6 @@ class EventExpander:
     ) -> Sequence[m.Instance]:
         """Expand the event into instances between start and end."""
         tz = event.timezone
-
-        start = start.replace(tzinfo=UTC)
-        end = end.replace(tzinfo=UTC)
 
         calendar = m.Calendar(events=[event])
         calendar = self._parser.calendar_to_ical(calendar)

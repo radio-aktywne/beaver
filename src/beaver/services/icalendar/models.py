@@ -52,7 +52,7 @@ class UntilTermination:
     """Type of the termination."""
 
     until: datetime
-    """End datetime of the recurrence in UTC."""
+    """Last possible start datetime of an instance of the recurring event in event timezone."""
 
 
 type Termination = CountTermination | UntilTermination
