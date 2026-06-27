@@ -52,7 +52,7 @@ type Timedelta = Annotated[
 ]
 
 
-def awareutcnow() -> AwareDatetime:
+def awareutcnow() -> UTCDatetime:
     """Return the current datetime in UTC with timezone information."""
     return datetime.now(UTC)
 
