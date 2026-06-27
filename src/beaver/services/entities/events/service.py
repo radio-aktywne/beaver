@@ -338,11 +338,8 @@ class EventsService:
     ) -> tuple[im.Instance, int] | None:
         instances = self._list_event_instances(
             event,
-            event.start.replace(tzinfo=event.timezone)
-            .astimezone(UTC)
-            .replace(tzinfo=None),
-            at.replace(tzinfo=event.timezone).astimezone(UTC).replace(tzinfo=None)
-            + event.duration,
+            event.start.replace(tzinfo=event.timezone).astimezone(UTC),
+            at.replace(tzinfo=event.timezone).astimezone(UTC) + event.duration,
             exceptions=exceptions,
         )
 
@@ -404,10 +401,7 @@ class EventsService:
         return {
             "recurrence": {
                 "termination": m.UntilTermination(
-                    until=instance.start.replace(tzinfo=event.timezone)
-                    .astimezone(UTC)
-                    .replace(tzinfo=None)
-                    - timedelta(seconds=1)
+                    until=instance.start - timedelta(seconds=1)
                 )
             },
             "include": {i for i in event.include if i.start < instance.start}

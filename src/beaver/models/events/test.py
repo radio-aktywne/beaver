@@ -5,7 +5,7 @@ from pydantic import Field
 from beaver.models.base import SerializableModel
 from beaver.models.events.enums import EventType
 from beaver.models.events.fields import CreatedAtField, DataField, TypeField
-from beaver.utils.time import naiveutcnow
+from beaver.utils.time import awareutcnow
 
 
 class TestEventData(SerializableModel):
@@ -19,5 +19,5 @@ class TestEvent(SerializableModel):
     """Event that is emitted for testing purposes."""
 
     type: TypeField[Literal[EventType.TEST]] = EventType.TEST
-    created_at: CreatedAtField = Field(default_factory=naiveutcnow)
+    created_at: CreatedAtField = Field(default_factory=awareutcnow)
     data: DataField[TestEventData]

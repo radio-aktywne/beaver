@@ -35,12 +35,10 @@ curl \
     --get \
     --request GET \
     --header "Content-Type: application/json" \
-    --data-urlencode "start=2024-01-01T00:00:00" \
-    --data-urlencode "end=2024-01-08T00:00:00" \
+    --data-urlencode "start=2000-01-01T00:00:00Z" \
+    --data-urlencode "end=2000-01-08T00:00:00Z" \
     http://localhost:10500/instances
 ```
-
-The start and end times should be in the UTC timezone.
 
 ## Ping
 

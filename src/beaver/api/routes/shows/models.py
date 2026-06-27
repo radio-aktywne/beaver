@@ -50,7 +50,7 @@ class UntilTermination(SerializableModel):
     """Type of the termination."""
 
     until: NaiveDatetime
-    """End datetime of the recurrence in UTC."""
+    """Last possible start datetime of an instance of the recurring event in event timezone."""
 
     @classmethod
     def map(cls, termination: sm.UntilTermination) -> Self:

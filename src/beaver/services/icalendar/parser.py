@@ -176,7 +176,9 @@ class ICalendarParser:
 
         return results
 
-    def recurrence_to_ical(self, rule: m.Recurrence) -> icalendar.vRecur:  # noqa: PLR0912, C901
+    def recurrence_to_ical(  # noqa: PLR0912, C901
+        self, rule: m.Recurrence, timezone: ZoneInfo
+    ) -> icalendar.vRecur:
         """Convert a Recurrence object to an icalendar.vRecur object."""
         parts = OrderedDict()
         parts["FREQ"] = self.frequency_to_ical(rule.frequency).to_ical().decode("utf-8")
@@ -184,16 +186,14 @@ class ICalendarParser:
         if rule.termination is not None:
             match rule.termination.type:
                 case "until":
-                    until = rule.termination.until.replace(tzinfo=UTC)
-                    parts["UNTIL"] = (
-                        self.datetime_to_ical(until).to_ical().decode("utf-8")
-                    )
+                    until = rule.termination.until.replace(tzinfo=timezone)
+                    until = until.astimezone(UTC)
+                    until = self.datetime_to_ical(until).to_ical().decode("utf-8")
+                    parts["UNTIL"] = until
                 case "count":
-                    parts["COUNT"] = (
-                        self.int_to_ical(rule.termination.count)
-                        .to_ical()
-                        .decode("utf-8")
-                    )
+                    count = rule.termination.count
+                    count = self.int_to_ical(count).to_ical().decode("utf-8")
+                    parts["COUNT"] = count
 
         if rule.interval is not None:
             parts["INTERVAL"] = (
@@ -281,7 +281,9 @@ class ICalendarParser:
 
         return icalendar.vRecur.from_ical(ical)
 
-    def ical_to_recurrence(self, vrecur: icalendar.vRecur) -> m.Recurrence:  # noqa: PLR0912, PLR0915, C901
+    def ical_to_recurrence(  # noqa: PLR0912, PLR0915, C901
+        self, vrecur: icalendar.vRecur, timezone: ZoneInfo
+    ) -> m.Recurrence:
         """Convert an icalendar.vRecur object to a Recurrence object."""
         frequency = self.ical_to_frequency(
             icalendar.vFrequency(next(iter(vrecur["FREQ"])))
@@ -292,7 +294,7 @@ class ICalendarParser:
         until = vrecur.get("UNTIL")
         if until is not None:
             until = self.ical_to_datetime(icalendar.vDatetime(next(iter(until))))
-            until = until.astimezone(UTC).replace(tzinfo=None)
+            until = until.astimezone(timezone).replace(tzinfo=None)
             termination = m.UntilTermination(until=until)
 
         count = vrecur.get("COUNT")
@@ -461,7 +463,11 @@ class ICalendarParser:
         ical.add("DURATION", self.timedelta_to_ical(duration), encode=False)
 
         if event.recurrence is not None:
-            ical.add("RRULE", self.recurrence_to_ical(event.recurrence), encode=False)
+            ical.add(
+                "RRULE",
+                self.recurrence_to_ical(event.recurrence, event.timezone),
+                encode=False,
+            )
 
         if event.include is not None:
             rdate = self.inclusions_to_ical(event.include, event.timezone)
@@ -498,7 +504,7 @@ class ICalendarParser:
         exdate = event.get("EXDATE")
         exdate = [exdate] if isinstance(exdate, icalendar.vDDDLists) else exdate
 
-        recurrence = self.ical_to_recurrence(rrule) if rrule else None
+        recurrence = self.ical_to_recurrence(rrule, tz) if rrule else None
         include = self.ical_to_inclusions(rdate, tz) if rdate else None
         exclude = self.ical_to_exclusions(exdate, tz) if exdate else None
 

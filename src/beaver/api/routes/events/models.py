@@ -7,7 +7,7 @@ from pydantic import Field, PositiveInt
 
 from beaver.models.base import SerializableModel, datamodel
 from beaver.services.entities.events import models as em
-from beaver.utils.time import NaiveDatetime, Timedelta, Timezone
+from beaver.utils.time import NaiveDatetime, Timedelta, Timezone, UTCDatetime
 
 type Second = Annotated[int, Field(ge=0, le=59)]
 
@@ -54,7 +54,7 @@ class UntilTermination(SerializableModel):
     """Type of the termination."""
 
     until: NaiveDatetime
-    """End datetime of the recurrence in UTC."""
+    """Last possible start datetime of an instance of the recurring event in event timezone."""
 
     @classmethod
     def imap(cls, termination: em.UntilTermination) -> Self:
@@ -320,10 +320,10 @@ class TimeRangeQuery(SerializableModel):
     type: Literal["time-range"] = "time-range"
     """Type of the query."""
 
-    start: NaiveDatetime | None = None
+    start: UTCDatetime | None = None
     """Beginning of the time range in UTC."""
 
-    end: NaiveDatetime | None = None
+    end: UTCDatetime | None = None
     """End of the time range in UTC."""
 
     def map(self) -> em.TimeRangeQuery:

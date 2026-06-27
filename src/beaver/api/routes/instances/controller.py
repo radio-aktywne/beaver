@@ -20,7 +20,7 @@ from beaver.services.entities.events.service import EventsService
 from beaver.services.entities.instances.service import InstancesService
 from beaver.services.icalendar.service import ICalendarService
 from beaver.state import State
-from beaver.utils.time import naiveutcnow
+from beaver.utils.time import awareutcnow
 
 
 class DependenciesBuilder:
@@ -90,8 +90,8 @@ class Controller(BaseController):
     ) -> Response[Serializable[m.ListResponseResults]]:
         """List instances."""
         request = m.ListRequest(
-            start=start.root if start else naiveutcnow(),
-            end=end.root if end else naiveutcnow(),
+            start=start.root if start else awareutcnow(),
+            end=end.root if end else awareutcnow(),
             where=where.root if where else None,
             include=include.root if include else None,
             order=order.root if order else {"start": "asc"},
