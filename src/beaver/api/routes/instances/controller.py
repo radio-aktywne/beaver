@@ -115,7 +115,7 @@ class Controller(BaseController):
         eventId: Annotated[  # noqa: N803
             Serializable[m.GetRequestEventId],
             Parameter(
-                description="Identifier of the event that the instance to get belongs to.",
+                description="Identifier of the event the instance to get belongs to.",
             ),
         ],
         start: Annotated[
@@ -193,7 +193,7 @@ class Controller(BaseController):
         eventId: Annotated[  # noqa: N803
             Serializable[m.UpdateRequestEventId],
             Parameter(
-                description="Identifier of the event that the instance to update belongs to.",
+                description="Identifier of the event the instance to update belongs to.",
             ),
         ],
         start: Annotated[
@@ -245,7 +245,7 @@ class Controller(BaseController):
         eventId: Annotated[  # noqa: N803
             Serializable[m.DeleteRequestEventId],
             Parameter(
-                description="Identifier of the event that the instance to delete belongs to.",
+                description="Identifier of the event the instance to delete belongs to.",
             ),
         ],
         start: Annotated[

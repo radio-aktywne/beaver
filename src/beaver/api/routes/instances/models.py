@@ -183,7 +183,7 @@ class Show(SerializableModel):
     """Description of the show."""
 
     events: Sequence["Event"] | None
-    """Events that the show belongs to."""
+    """Events the show belongs to."""
 
     @classmethod
     def map(cls, show: im.Show) -> Self:
@@ -211,7 +211,7 @@ class Event(SerializableModel):
     """Identifier of the show the event belongs to."""
 
     show: Show | None
-    """Show that the event belongs to."""
+    """Show the event belongs to."""
 
     start: NaiveDatetime
     """Start datetime of the event in event timezone."""
@@ -264,10 +264,10 @@ class Instance(SerializableModel):
     """Duration of the instance."""
 
     event_id: UUID
-    """Identifier of the event that the instance belongs to."""
+    """Identifier of the event the instance belongs to."""
 
     event: Event | None
-    """Event that the instance belongs to."""
+    """Event the instance belongs to."""
 
     @classmethod
     def map(cls, instance: im.Instance) -> Self:
@@ -300,7 +300,7 @@ class InstanceCreateInput(SerializableModel):
     """Start datetime of the instance in event timezone."""
 
     event_id: str
-    """Identifier of the event that the instance belongs to."""
+    """Identifier of the event the instance belongs to."""
 
     def map(self) -> im.InstanceCreateInput:
         """Map to internal representation."""
@@ -390,7 +390,7 @@ class GetRequest:
     """Request to get an instance."""
 
     event_id: GetRequestEventId
-    """Identifier of the event that the instance to get belongs to."""
+    """Identifier of the event the instance to get belongs to."""
 
     start: GetRequestStart
     """Start datetime of the instance to get in event timezone."""
@@ -434,7 +434,7 @@ class UpdateRequest:
     """Data to update an instance."""
 
     event_id: UpdateRequestEventId
-    """Identifier of the event that the instance to update belongs to."""
+    """Identifier of the event the instance to update belongs to."""
 
     start: UpdateRequestStart
     """Start datetime of the instance to update in event timezone."""
@@ -456,7 +456,7 @@ class DeleteRequest:
     """Request to delete an instance."""
 
     event_id: DeleteRequestEventId
-    """Identifier of the event that the instance to delete belongs to."""
+    """Identifier of the event the instance to delete belongs to."""
 
     start: DeleteRequestStart
     """Start datetime of the instance to delete in event timezone."""

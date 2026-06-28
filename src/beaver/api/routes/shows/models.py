@@ -183,7 +183,7 @@ class Event(SerializableModel):
     """Identifier of the show the event belongs to."""
 
     show: "Show | None"
-    """Show that the event belongs to."""
+    """Show the event belongs to."""
 
     start: NaiveDatetime
     """Start datetime of the event in event timezone."""
@@ -239,7 +239,7 @@ class Show(SerializableModel):
     """Description of the show."""
 
     events: Sequence[Event] | None
-    """Events that the show belongs to."""
+    """Events the show belongs to."""
 
     @classmethod
     def map(cls, show: sm.Show) -> Self:

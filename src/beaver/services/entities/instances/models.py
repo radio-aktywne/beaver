@@ -41,10 +41,10 @@ class Instance:
     """Duration of the instance."""
 
     event_id: str
-    """Identifier of the event that the instance belongs to."""
+    """Identifier of the event the instance belongs to."""
 
     event: Event | None
-    """Event that the instance belongs to."""
+    """Event the instance belongs to."""
 
 
 EventRelationFilter = TypedDict(
@@ -68,7 +68,7 @@ class InstanceWhereUniqueInput(TypedDict, total=True):
     """Instance unique arguments for searching."""
 
     event_id: str
-    """Identifier of the event that the instance belongs to."""
+    """Identifier of the event the instance belongs to."""
 
     start: datetime
     """Start datetime of the instance in event timezone."""
@@ -127,7 +127,7 @@ class InstanceCreateInput:
     """Start datetime of the instance in event timezone."""
 
     event_id: str
-    """Identifier of the event that the instance belongs to."""
+    """Identifier of the event the instance belongs to."""
 
 
 class InstanceUpdateInput(TypedDict, total=False):
