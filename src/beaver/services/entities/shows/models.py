@@ -1,14 +1,12 @@
-from collections.abc import Sequence
-from collections.abc import Set as AbstractSet
+from collections.abc import Sequence, Set as AbstractSet
 from datetime import datetime, timedelta
 from typing import Self
 from zoneinfo import ZoneInfo
 
 from beaver.models.base import datamodel
 from beaver.services.data.howlite import models as hm
-from beaver.services.data.sapphire import enums as se
-from beaver.services.data.sapphire import models as sm
-from beaver.services.data.sapphire import types as st
+from beaver.services.data.sapphire import enums as se, models as sm, types as st
+
 
 EventType = se.EventType
 
@@ -44,7 +42,7 @@ class Event:
     show_id: str | None
     """Identifier of the show the event belongs to."""
 
-    show: "Show | None"
+    show: Show | None
     """Show the event belongs to."""
 
     start: datetime
@@ -66,7 +64,7 @@ class Event:
     """Excluded instances of the event."""
 
     @classmethod
-    def map(cls, sevent: sm.Event, hevent: hm.Event, show: "Show | None") -> "Event":
+    def map(cls, sevent: sm.Event, hevent: hm.Event, show: Show | None) -> Event:
         """Map from internal representation."""
         return Event(
             id=sevent.id,

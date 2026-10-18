@@ -5,6 +5,7 @@ from uuid import UUID
 from beaver.models.base import datamodel
 from beaver.services.icalendar import models as im
 
+
 Frequency = im.Frequency
 
 Weekday = im.Weekday

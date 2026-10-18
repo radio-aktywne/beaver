@@ -3,15 +3,11 @@ from collections.abc import Generator, Sequence
 from contextlib import contextmanager
 from uuid import UUID
 
-from beaver.services.data.howlite import errors as he
-from beaver.services.data.howlite import models as hm
+from beaver.services.data.howlite import errors as he, models as hm
 from beaver.services.data.howlite.service import HowliteService
-from beaver.services.data.sapphire import errors as se
-from beaver.services.data.sapphire import models as sm
-from beaver.services.data.sapphire import types as st
+from beaver.services.data.sapphire import errors as se, models as sm, types as st
 from beaver.services.data.sapphire.service import SapphireService
-from beaver.services.entities.shows import errors as e
-from beaver.services.entities.shows import models as m
+from beaver.services.entities.shows import errors as e, models as m
 
 
 class ShowsService:

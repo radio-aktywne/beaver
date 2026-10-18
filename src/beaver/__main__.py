@@ -8,6 +8,7 @@ from beaver.console import FallbackConsoleBuilder
 from beaver.server import Server
 from beaver.services.data.sapphire.migrator import SapphireMigrator
 
+
 cli = CliBuilder().build()
 
 

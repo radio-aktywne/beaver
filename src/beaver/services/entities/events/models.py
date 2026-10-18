@@ -1,14 +1,12 @@
-from collections.abc import Sequence
-from collections.abc import Set as AbstractSet
+from collections.abc import Sequence, Set as AbstractSet
 from datetime import datetime, timedelta
 from typing import NotRequired, Self, TypedDict
 from zoneinfo import ZoneInfo
 
 from beaver.models.base import datamodel
 from beaver.services.data.howlite import models as hm
-from beaver.services.data.sapphire import enums as se
-from beaver.services.data.sapphire import models as sm
-from beaver.services.data.sapphire import types as st
+from beaver.services.data.sapphire import enums as se, models as sm, types as st
+
 
 EventType = se.EventType
 
@@ -44,11 +42,11 @@ class Show:
     description: str | None
     """Description of the show."""
 
-    events: Sequence["Event"] | None
+    events: Sequence[Event] | None
     """Events belonging to the show."""
 
     @classmethod
-    def map(cls, show: sm.Show, events: Sequence["Event"] | None) -> Self:
+    def map(cls, show: sm.Show, events: Sequence[Event] | None) -> Self:
         """Map from internal representation."""
         return cls(
             id=show.id, title=show.title, description=show.description, events=events
@@ -90,7 +88,7 @@ class Event:
     """Excluded instances of the event."""
 
     @classmethod
-    def map(cls, sevent: sm.Event, hevent: hm.Event, show: Show | None) -> "Event":
+    def map(cls, sevent: sm.Event, hevent: hm.Event, show: Show | None) -> Event:
         """Map from internal representation."""
         return Event(
             id=sevent.id,

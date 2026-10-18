@@ -16,7 +16,8 @@ class PartialUpdateInsufficientDataError(ValidationError):
 
     def __init__(self) -> None:
         super().__init__(
-            "Provided data is insufficient for a partial update in the current resource state."
+            "Provided data is insufficient for a partial update "
+            "in the current resource state."
         )
 
 
@@ -28,11 +29,12 @@ class SplitOneTimeEventError(ValidationError):
 
 
 class SplitInstanceMatchError(ValidationError):
-    """Raised when attempting to split an event at a time that does not match any recurring instance."""
+    """Raised when split does not match any recurring instance."""
 
     def __init__(self, event_id: str, at: datetime) -> None:
         super().__init__(
-            f"Cannot split event {event_id} at {isostringify(at)}, because it does not match any recurring instance of the event."
+            f"Cannot split event {event_id} at {isostringify(at)}, "
+            "because it does not match any recurring instance of the event."
         )
 
 
@@ -41,7 +43,8 @@ class SplitFirstInstanceError(ValidationError):
 
     def __init__(self, event_id: str, at: datetime) -> None:
         super().__init__(
-            f"Cannot split event {event_id} at {isostringify(at)}, because it is the first instance of the recurring event."
+            f"Cannot split event {event_id} at {isostringify(at)}, "
+            "because it is the first instance of the recurring event."
         )
 
 

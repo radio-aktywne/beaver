@@ -5,6 +5,7 @@ from typing import Literal, TypedDict
 from beaver.models.base import datamodel
 from beaver.services.entities.events import models as em
 
+
 EventType = em.EventType
 
 Show = em.Show

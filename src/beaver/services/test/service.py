@@ -2,8 +2,7 @@ from litestar.channels import ChannelsPlugin
 
 from beaver.models.events import test as ev
 from beaver.models.events.types import Event
-from beaver.services.test import errors as e
-from beaver.services.test import models as m
+from beaver.services.test import errors as e, models as m
 
 
 class TestService:

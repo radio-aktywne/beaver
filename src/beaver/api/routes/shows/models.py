@@ -1,5 +1,4 @@
-from collections.abc import Sequence
-from collections.abc import Set as AbstractSet
+from collections.abc import Sequence, Set as AbstractSet
 from typing import Annotated, Literal, Self
 from uuid import UUID
 
@@ -8,6 +7,7 @@ from pydantic import Field, PositiveInt
 from beaver.models.base import SerializableModel, datamodel
 from beaver.services.entities.shows import models as sm
 from beaver.utils.time import NaiveDatetime, Timedelta, Timezone
+
 
 type Second = Annotated[int, Field(ge=0, le=59)]
 
@@ -50,7 +50,7 @@ class UntilTermination(SerializableModel):
     """Type of the termination."""
 
     until: NaiveDatetime
-    """Last possible start datetime of an instance of the recurring event in event timezone."""
+    """Last possible start datetime of an instance in event timezone."""
 
     @classmethod
     def map(cls, termination: sm.UntilTermination) -> Self:
@@ -182,7 +182,7 @@ class Event(SerializableModel):
     show_id: UUID | None
     """Identifier of the show the event belongs to."""
 
-    show: "Show | None"
+    show: Show | None
     """Show the event belongs to."""
 
     start: NaiveDatetime

@@ -1,9 +1,8 @@
 from collections.abc import Mapping
 from typing import Annotated
 
-from litestar import Controller as BaseController
-from litestar import handlers
-from litestar.di import Provide
+from litestar import Controller as BaseController, handlers
+from litestar.di import NamedDependency, Provide
 from litestar.params import Body, Parameter
 from litestar.response import Response
 
@@ -12,8 +11,7 @@ from beaver.api.exceptions import (
     ConflictException,
     NotFoundException,
 )
-from beaver.api.routes.shows import errors as e
-from beaver.api.routes.shows import models as m
+from beaver.api.routes.shows import errors as e, models as m
 from beaver.api.routes.shows.service import Service
 from beaver.models.base import Jsonable, Serializable
 from beaver.services.entities.shows.service import ShowsService
@@ -44,9 +42,9 @@ class Controller(BaseController):
         summary="List shows",
         raises=[BadRequestException],
     )
-    async def list(  # noqa: PLR0913
+    async def list(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         limit: Annotated[
             Jsonable[m.ListRequestLimit] | None,
             Parameter(
@@ -101,7 +99,7 @@ class Controller(BaseController):
     )
     async def get(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         id: Annotated[  # noqa: A002
             Serializable[m.GetRequestId],
             Parameter(
@@ -133,7 +131,7 @@ class Controller(BaseController):
     )
     async def create(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         data: Annotated[
             Serializable[m.CreateRequestData],
             Body(
@@ -169,7 +167,7 @@ class Controller(BaseController):
     )
     async def update(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         id: Annotated[  # noqa: A002
             Serializable[m.UpdateRequestId],
             Parameter(
@@ -212,7 +210,7 @@ class Controller(BaseController):
     )
     async def delete(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         id: Annotated[  # noqa: A002
             Serializable[m.DeleteRequestId],
             Parameter(

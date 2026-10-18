@@ -1,5 +1,5 @@
-from prisma.errors import DataError, UniqueViolationError
-from prisma.errors import PrismaError as ServiceError
+from prisma.errors import DataError, PrismaError as ServiceError, UniqueViolationError
+
 
 __all__ = [
     "DataError",

@@ -9,6 +9,7 @@ from litestar.plugins import PluginProtocol
 
 from beaver.api.lifespans import (
     SapphireLifespan,
+    SuppressHTTPX2LoggingLifespan,
     SuppressHTTPXLoggingLifespan,
     TestLifespan,
 )
@@ -38,6 +39,7 @@ class AppBuilder:
         return [
             TestLifespan,
             SuppressHTTPXLoggingLifespan,
+            SuppressHTTPX2LoggingLifespan,
             SapphireLifespan,
         ]
 

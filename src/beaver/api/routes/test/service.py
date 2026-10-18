@@ -1,10 +1,8 @@
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from beaver.api.routes.test import errors as e
-from beaver.api.routes.test import models as m
-from beaver.services.test import errors as te
-from beaver.services.test import models as tm
+from beaver.api.routes.test import errors as e, models as m
+from beaver.services.test import errors as te, models as tm
 from beaver.services.test.service import TestService
 
 
