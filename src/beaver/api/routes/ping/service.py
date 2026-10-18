@@ -1,10 +1,8 @@
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from beaver.api.routes.ping import errors as e
-from beaver.api.routes.ping import models as m
-from beaver.services.ping import errors as pe
-from beaver.services.ping import models as pm
+from beaver.api.routes.ping import errors as e, models as m
+from beaver.services.ping import errors as pe, models as pm
 from beaver.services.ping.service import PingService
 
 

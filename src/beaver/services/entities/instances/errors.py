@@ -27,5 +27,6 @@ class InstanceAlreadyExistsError(ConflictError):
 
     def __init__(self, event_id: str, start: datetime) -> None:
         super().__init__(
-            f"Instance with start {isostringify(start)} already exists for event {event_id}."
+            f"Instance with start {isostringify(start)} "
+            f"already exists for event {event_id}."
         )

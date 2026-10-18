@@ -1,9 +1,8 @@
 from collections.abc import Mapping
 from typing import Annotated
 
-from litestar import Controller as BaseController
-from litestar import handlers
-from litestar.di import Provide
+from litestar import Controller as BaseController, handlers
+from litestar.di import NamedDependency, Provide
 from litestar.params import Body, Parameter
 from litestar.response import Response
 
@@ -12,8 +11,7 @@ from beaver.api.exceptions import (
     ConflictException,
     NotFoundException,
 )
-from beaver.api.routes.instances import errors as e
-from beaver.api.routes.instances import models as m
+from beaver.api.routes.instances import errors as e, models as m
 from beaver.api.routes.instances.service import Service
 from beaver.models.base import Jsonable, Serializable
 from beaver.services.entities.events.service import EventsService
@@ -54,13 +52,14 @@ class Controller(BaseController):
         summary="List instances",
         raises=[BadRequestException],
     )
-    async def list(  # noqa: PLR0913
+    async def list(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         start: Annotated[
             Jsonable[m.ListRequestStart] | None,
             Parameter(
-                description="Start datetime in UTC to filter instances. Default is now.",
+                description="Start datetime in UTC to filter instances. "
+                "Default is now.",
             ),
         ] = None,
         end: Annotated[
@@ -111,7 +110,7 @@ class Controller(BaseController):
     )
     async def get(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         eventId: Annotated[  # noqa: N803
             Serializable[m.GetRequestEventId],
             Parameter(
@@ -153,7 +152,7 @@ class Controller(BaseController):
     )
     async def create(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         data: Annotated[
             Serializable[m.CreateRequestData],
             Body(
@@ -189,17 +188,19 @@ class Controller(BaseController):
     )
     async def update(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         eventId: Annotated[  # noqa: N803
             Serializable[m.UpdateRequestEventId],
             Parameter(
-                description="Identifier of the event the instance to update belongs to.",
+                description="Identifier of the event "
+                "the instance to update belongs to.",
             ),
         ],
         start: Annotated[
             Serializable[m.UpdateRequestStart],
             Parameter(
-                description="Start datetime of the instance to update in event timezone.",
+                description="Start datetime of the instance to update "
+                "in event timezone.",
             ),
         ],
         data: Annotated[
@@ -241,17 +242,19 @@ class Controller(BaseController):
     )
     async def delete(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         eventId: Annotated[  # noqa: N803
             Serializable[m.DeleteRequestEventId],
             Parameter(
-                description="Identifier of the event the instance to delete belongs to.",
+                description="Identifier of the event "
+                "the instance to delete belongs to.",
             ),
         ],
         start: Annotated[
             Serializable[m.DeleteRequestStart],
             Parameter(
-                description="Start datetime of the instance to delete in event timezone.",
+                description="Start datetime of the instance to delete "
+                "in event timezone.",
             ),
         ],
     ) -> None:

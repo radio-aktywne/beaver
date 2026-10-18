@@ -1,17 +1,15 @@
 from collections import OrderedDict
-from collections.abc import Sequence
-from collections.abc import Set as AbstractSet
+from collections.abc import Sequence, Set as AbstractSet
 from datetime import UTC, date, datetime, timedelta
 from typing import cast
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
 import icalendar
-from icalendar.prop import WEEKDAY_RULE
+from icalendar.prop.recur.weekday import WEEKDAY_RULE
 from icalendar.timezone import tzid_from_dt, tzid_from_tzinfo
 
-from beaver.services.icalendar import errors as e
-from beaver.services.icalendar import models as m
+from beaver.services.icalendar import errors as e, models as m
 
 
 class ICalendarParser:
@@ -34,13 +32,13 @@ class ICalendarParser:
         return int(vint)
 
     def ints_to_ical(self, values: AbstractSet[int]) -> Sequence[icalendar.vInt]:
-        """Convert a set of ints to a sequence of icalendar.vInt objects."""
+        """Convert a set of ints to a sequence of icalendar.vInt."""
         return [self.int_to_ical(value) for value in values]
 
     def ical_to_ints(
         self, vints: icalendar.vInt | Sequence[icalendar.vInt]
     ) -> AbstractSet[int]:
-        """Convert a sequence of icalendar.vInt objects to a set of ints."""
+        """Convert a sequence of icalendar.vInt to a set of ints."""
         if isinstance(vints, icalendar.vInt):
             vints = [vints]
 
@@ -134,7 +132,7 @@ class ICalendarParser:
     def weekday_rules_to_ical(
         self, rules: AbstractSet[m.WeekdayRule]
     ) -> Sequence[icalendar.vWeekday]:
-        """Convert a set of WeekdayRule objects to a sequence of icalendar.vWeekday objects."""
+        """Convert a set of WeekdayRule to a sequence of icalendar.vWeekday."""
         results = []
 
         for rule in rules:
@@ -152,7 +150,7 @@ class ICalendarParser:
     def ical_to_weekday_rules(
         self, vweekdays: icalendar.vWeekday | Sequence[icalendar.vWeekday]
     ) -> AbstractSet[m.WeekdayRule]:
-        """Convert a sequence of icalendar.vWeekday objects to a set of WeekdayRule objects."""
+        """Convert a sequence of icalendar.vWeekday to a set of WeekdayRule."""
         if isinstance(vweekdays, icalendar.vWeekday):
             vweekdays = [vweekdays]
 
@@ -378,7 +376,7 @@ class ICalendarParser:
     def inclusions_to_ical(
         self, inclusions: AbstractSet[m.Inclusion], tz: ZoneInfo
     ) -> Sequence[icalendar.vDDDLists]:
-        """Convert a sequence of Inclusion objects to a sequence of icalendar.vDDDLists objects."""
+        """Convert a sequence of Inclusion to a sequence of icalendar.vDDDLists."""
         vdddlists = []
 
         for inclusion in inclusions:
@@ -394,7 +392,7 @@ class ICalendarParser:
     def ical_to_inclusions(
         self, vdddlists: Sequence[icalendar.vDDDLists], tz: ZoneInfo
     ) -> AbstractSet[m.Inclusion]:
-        """Convert a sequence of icalendar.vDDDLists objects to a sequence of Inclusion objects."""
+        """Convert a sequence of icalendar.vDDDLists to a sequence of Inclusion."""
         inclusions = set()
 
         for vdddlist in vdddlists:
@@ -415,7 +413,7 @@ class ICalendarParser:
     def exclusions_to_ical(
         self, exclusions: AbstractSet[m.Exclusion], tz: ZoneInfo
     ) -> Sequence[icalendar.vDDDLists]:
-        """Convert a sequence of Exclusion objects to a sequence of icalendar.vDDDLists objects."""
+        """Convert a sequence of Exclusion to a sequence of icalendar.vDDDLists."""
         vdddlists = []
 
         for exclusion in exclusions:
@@ -431,7 +429,7 @@ class ICalendarParser:
     def ical_to_exclusions(
         self, vdddlists: Sequence[icalendar.vDDDLists], tz: ZoneInfo
     ) -> AbstractSet[m.Exclusion]:
-        """Convert a sequence of icalendar.vDDDLists objects to a sequence of Exclusion objects."""
+        """Convert a sequence of icalendar.vDDDLists to a sequence of Exclusion."""
         exclusions = set()
 
         for vdddl in vdddlists:
@@ -481,7 +479,7 @@ class ICalendarParser:
 
     def ical_to_event(self, event: icalendar.Event) -> m.Event:
         """Convert an icalendar.Event object to an Event object."""
-        event_id = UUID(self.ical_to_string(event["UID"]))
+        event_id = UUID(event.uid)
 
         start = (
             event.start
@@ -530,16 +528,12 @@ class ICalendarParser:
 
     def ical_to_calendar(self, calendar: icalendar.Calendar) -> m.Calendar:
         """Convert an icalendar.Calendar object to a Calendar object."""
-        events = [
-            self.ical_to_event(event)
-            for event in calendar.walk(icalendar.Event.name)
-            if isinstance(event, icalendar.Event)
-        ]
+        events = [self.ical_to_event(event) for event in calendar.events]
         return m.Calendar(events=events)
 
     def string_to_calendar(self, value: str) -> m.Calendar:
         """Convert a string to a Calendar object."""
-        calendar = cast("icalendar.Calendar", icalendar.Calendar.from_ical(value))
+        calendar = cast(icalendar.Calendar, icalendar.Calendar.from_ical(value))
         return self.ical_to_calendar(calendar)
 
     def calendar_to_string(self, calendar: m.Calendar) -> str:

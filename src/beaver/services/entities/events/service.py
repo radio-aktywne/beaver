@@ -4,17 +4,12 @@ from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from beaver.services.data.howlite import errors as he
-from beaver.services.data.howlite import models as hm
+from beaver.services.data.howlite import errors as he, models as hm
 from beaver.services.data.howlite.service import HowliteService
-from beaver.services.data.sapphire import errors as se
-from beaver.services.data.sapphire import models as sm
-from beaver.services.data.sapphire import types as st
+from beaver.services.data.sapphire import errors as se, models as sm, types as st
 from beaver.services.data.sapphire.service import SapphireService
-from beaver.services.entities.events import errors as e
-from beaver.services.entities.events import models as m
-from beaver.services.icalendar import errors as ie
-from beaver.services.icalendar import models as im
+from beaver.services.entities.events import errors as e, models as m
+from beaver.services.icalendar import errors as ie, models as im
 from beaver.services.icalendar.service import ICalendarService
 
 
@@ -91,7 +86,7 @@ class EventsService:
 
         return m.Show.map(sshow, events)
 
-    async def _list_sapphire_events(  # noqa: PLR0913
+    async def _list_sapphire_events(
         self,
         transaction: SapphireService,
         limit: int | None,

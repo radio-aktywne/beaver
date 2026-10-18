@@ -1,10 +1,8 @@
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from beaver.api.routes.instances import errors as e
-from beaver.api.routes.instances import models as m
-from beaver.services.entities.instances import errors as ie
-from beaver.services.entities.instances import models as im
+from beaver.api.routes.instances import errors as e, models as m
+from beaver.services.entities.instances import errors as ie, models as im
 from beaver.services.entities.instances.service import InstancesService
 
 

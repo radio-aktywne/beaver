@@ -3,11 +3,10 @@ from http import HTTPMethod, HTTPStatus
 from typing import Any
 from xml.etree import ElementTree as ET
 
-from httpx import AsyncClient, BasicAuth, HTTPError, HTTPStatusError, Response
+from httpx2 import AsyncClient, BasicAuth, HTTPError, HTTPStatusError, Response
 
 from beaver.config.models import HowliteCalDAVConfig, HowliteConfig
-from beaver.services.data.howlite import errors as e
-from beaver.services.data.howlite import models as m
+from beaver.services.data.howlite import errors as e, models as m
 from beaver.services.data.howlite.queries import QueryBuilderFactory
 from beaver.services.icalendar.service import ICalendarService
 
@@ -18,7 +17,7 @@ class HowliteClient:
     def __init__(self, config: HowliteCalDAVConfig) -> None:
         self.config = config
 
-    async def request(  # noqa: PLR0913
+    async def request(
         self,
         method: str,
         path: str,

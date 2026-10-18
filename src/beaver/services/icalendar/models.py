@@ -1,5 +1,4 @@
-from collections.abc import Sequence
-from collections.abc import Set as AbstractSet
+from collections.abc import Sequence, Set as AbstractSet
 from datetime import datetime, timedelta
 from enum import StrEnum
 from typing import Literal
@@ -52,7 +51,7 @@ class UntilTermination:
     """Type of the termination."""
 
     until: datetime
-    """Last possible start datetime of an instance of the recurring event in event timezone."""
+    """Last possible start datetime of an instance in event timezone."""
 
 
 type Termination = CountTermination | UntilTermination

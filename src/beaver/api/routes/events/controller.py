@@ -1,10 +1,9 @@
 from collections.abc import Mapping
 from typing import Annotated
 
-from litestar import Controller as BaseController
-from litestar import handlers
-from litestar.di import Provide
-from litestar.params import Body, Parameter
+from litestar import Controller as BaseController, handlers
+from litestar.di import NamedDependency, Provide
+from litestar.params import Body, Parameter, QueryParameter
 from litestar.response import Response
 
 from beaver.api.exceptions import (
@@ -12,8 +11,7 @@ from beaver.api.exceptions import (
     ConflictException,
     NotFoundException,
 )
-from beaver.api.routes.events import errors as e
-from beaver.api.routes.events import models as m
+from beaver.api.routes.events import errors as e, models as m
 from beaver.api.routes.events.service import Service
 from beaver.models.base import Jsonable, Serializable
 from beaver.services.entities.events.service import EventsService
@@ -49,9 +47,9 @@ class Controller(BaseController):
         summary="List events",
         raises=[BadRequestException],
     )
-    async def list(  # noqa: PLR0913
+    async def list(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         limit: Annotated[
             Jsonable[m.ListRequestLimit] | None,
             Parameter(
@@ -72,9 +70,9 @@ class Controller(BaseController):
         ] = None,
         q: Annotated[
             Jsonable[m.ListRequestQuery] | None,
-            Parameter(
+            QueryParameter(
+                name="query",
                 description="Advanced query to apply to find events.",
-                query="query",
             ),
         ] = None,
         include: Annotated[
@@ -114,7 +112,7 @@ class Controller(BaseController):
     )
     async def get(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         id: Annotated[  # noqa: A002
             Serializable[m.GetRequestId],
             Parameter(
@@ -146,7 +144,7 @@ class Controller(BaseController):
     )
     async def create(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         data: Annotated[
             Serializable[m.CreateRequestData],
             Body(
@@ -182,7 +180,7 @@ class Controller(BaseController):
     )
     async def update(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         id: Annotated[  # noqa: A002
             Serializable[m.UpdateRequestId],
             Parameter(
@@ -227,7 +225,7 @@ class Controller(BaseController):
     )
     async def split(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         id: Annotated[  # noqa: A002
             Serializable[m.SplitRequestId],
             Parameter(
@@ -272,7 +270,7 @@ class Controller(BaseController):
     )
     async def delete(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         id: Annotated[  # noqa: A002
             Serializable[m.DeleteRequestId],
             Parameter(

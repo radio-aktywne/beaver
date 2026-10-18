@@ -1,29 +1,39 @@
 {
   inputs = {
-    nixpkgs = {
-      url = "github:NixOS/nixpkgs/nixos-25.05";
-    };
-
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
+    };
+
+    multiverse = {
+      url = "github:fzakaria/nixpkgs-multiverse";
+    };
+
+    nixpkgs = {
+      url = "github:NixOS/nixpkgs/nixos-26.05";
     };
   };
 
   outputs = inputs:
     inputs.flake-parts.lib.mkFlake {inherit inputs;} {
-      # Import local override if it exists
-      imports = [
-        (
-          if builtins.pathExists ./local.nix
-          then ./local.nix
-          else {}
-        )
-      ];
+      flake = {
+        overlays = {
+          default = final: prev: {
+            # Add multiverse as an attribute
+            multiverse = inputs.multiverse.lib.mkMultiverse {
+              config = {
+                # Allow packages with non-free licenses
+                allowUnfree = true;
+              };
+
+              system = final.stdenv.hostPlatform.system;
+            };
+          };
+        };
+      };
 
       # Sensible defaults
       systems = [
         "x86_64-linux"
-        "i686-linux"
         "aarch64-linux"
         "x86_64-darwin"
         "aarch64-darwin"
@@ -37,14 +47,16 @@
         ...
       }: let
         nix = pkgs.nix;
-        node = pkgs.nodejs;
-        python = pkgs.python313;
+        node = pkgs.nodejs_26;
+        python = pkgs.python314;
+        nh = pkgs.nh;
         nil = pkgs.nil;
         task = pkgs.go-task;
         coreutils = pkgs.coreutils;
         trunk = pkgs.trunk-io;
         uv = pkgs.uv;
         cacert = pkgs.cacert;
+        prisma-engines = pkgs.multiverse.versions.prisma-engines."5.21.0";
         openssl = pkgs.openssl;
         usql = pkgs.usql;
         tini = pkgs.tini;
@@ -53,14 +65,16 @@
         # Override pkgs argument
         _module.args.pkgs = import inputs.nixpkgs {
           inherit system;
+
           config = {
             # Allow packages with non-free licenses
             allowUnfree = true;
-            # Allow packages with broken dependencies
-            allowBroken = true;
-            # Allow packages with unsupported system
-            allowUnsupportedSystem = true;
           };
+
+          overlays = [
+            # Use default overlay
+            inputs.self.overlays.default
+          ];
         };
 
         # Set which formatter should be used
@@ -75,19 +89,24 @@
               nix
               node
               python
+              nh
               nil
               task
               coreutils
               trunk
               uv
               cacert
+              prisma-engines
               openssl
               usql
             ];
 
-            # Remove in the future: https://github.com/testcontainers/testcontainers-python/issues/874
-            PYTHONWARNINGS = "ignore::DeprecationWarning:testcontainers";
-
+            PKG_CONFIG_PATH = "${openssl.dev}/lib/pkgconfig";
+            PRISMA_FMT_BINARY = "${prisma-engines}/bin/prisma-fmt";
+            PRISMA_INTROSPECTION_ENGINE_BINARY = "${prisma-engines}/bin/introspection-engine";
+            PRISMA_QUERY_ENGINE_BINARY = "${prisma-engines}/bin/query-engine";
+            PRISMA_QUERY_ENGINE_LIBRARY = "${prisma-engines}/lib/libquery_engine.node";
+            PRISMA_SCHEMA_ENGINE_BINARY = "${prisma-engines}/bin/schema-engine";
             UV_PYTHON = python;
             UV_PYTHON_PREFERENCE = "only-system";
 
@@ -105,12 +124,18 @@
               python
               uv
               cacert
+              prisma-engines
               openssl
               tini
               su-exec
             ];
 
-            LD_LIBRARY_PATH = lib.makeLibraryPath [openssl];
+            PKG_CONFIG_PATH = "${openssl.dev}/lib/pkgconfig";
+            PRISMA_FMT_BINARY = "${prisma-engines}/bin/prisma-fmt";
+            PRISMA_INTROSPECTION_ENGINE_BINARY = "${prisma-engines}/bin/introspection-engine";
+            PRISMA_QUERY_ENGINE_BINARY = "${prisma-engines}/bin/query-engine";
+            PRISMA_QUERY_ENGINE_LIBRARY = "${prisma-engines}/lib/libquery_engine.node";
+            PRISMA_SCHEMA_ENGINE_BINARY = "${prisma-engines}/bin/schema-engine";
             UV_PYTHON = python;
             UV_PYTHON_PREFERENCE = "only-system";
 
@@ -131,8 +156,15 @@
               trunk
               uv
               cacert
+              prisma-engines
             ];
 
+            PKG_CONFIG_PATH = "${openssl.dev}/lib/pkgconfig";
+            PRISMA_FMT_BINARY = "${prisma-engines}/bin/prisma-fmt";
+            PRISMA_INTROSPECTION_ENGINE_BINARY = "${prisma-engines}/bin/introspection-engine";
+            PRISMA_QUERY_ENGINE_BINARY = "${prisma-engines}/bin/query-engine";
+            PRISMA_QUERY_ENGINE_LIBRARY = "${prisma-engines}/lib/libquery_engine.node";
+            PRISMA_SCHEMA_ENGINE_BINARY = "${prisma-engines}/bin/schema-engine";
             UV_PYTHON = python;
             UV_PYTHON_PREFERENCE = "only-system";
 
@@ -151,14 +183,16 @@
               coreutils
               uv
               cacert
+              prisma-engines
               openssl
             ];
 
-            LD_LIBRARY_PATH = lib.makeLibraryPath [openssl];
-
-            # Remove in the future: https://github.com/testcontainers/testcontainers-python/issues/874
-            PYTHONWARNINGS = "ignore::DeprecationWarning:testcontainers";
-
+            PKG_CONFIG_PATH = "${openssl.dev}/lib/pkgconfig";
+            PRISMA_FMT_BINARY = "${prisma-engines}/bin/prisma-fmt";
+            PRISMA_INTROSPECTION_ENGINE_BINARY = "${prisma-engines}/bin/introspection-engine";
+            PRISMA_QUERY_ENGINE_BINARY = "${prisma-engines}/bin/query-engine";
+            PRISMA_QUERY_ENGINE_LIBRARY = "${prisma-engines}/lib/libquery_engine.node";
+            PRISMA_SCHEMA_ENGINE_BINARY = "${prisma-engines}/bin/schema-engine";
             UV_PYTHON = python;
             UV_PYTHON_PREFERENCE = "only-system";
 

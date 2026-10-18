@@ -1,5 +1,4 @@
-from collections.abc import AsyncIterator
-from collections.abc import Set as AbstractSet
+from collections.abc import AsyncIterator, Set as AbstractSet
 
 from beaver.models.base import datamodel
 from beaver.models.events.enums import EventType

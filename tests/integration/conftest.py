@@ -2,7 +2,7 @@ from collections.abc import AsyncGenerator
 
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, BasicAuth
+from httpx2 import AsyncClient, BasicAuth
 from litestar import Litestar
 from litestar.testing import AsyncTestClient
 from prisma import Prisma
@@ -33,7 +33,7 @@ async def howlite() -> AsyncGenerator[AsyncDockerContainer]:
     """Build howlite container."""
 
     async def _check() -> None:
-        auth = BasicAuth(username="user", password="password")
+        auth = BasicAuth(username="user", password="password")  # noqa: S106
         client = AsyncClient(
             base_url="http://localhost:10520",
             auth=auth,

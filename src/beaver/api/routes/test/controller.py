@@ -1,16 +1,14 @@
 from collections.abc import Mapping
 from typing import Annotated
 
-from litestar import Controller as BaseController
-from litestar import handlers
+from litestar import Controller as BaseController, handlers
 from litestar.channels import ChannelsPlugin
-from litestar.di import Provide
+from litestar.di import NamedDependency, Provide
 from litestar.params import Parameter
 from litestar.response import Response
 
 from beaver.api.exceptions import BadRequestException
-from beaver.api.routes.test import errors as e
-from beaver.api.routes.test import models as m
+from beaver.api.routes.test import errors as e, models as m
 from beaver.api.routes.test.service import Service
 from beaver.models.base import Jsonable, Serializable
 from beaver.services.test.service import TestService
@@ -19,7 +17,9 @@ from beaver.services.test.service import TestService
 class DependenciesBuilder:
     """Builder for the dependencies of the controller."""
 
-    async def _build_service(self, channels: ChannelsPlugin) -> Service:
+    async def _build_service(
+        self, channels: NamedDependency[ChannelsPlugin]
+    ) -> Service:
         return Service(test=TestService(channels=channels))
 
     def build(self) -> Mapping[str, Provide]:
@@ -40,7 +40,7 @@ class Controller(BaseController):
     )
     async def test(
         self,
-        service: Service,
+        service: NamedDependency[Service],
         parameters: Annotated[
             Jsonable[m.TestRequestParameters] | None,
             Parameter(
