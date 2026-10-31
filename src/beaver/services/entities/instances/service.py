@@ -257,7 +257,7 @@ class InstancesService:
 
         edata: em.EventUpdateInput = {}
 
-        if "start" in data:
+        if "start" in data and data["start"] != instance.start:
             utcstart = data["start"].replace(tzinfo=event.timezone).astimezone(UTC)
             instances = self._list_event_instances(
                 event, utcstart, utcstart + event.duration
