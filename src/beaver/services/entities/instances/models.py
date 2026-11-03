@@ -3,32 +3,40 @@ from datetime import datetime, timedelta
 from typing import Literal, TypedDict
 
 from beaver.models.base import datamodel
-from beaver.services.entities.events import models as em
+from beaver.services.persistence.events import models as pm
 
 
-EventType = em.EventType
+EventType = pm.EventType
 
-Show = em.Show
+Show = pm.Show
 
-Frequency = em.Frequency
+Frequency = pm.Frequency
 
-Weekday = em.Weekday
+Weekday = pm.Weekday
 
-CountTermination = em.CountTermination
+CountTermination = pm.CountTermination
 
-UntilTermination = em.UntilTermination
+UntilTermination = pm.UntilTermination
 
-type Termination = em.Termination
+type Termination = pm.Termination
 
-WeekdayRule = em.WeekdayRule
+WeekdayRule = pm.WeekdayRule
 
-Recurrence = em.Recurrence
+Recurrence = pm.Recurrence
 
-Inclusion = em.Inclusion
+Inclusion = pm.Inclusion
 
-Exclusion = em.Exclusion
+Exclusion = pm.Exclusion
 
-Event = em.Event
+Event = pm.Event
+
+EventWhereInput = pm.EventWhereInput
+
+EventWhereUniqueInput = pm.EventWhereUniqueInput
+
+EventInclude = pm.EventInclude
+
+TimeRangeQuery = pm.TimeRangeQuery
 
 
 @datamodel
@@ -51,8 +59,8 @@ class Instance:
 EventRelationFilter = TypedDict(
     "EventRelationFilter",
     {
-        "is": em.EventWhereInput,
-        "is_not": em.EventWhereInput,
+        "is": EventWhereInput,
+        "is_not": EventWhereInput,
     },
     total=False,
 )
@@ -78,7 +86,7 @@ class InstanceWhereUniqueInput(TypedDict, total=True):
 class EventArgsFromInstance(TypedDict, total=False):
     """Event arguments to include when querying instances."""
 
-    include: em.EventInclude
+    include: EventInclude
     """Relations to include when querying events from instances."""
 
 

@@ -75,7 +75,6 @@ class Service:
     def _map_instance_update_input(
         self, data: m.InstanceUpdateInput
     ) -> im.InstanceUpdateInput:
-        """Map instance update input to internal representation."""
         idata: im.InstanceUpdateInput = {}
 
         if "start" in data:

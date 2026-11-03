@@ -1,4 +1,4 @@
-from collections.abc import Sequence
+from collections.abc import Sequence, Set as AbstractSet
 from datetime import datetime
 from uuid import UUID
 
@@ -81,6 +81,19 @@ class GetEventResponse:
 
     event: Event
     """Event data."""
+
+
+@datamodel
+class ListEventsRequest:
+    """Request to list event identifiers."""
+
+
+@datamodel
+class ListEventsResponse:
+    """Response for listing event identifiers."""
+
+    ids: AbstractSet[UUID]
+    """Identifiers of the events."""
 
 
 @datamodel

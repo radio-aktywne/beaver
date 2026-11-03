@@ -1,63 +1,23 @@
 from abc import ABC, abstractmethod
-from collections.abc import Mapping, Sequence
-from xml.etree import ElementTree as ET
+from typing import override
+
+from caldav.search import CalDAVSearcher
 
 from beaver.services.data.howlite import models as m
-from beaver.services.icalendar.service import ICalendarService
 
 
 class QueryBuilder(ABC):
-    """Base class for query builders."""
-
-    @property
-    def namespaces(self) -> Mapping[str, str]:
-        """Get XML namespaces."""
-        return {
-            "D": "DAV:",
-            "C": "urn:ietf:params:xml:ns:caldav",
-        }
-
-    def _build_prop(self) -> ET.Element:
-        data = ET.Element("C:calendar-data")
-
-        prop = ET.Element("D:prop")
-        prop.append(data)
-
-        return prop
+    """Base class for CalDAV query builders."""
 
     @abstractmethod
-    def _build_filters(self) -> Sequence[ET.Element]:
+    def _build_searcher(self) -> CalDAVSearcher:
         pass
 
-    def _build_filter_root(self) -> ET.Element:
-        queryfilters = self._build_filters()
-
-        eventfilter = ET.Element("C:comp-filter", name="VEVENT")
-        for queryfilter in queryfilters:
-            eventfilter.append(queryfilter)
-
-        calendarfilter = ET.Element("C:comp-filter", name="VCALENDAR")
-        calendarfilter.append(eventfilter)
-
-        root = ET.Element("C:filter")
-        root.append(calendarfilter)
-
-        return root
-
-    def build(self) -> ET.Element:
-        """Build the query."""
-        query = ET.Element(
-            "C:calendar-query",
-            attrib={f"xmlns:{key}": value for key, value in self.namespaces.items()},
-        )
-
-        prop = self._build_prop()
-        queryfilter = self._build_filter_root()
-
-        query.append(prop)
-        query.append(queryfilter)
-
-        return query
+    def build(self) -> str:
+        """Build the calendar-query REPORT body."""
+        searcher = self._build_searcher()
+        query, _ = searcher.build_search_xml_query()
+        return str(query)
 
 
 class TimeRangeQueryBuilder(QueryBuilder):
@@ -65,26 +25,18 @@ class TimeRangeQueryBuilder(QueryBuilder):
 
     def __init__(self, query: m.TimeRangeQuery) -> None:
         self._query = query
-        self._icalendar = ICalendarService()
 
-    def _build_filters(self) -> Sequence[ET.Element]:
-        attrib = {}
+    @override
+    def _build_searcher(self) -> CalDAVSearcher:
+        kwargs = {}
 
         if self._query.start is not None:
-            start = self._query.start
-            start = self._icalendar.parser.datetime_to_ical(start)
-            start = start.to_ical().decode("utf-8")
-            attrib["start"] = start
+            kwargs["start"] = self._query.start
 
         if self._query.end is not None:
-            end = self._query.end
-            end = self._icalendar.parser.datetime_to_ical(end)
-            end = end.to_ical().decode("utf-8")
-            attrib["end"] = end
+            kwargs["end"] = self._query.end
 
-        queryfilter = ET.Element("C:time-range", attrib=attrib)
-
-        return [queryfilter]
+        return CalDAVSearcher(event=True, expand=False, **kwargs)
 
 
 class RecurringQueryBuilder(QueryBuilder):
@@ -93,29 +45,24 @@ class RecurringQueryBuilder(QueryBuilder):
     def __init__(self, query: m.RecurringQuery) -> None:
         self._query = query
 
-    def _build_filters(self) -> Sequence[ET.Element]:
-        queryfilter = ET.Element("C:prop-filter", name="RRULE")
-
-        if not self._query.recurring:
-            queryfilter.append(ET.Element("C:is-not-defined"))
-        return [queryfilter]
+    @override
+    def _build_searcher(self) -> CalDAVSearcher:
+        searcher = CalDAVSearcher(event=True, expand=False)
+        searcher.add_property_filter(
+            "RRULE", None, operator="def" if self._query.recurring else "undef"
+        )
+        return searcher
 
 
 class QueryBuilderFactory:
     """Query builder factory."""
 
-    class QueryTypeError(TypeError):
-        """Query type error."""
-
-        def __init__(self, query: m.Query) -> None:
-            super().__init__(f"Unknown query type: {type(query)}.")
-
     def get(self, query: m.Query) -> QueryBuilder:
-        """Get a query builder."""
+        """Get a builder for the query."""
         if isinstance(query, m.TimeRangeQuery):
             return TimeRangeQueryBuilder(query)
 
         if isinstance(query, m.RecurringQuery):
             return RecurringQueryBuilder(query)
 
-        raise QueryBuilderFactory.QueryTypeError(query)
+        raise TypeError(type(query))

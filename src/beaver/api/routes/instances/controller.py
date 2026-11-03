@@ -14,7 +14,6 @@ from beaver.api.exceptions import (
 from beaver.api.routes.instances import errors as e, models as m
 from beaver.api.routes.instances.service import Service
 from beaver.models.base import Jsonable, Serializable
-from beaver.services.entities.events.service import EventsService
 from beaver.services.entities.instances.service import InstancesService
 from beaver.services.icalendar.service import ICalendarService
 from beaver.state import State
@@ -27,11 +26,7 @@ class DependenciesBuilder:
     async def _build_service(self, state: State) -> Service:
         return Service(
             instances=InstancesService(
-                events=EventsService(
-                    howlite=state.howlite,
-                    icalendar=ICalendarService(),
-                    sapphire=state.sapphire,
-                ),
+                coordination=state.coordination,
                 icalendar=ICalendarService(),
             )
         )

@@ -25,9 +25,8 @@ class DependenciesBuilder:
     async def _build_service(self, state: State) -> Service:
         return Service(
             events=EventsService(
-                howlite=state.howlite,
+                coordination=state.coordination,
                 icalendar=ICalendarService(),
-                sapphire=state.sapphire,
             )
         )
 

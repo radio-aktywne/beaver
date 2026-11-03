@@ -1,16 +1,16 @@
-from collections.abc import Generator, Sequence
-from contextlib import contextmanager
+from collections.abc import AsyncGenerator, Generator
+from contextlib import asynccontextmanager, contextmanager
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from beaver.services.data.howlite import errors as he, models as hm
-from beaver.services.data.howlite.service import HowliteService
-from beaver.services.data.sapphire import errors as se, models as sm, types as st
-from beaver.services.data.sapphire.service import SapphireService
+from beaver.services.consistency.coordination import errors as ce, models as cm
+from beaver.services.consistency.coordination.service import CoordinationService
 from beaver.services.entities.events import errors as e, models as m
 from beaver.services.icalendar import errors as ie, models as im
 from beaver.services.icalendar.service import ICalendarService
+from beaver.services.persistence.events import errors as pe
+from beaver.services.persistence.service import PersistenceService
 
 
 class EventsService:
@@ -18,327 +18,78 @@ class EventsService:
 
     def __init__(
         self,
-        howlite: HowliteService,
+        coordination: CoordinationService,
         icalendar: ICalendarService,
-        sapphire: SapphireService,
     ) -> None:
-        self._howlite = howlite
+        self._coordination = coordination
         self._icalendar = icalendar
-        self._sapphire = sapphire
 
     @contextmanager
     def _handle_errors(self) -> Generator[None]:
         try:
             yield
-        except se.UniqueViolationError as ex:
+        except pe.ConflictError as ex:
             raise e.ConflictError from ex
-        except se.DataError as ex:
+        except pe.PartialUpdateInsufficientDataError as ex:
+            raise e.PartialUpdateInsufficientDataError from ex
+        except (ie.ValidationError, pe.ValidationError) as ex:
             raise e.ValidationError from ex
-        except (he.ServiceError, ie.ServiceError, se.ServiceError) as ex:
+        except (ce.ServiceError, ie.ServiceError, pe.ServiceError) as ex:
             raise e.ServiceError from ex
 
-    async def _where_with_query(
-        self, where: m.EventWhereInput | None, query: m.Query | None
-    ) -> m.EventWhereInput | None:
-        if query is None:
-            return where
-
-        request = hm.QueryEventsRequest(query=query)
-
+    @asynccontextmanager
+    async def _transaction(
+        self, transaction: cm.Transaction | None = None
+    ) -> AsyncGenerator[cm.Transaction]:
         with self._handle_errors():
-            response = await self._howlite.query_events(request)
+            async with self._coordination.transaction(transaction) as active:
+                yield active
 
-        where = where.copy() if where is not None else {}
-        extra_where: m.EventWhereInput = {
-            "id": {
-                "in": [str(event.id) for event in response.events],
-            },
-        }
-
-        if "AND" in where:
-            where["AND"].append(extra_where)
-        else:
-            where["AND"] = [extra_where]
-
-        return where
-
-    async def _merge_event(self, sevent: sm.Event, hevent: hm.Event) -> m.Event:
-        if sevent.show is not None:
-            show = await self._map_show(sevent.show)
-        else:
-            show = None
-
-        return m.Event.map(sevent, hevent, show)
-
-    async def _map_event(self, sevent: sm.Event) -> m.Event:
-        request = hm.GetEventRequest(id=UUID(sevent.id))
-
-        with self._handle_errors():
-            response = await self._howlite.get_event(request)
-
-        return await self._merge_event(sevent, response.event)
-
-    async def _map_show(self, sshow: sm.Show) -> m.Show:
-        if sshow.events is not None:
-            events = [await self._map_event(event) for event in sshow.events]
-        else:
-            events = None
-
-        return m.Show.map(sshow, events)
-
-    async def _list_sapphire_events(
-        self,
-        transaction: SapphireService,
-        limit: int | None,
-        offset: int | None,
-        where: m.EventWhereInput | None,
-        include: m.EventInclude | None,
-        order: m.EventOrderByInput | Sequence[m.EventOrderByInput] | None,
-    ) -> Sequence[sm.Event]:
-        with self._handle_errors():
-            return await transaction.event.find_many(
-                take=limit,
-                skip=offset,
-                where=where,
-                include=include,
-                order=list(order) if isinstance(order, Sequence) else order,
-            )
-
-    async def _get_sapphire_event(
-        self,
-        transaction: SapphireService,
-        where: m.EventWhereUniqueInput,
-        include: m.EventInclude | None,
-    ) -> sm.Event | None:
-        with self._handle_errors():
-            return await transaction.event.find_unique(where=where, include=include)
-
-    async def _create_sapphire_event(
-        self,
-        transaction: SapphireService,
-        data: m.EventCreateInput,
-        include: m.EventInclude | None,
-    ) -> sm.Event:
-        d: st.EventCreateInput = {"type": data["type"]}
-        if "id" in data:
-            d["id"] = data["id"]
-        if "showId" in data:
-            d["showId"] = data["showId"]
-
-        with self._handle_errors():
-            return await transaction.event.create(data=d, include=include)
-
-    async def _update_sapphire_event(
-        self,
-        transaction: SapphireService,
-        data: m.EventUpdateInput,
-        where: m.EventWhereUniqueInput,
-        include: m.EventInclude | None,
-    ) -> sm.Event | None:
-        d: st.EventUpdateInput = {}
-        if "id" in data:
-            d["id"] = data["id"]
-        if "type" in data:
-            d["type"] = data["type"]
-
-        with self._handle_errors():
-            return await transaction.event.update(data=d, where=where, include=include)
-
-    async def _delete_sapphire_event(
-        self,
-        transaction: SapphireService,
-        where: m.EventWhereUniqueInput,
-        include: m.EventInclude | None,
-    ) -> sm.Event | None:
-        with self._handle_errors():
-            return await transaction.event.delete(where=where, include=include)
-
-    async def _list_howlite_events(
-        self, sevents: Sequence[sm.Event]
-    ) -> Sequence[hm.Event]:
-        hevents = []
-
-        for sevent in sevents:
-            request = hm.GetEventRequest(id=UUID(sevent.id))
-
-            with self._handle_errors():
-                response = await self._howlite.get_event(request)
-
-            hevent = response.event
-            hevents.append(hevent)
-
-        return hevents
-
-    async def _get_howlite_event(self, sevent: sm.Event) -> hm.Event:
-        request = hm.GetEventRequest(id=UUID(sevent.id))
-
-        with self._handle_errors():
-            response = await self._howlite.get_event(request)
-
-        return response.event
-
-    async def _create_howlite_event(
-        self, data: m.EventCreateInput, sevent: sm.Event
-    ) -> hm.Event:
-        hevent = hm.Event(
-            id=UUID(sevent.id),
-            start=data["start"],
-            duration=data["duration"],
-            timezone=data["timezone"],
-            recurrence=data.get("recurrence"),
-            include=data.get("include"),
-            exclude=data.get("exclude"),
-        )
-        request = hm.UpsertEventRequest(event=hevent)
-
-        with self._handle_errors():
-            response = await self._howlite.upsert_event(request)
-
-        return response.event
-
-    async def _update_howlite_event(
-        self, data: m.EventUpdateInput, osevent: sm.Event, nsevent: sm.Event
-    ) -> hm.Event:
-        with self._handle_errors():
-            request = hm.GetEventRequest(id=UUID(osevent.id))
-            response = await self._howlite.get_event(request)
-            ohevent = response.event
-
-        ohrec = ohevent.recurrence
-
-        if "recurrence" not in data:
-            nhrec = ohrec
-        else:
-            rec = data["recurrence"]
-
-            if rec is None:
-                nhrec = None
-            elif ohrec is not None:
-                nhrec = hm.Recurrence(
-                    frequency=rec.get("frequency", ohrec.frequency),
-                    termination=rec.get("termination", ohrec.termination),
-                    interval=rec.get("interval", ohrec.interval),
-                    by_seconds=rec.get("by_seconds", ohrec.by_seconds),
-                    by_minutes=rec.get("by_minutes", ohrec.by_minutes),
-                    by_hours=rec.get("by_hours", ohrec.by_hours),
-                    by_weekdays=rec.get("by_weekdays", ohrec.by_weekdays),
-                    by_monthdays=rec.get("by_monthdays", ohrec.by_monthdays),
-                    by_yeardays=rec.get("by_yeardays", ohrec.by_yeardays),
-                    by_weeks=rec.get("by_weeks", ohrec.by_weeks),
-                    by_months=rec.get("by_months", ohrec.by_months),
-                    by_set_positions=rec.get(
-                        "by_set_positions", ohrec.by_set_positions
-                    ),
-                    week_start=rec.get("week_start", ohrec.week_start),
-                )
-            else:
-                if "frequency" not in rec:
-                    raise e.PartialUpdateInsufficientDataError
-
-                nhrec = hm.Recurrence(
-                    frequency=rec["frequency"],
-                    termination=rec.get("termination"),
-                    interval=rec.get("interval"),
-                    by_seconds=rec.get("by_seconds"),
-                    by_minutes=rec.get("by_minutes"),
-                    by_hours=rec.get("by_hours"),
-                    by_weekdays=rec.get("by_weekdays"),
-                    by_monthdays=rec.get("by_monthdays"),
-                    by_yeardays=rec.get("by_yeardays"),
-                    by_weeks=rec.get("by_weeks"),
-                    by_months=rec.get("by_months"),
-                    by_set_positions=rec.get("by_set_positions"),
-                    week_start=rec.get("week_start"),
-                )
-
-        nhevent = hm.Event(
-            id=UUID(nsevent.id),
-            start=data.get("start", ohevent.start),
-            duration=data.get("duration", ohevent.duration),
-            timezone=data.get("timezone", ohevent.timezone),
-            recurrence=nhrec,
-            include=data.get("include", ohevent.include),
-            exclude=data.get("exclude", ohevent.exclude),
-        )
-
-        if ohevent.id != nhevent.id:
-            request = hm.DeleteEventRequest(id=ohevent.id)
-
-            with self._handle_errors():
-                await self._howlite.delete_event(request)
-
-        request = hm.UpsertEventRequest(event=nhevent)
-
-        with self._handle_errors():
-            response = await self._howlite.upsert_event(request)
-
-        return response.event
-
-    async def _delete_howlite_event(self, dsevent: sm.Event) -> hm.Event:
-        get_event_request = hm.GetEventRequest(id=UUID(dsevent.id))
-
-        with self._handle_errors():
-            get_event_response = await self._howlite.get_event(get_event_request)
-
-        hevent = get_event_response.event
-        delete_event_request = hm.DeleteEventRequest(id=hevent.id)
-
-        with self._handle_errors():
-            await self._howlite.delete_event(delete_event_request)
-
-        return hevent
-
-    def _list_event_instances(
-        self, event: m.Event, start: datetime, end: datetime, *, exceptions: bool
-    ) -> Sequence[im.Instance]:
-        ievent = im.Event(
+    def _recurrence_event(self, event: m.Event) -> im.Event:
+        return im.Event(
             id=UUID(event.id),
             start=event.start,
             duration=event.duration,
             timezone=event.timezone,
             recurrence=event.recurrence,
-            include=event.include if exceptions else None,
-            exclude=event.exclude if exceptions else None,
         )
 
-        with self._handle_errors():
-            return self._icalendar.expander.expand(ievent, start, end)
-
-    def _find_event_instance(
-        self, event: m.Event, at: datetime, *, exceptions: bool
-    ) -> tuple[im.Instance, int] | None:
-        instances = self._list_event_instances(
-            event,
-            event.start.replace(tzinfo=event.timezone).astimezone(UTC),
-            at.replace(tzinfo=event.timezone).astimezone(UTC) + event.duration,
-            exceptions=exceptions,
+    def _find_split_instance(self, event: m.Event, at: datetime) -> im.Instance | None:
+        utc_at = at.replace(tzinfo=event.timezone).astimezone(UTC)
+        instances = self._icalendar.expander.expand(
+            self._recurrence_event(event), utc_at, utc_at
         )
 
-        return next(((i, p) for p, i in enumerate(instances) if i.start == at), None)
+        return next((instance for instance in instances if instance.start == at), None)
 
-    def _create_split_event_create_input(
+    def _split_create_data(
         self,
         event: m.Event,
         recurrence: m.Recurrence,
         instance: im.Instance,
-        position: int,
         update: m.EventUpdateInput | None,
     ) -> m.EventCreateInput:
         update = update or {}
-
         rec: m.Recurrence | None = recurrence
 
         if rec.termination and rec.termination.type == "count":
+            instances = self._icalendar.expander.expand(
+                self._recurrence_event(event),
+                event.start.replace(tzinfo=event.timezone).astimezone(UTC),
+                instance.start.replace(tzinfo=event.timezone).astimezone(UTC),
+            )
+            position = sum(item.start < instance.start for item in instances)
             rec = replace(
                 rec,
                 termination=m.CountTermination(count=rec.termination.count - position),
             )
 
         if "recurrence" in update:
-            if update["recurrence"] is not None:
-                rec = replace(rec, **update["recurrence"])
-            else:
-                rec = None
+            rec = (
+                replace(rec, **update["recurrence"])
+                if update["recurrence"] is not None
+                else None
+            )
 
         data: m.EventCreateInput = {
             "showId": event.show_id,
@@ -360,13 +111,12 @@ class EventsService:
                 else None,
             ),
         }
-
         if "id" in update:
             data["id"] = update["id"]
 
         return data
 
-    def _create_split_event_update_input(
+    def _split_update_data(
         self, event: m.Event, instance: im.Instance
     ) -> m.EventUpdateInput:
         return {
@@ -383,144 +133,118 @@ class EventsService:
             else None,
         }
 
-    async def count(self, request: m.CountRequest) -> m.CountResponse:
+    async def count(
+        self, request: m.CountRequest, *, transaction: cm.Transaction | None = None
+    ) -> m.CountResponse:
         """Count events."""
-        where = request.where
-        query = request.query
-
-        where = await self._where_with_query(where, query)
-
-        with self._handle_errors():
-            count = await self._sapphire.event.count(where=where)
+        async with self._transaction(transaction) as active:
+            persistence = PersistenceService(active)
+            count = await persistence.events.count(request.where, request.query)
 
         return m.CountResponse(count=count)
 
-    async def list(self, request: m.ListRequest) -> m.ListResponse:
+    async def list(
+        self, request: m.ListRequest, *, transaction: cm.Transaction | None = None
+    ) -> m.ListResponse:
         """List events."""
-        limit = request.limit
-        offset = request.offset
-        where = request.where
-        query = request.query
-        include = request.include
-        order = request.order
-
-        where = await self._where_with_query(where, query)
-
-        async with self._sapphire.tx() as transaction:
-            sevents = await self._list_sapphire_events(
-                transaction, limit, offset, where, include, order
+        async with self._transaction(transaction) as active:
+            persistence = PersistenceService(active)
+            events = await persistence.events.list(
+                where=request.where,
+                query=request.query,
+                include=request.include,
+                take=request.limit,
+                skip=request.offset,
+                order=request.order,
             )
-
-        hevents = await self._list_howlite_events(sevents)
-
-        events = [
-            await self._merge_event(dsevent, dtevent)
-            for dsevent, dtevent in zip(sevents, hevents, strict=True)
-        ]
 
         return m.ListResponse(events=events)
 
-    async def get(self, request: m.GetRequest) -> m.GetResponse:
+    async def get(
+        self, request: m.GetRequest, *, transaction: cm.Transaction | None = None
+    ) -> m.GetResponse:
         """Get event."""
-        where = request.where
-        include = request.include
-
-        async with self._sapphire.tx() as transaction:
-            sevent = await self._get_sapphire_event(transaction, where, include)
-
-        if sevent is None:
-            return m.GetResponse(event=None)
-
-        hevent = await self._get_howlite_event(sevent)
-        event = await self._merge_event(sevent, hevent)
+        async with self._transaction(transaction) as active:
+            persistence = PersistenceService(active)
+            event = await persistence.events.get(request.where, include=request.include)
 
         return m.GetResponse(event=event)
 
-    async def create(self, request: m.CreateRequest) -> m.CreateResponse:
+    async def create(
+        self, request: m.CreateRequest, *, transaction: cm.Transaction | None = None
+    ) -> m.CreateResponse:
         """Create event."""
-        data = request.data
-        include = request.include
+        async with self._transaction(transaction) as active:
+            persistence = PersistenceService(active)
+            event = await persistence.events.create(
+                request.data, include=request.include
+            )
 
-        async with self._sapphire.tx() as transaction:
-            sevent = await self._create_sapphire_event(transaction, data, include)
-            hevent = await self._create_howlite_event(data, sevent)
-
-        event = await self._merge_event(sevent, hevent)
         return m.CreateResponse(event=event)
 
-    async def update(self, request: m.UpdateRequest) -> m.UpdateResponse:
+    async def update(
+        self, request: m.UpdateRequest, *, transaction: cm.Transaction | None = None
+    ) -> m.UpdateResponse:
         """Update event."""
-        data = request.data
-        where = request.where
-        include = request.include
-
-        async with self._sapphire.tx() as transaction:
-            osevent = await self._get_sapphire_event(transaction, where, None)
-            nsevent = await self._update_sapphire_event(
-                transaction, data, where, include
+        async with self._transaction(transaction) as active:
+            persistence = PersistenceService(active)
+            event = await persistence.events.update(
+                request.data, where=request.where, include=request.include
             )
 
-            if osevent is None or nsevent is None:
-                return m.UpdateResponse(event=None)
-
-            hevent = await self._update_howlite_event(data, osevent, nsevent)
-
-        event = await self._merge_event(nsevent, hevent)
         return m.UpdateResponse(event=event)
 
-    async def split(self, request: m.SplitRequest) -> m.SplitResponse:
+    async def split(
+        self, request: m.SplitRequest, *, transaction: cm.Transaction | None = None
+    ) -> m.SplitResponse:
         """Split event."""
-        where = request.where
-        data = request.data
-        include = request.include
-
-        async with self._sapphire.tx() as transaction:
-            bsevent = await self._get_sapphire_event(transaction, where, include)
-
-            if bsevent is None:
+        async with self._transaction(transaction) as active:
+            persistence = PersistenceService(active)
+            event = await persistence.events.get(request.where)
+            if event is None:
                 return m.SplitResponse(result=None)
 
-            bhevent = await self._get_howlite_event(bsevent)
-            bevent = await self._merge_event(bsevent, bhevent)
-
-            if bevent.recurrence is None:
+            if event.recurrence is None:
                 raise e.SplitOneTimeEventError
 
-            result = self._find_event_instance(bevent, data["at"], exceptions=False)
+            instance = self._find_split_instance(event, request.data["at"])
+            if instance is None:
+                raise e.SplitInstanceMatchError(event.id, request.data["at"])
+            if instance.start == event.start:
+                raise e.SplitFirstInstanceError(event.id, request.data["at"])
 
-            if result is None:
-                raise e.SplitInstanceMatchError(bevent.id, data["at"])
-
-            instance, position = result
-
-            if position == 0:
-                raise e.SplitFirstInstanceError(bevent.id, data["at"])
-
-            cdata = self._create_split_event_create_input(
-                bevent, bevent.recurrence, instance, position, data.get("update")
+            cdata = self._split_create_data(
+                event, event.recurrence, instance, request.data.get("update")
             )
-            udata = self._create_split_event_update_input(bevent, instance)
+            udata = self._split_update_data(event, instance)
+            after = await persistence.events.create(cdata)
+            if await persistence.events.update(udata, where={"id": event.id}) is None:
+                raise e.MissingSplitEventsError({event.id})
 
-            asevent = await self._create_sapphire_event(transaction, cdata, include)
-            ahevent = await self._create_howlite_event(cdata, asevent)
-            bhevent = await self._update_howlite_event(udata, bsevent, bsevent)
+            event_ids = {event.id, after.id}
+            events = await persistence.events.list(
+                where={"id": {"in": list(event_ids)}}, include=request.include
+            )
+            by_id = {item.id: item for item in events}
+            missing_ids = event_ids - by_id.keys()
+            if missing_ids:
+                raise e.MissingSplitEventsError(missing_ids)
 
-        bevent = await self._merge_event(bsevent, bhevent)
-        aevent = await self._merge_event(asevent, ahevent)
-        return m.SplitResponse(result=m.SplitResult(before=bevent, after=aevent))
+            result = m.SplitResult(
+                before=by_id[event.id],
+                after=by_id[after.id],
+            )
 
-    async def delete(self, request: m.DeleteRequest) -> m.DeleteResponse:
+        return m.SplitResponse(result=result)
+
+    async def delete(
+        self, request: m.DeleteRequest, *, transaction: cm.Transaction | None = None
+    ) -> m.DeleteResponse:
         """Delete event."""
-        where = request.where
-        include = request.include
+        async with self._transaction(transaction) as active:
+            persistence = PersistenceService(active)
+            event = await persistence.events.delete(
+                request.where, include=request.include
+            )
 
-        async with self._sapphire.tx() as transaction:
-            sevent = await self._delete_sapphire_event(transaction, where, include)
-
-            if sevent is None:
-                return m.DeleteResponse(event=None)
-
-            hevent = await self._delete_howlite_event(sevent)
-
-        event = await self._merge_event(sevent, hevent)
         return m.DeleteResponse(event=event)

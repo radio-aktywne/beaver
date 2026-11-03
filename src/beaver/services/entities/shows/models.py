@@ -1,132 +1,56 @@
-from collections.abc import Sequence, Set as AbstractSet
-from datetime import datetime, timedelta
-from typing import Self
-from zoneinfo import ZoneInfo
+from collections.abc import Sequence
 
 from beaver.models.base import datamodel
-from beaver.services.data.howlite import models as hm
-from beaver.services.data.sapphire import enums as se, models as sm, types as st
+from beaver.services.persistence.shows import models as pm
 
 
-EventType = se.EventType
+EventType = pm.EventType
 
-Frequency = hm.Frequency
+Frequency = pm.Frequency
 
-Weekday = hm.Weekday
+Weekday = pm.Weekday
 
-CountTermination = hm.CountTermination
+CountTermination = pm.CountTermination
 
-UntilTermination = hm.UntilTermination
+UntilTermination = pm.UntilTermination
 
-type Termination = hm.Termination
+type Termination = pm.Termination
 
-WeekdayRule = hm.WeekdayRule
+WeekdayRule = pm.WeekdayRule
 
-Recurrence = hm.Recurrence
+Recurrence = pm.Recurrence
 
-Inclusion = hm.Inclusion
+Inclusion = pm.Inclusion
 
-Exclusion = hm.Exclusion
+Exclusion = pm.Exclusion
 
+Event = pm.Event
 
-@datamodel
-class Event:
-    """Event data."""
+Show = pm.Show
 
-    id: str
-    """Identifier of the event."""
+ShowWhereInput = pm.ShowWhereInput
 
-    type: EventType
-    """Type of the event."""
+ShowInclude = pm.ShowInclude
 
-    show_id: str | None
-    """Identifier of the show the event belongs to."""
+ShowWhereUniqueIdInput = pm.ShowWhereUniqueIdInput
 
-    show: Show | None
-    """Show the event belongs to."""
-
-    start: datetime
-    """Start datetime of the event in event timezone."""
-
-    duration: timedelta
-    """Duration of the event."""
-
-    timezone: ZoneInfo
-    """Timezone of the event."""
-
-    recurrence: Recurrence | None
-    """Recurrence rule of the event."""
-
-    include: AbstractSet[Inclusion] | None
-    """Included instances of the event."""
-
-    exclude: AbstractSet[Exclusion] | None
-    """Excluded instances of the event."""
-
-    @classmethod
-    def map(cls, sevent: sm.Event, hevent: hm.Event, show: Show | None) -> Event:
-        """Map from internal representation."""
-        return Event(
-            id=sevent.id,
-            type=sevent.type,
-            show_id=sevent.showId,
-            show=show,
-            start=hevent.start,
-            duration=hevent.duration,
-            timezone=hevent.timezone,
-            recurrence=hevent.recurrence,
-            include=hevent.include,
-            exclude=hevent.exclude,
-        )
-
-
-@datamodel
-class Show:
-    """Show data."""
-
-    id: str
-    """Identifier of the show."""
-
-    title: str
-    """Title of the show."""
-
-    description: str | None
-    """Description of the show."""
-
-    events: Sequence[Event] | None
-    """Events belonging to the show."""
-
-    @classmethod
-    def map(cls, show: sm.Show, events: Sequence[Event] | None) -> Self:
-        """Map from internal representation."""
-        return cls(
-            id=show.id, title=show.title, description=show.description, events=events
-        )
-
-
-ShowWhereInput = st.ShowWhereInput
-
-ShowInclude = st.ShowInclude
-
-ShowWhereUniqueIdInput = st._ShowWhereUnique_id_Input  # noqa: SLF001
-
-ShowWhereUniqueTitleInput = st._ShowWhereUnique_title_Input  # noqa: SLF001
+ShowWhereUniqueTitleInput = pm.ShowWhereUniqueTitleInput
 
 type ShowWhereUniqueInput = ShowWhereUniqueIdInput | ShowWhereUniqueTitleInput
 
-ShowOrderByIdInput = st._Show_id_OrderByInput  # noqa: SLF001
+ShowOrderByIdInput = pm.ShowOrderByIdInput
 
-ShowOrderByTitleInput = st._Show_title_OrderByInput  # noqa: SLF001
+ShowOrderByTitleInput = pm.ShowOrderByTitleInput
 
-ShowOrderByDescriptionInput = st._Show_description_OrderByInput  # noqa: SLF001
+ShowOrderByDescriptionInput = pm.ShowOrderByDescriptionInput
 
 type ShowOrderByInput = (
     ShowOrderByIdInput | ShowOrderByTitleInput | ShowOrderByDescriptionInput
 )
 
-ShowCreateInput = st.ShowCreateWithoutRelationsInput
+ShowCreateInput = pm.ShowCreateInput
 
-ShowUpdateInput = st.ShowUpdateManyMutationInput
+ShowUpdateInput = pm.ShowUpdateInput
 
 
 @datamodel

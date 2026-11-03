@@ -7,6 +7,12 @@ title: Configuration
 
 You can configure the service at runtime using various environment variables:
 
+- `BEAVER__COORDINATION__GRACE` -
+  extra time for the database transaction to finish in seconds
+  (default: `10`)
+- `BEAVER__COORDINATION__TIMEOUT` -
+  time limit for a coordinated operation in seconds
+  (default: `60`)
 - `BEAVER__DEBUG` -
   enable debug mode
   (default: `true`)

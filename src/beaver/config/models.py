@@ -5,6 +5,16 @@ from pydantic import BaseModel, Field
 from beaver.config.base import BaseConfig
 
 
+class CoordinationConfig(BaseModel):
+    """Configuration for cross-store coordination."""
+
+    grace: float = Field(default=10, gt=0)
+    """Extra time for the database transaction to finish in seconds."""
+
+    timeout: float = Field(default=60, gt=0)
+    """Time limit for a coordinated operation in seconds."""
+
+
 class HowliteCalDAVConfig(BaseModel):
     """Configuration for the CalDAV API of the howlite database."""
 
@@ -89,6 +99,9 @@ class ServerConfig(BaseModel):
 
 class Config(BaseConfig):
     """Configuration for the service."""
+
+    coordination: CoordinationConfig = CoordinationConfig()
+    """Configuration for cross-store coordination."""
 
     debug: bool = True
     """Enable debug mode."""

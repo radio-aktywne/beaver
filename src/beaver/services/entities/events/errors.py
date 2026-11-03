@@ -1,3 +1,4 @@
+from collections.abc import Set as AbstractSet
 from datetime import datetime
 
 from beaver.utils.time import isostringify
@@ -5,6 +6,13 @@ from beaver.utils.time import isostringify
 
 class ServiceError(Exception):
     """Base class for service errors."""
+
+
+class MissingSplitEventsError(ServiceError):
+    """Raised when events disappear while applying a split."""
+
+    def __init__(self, event_ids: AbstractSet[str]) -> None:
+        super().__init__(f"Missing split events: {', '.join(sorted(event_ids))}.")
 
 
 class ValidationError(ServiceError):

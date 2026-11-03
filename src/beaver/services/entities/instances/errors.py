@@ -7,6 +7,16 @@ class ServiceError(Exception):
     """Base class for service errors."""
 
 
+class InstanceNotProducedError(ServiceError):
+    """Raised when an event update does not produce the requested instance."""
+
+    def __init__(self, event_id: str, start: datetime) -> None:
+        super().__init__(
+            f"Event update did not produce instance {isostringify(start)} "
+            f"for event {event_id}."
+        )
+
+
 class ValidationError(ServiceError):
     """Raised when a validation error occurs."""
 

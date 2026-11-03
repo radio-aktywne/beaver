@@ -144,6 +144,15 @@ class Event:
     timezone: ZoneInfo
     """Timezone of the event."""
 
+    summary: str | None = None
+    """Display title of the event."""
+
+    description: str | None = None
+    """Display description of the event."""
+
+    categories: AbstractSet[str] | None = None
+    """Categories of the event."""
+
     recurrence: Recurrence | None = None
     """Recurrence rule of the event."""
 
