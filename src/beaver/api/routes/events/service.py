@@ -24,7 +24,6 @@ class Service:
             raise e.ServiceError from ex
 
     def _map_event_create_input(self, data: m.EventCreateInput) -> em.EventCreateInput:
-        """Map event create input to internal representation."""
         edata: em.EventCreateInput = {
             "type": data["type"],
             "start": data["start"],
@@ -62,7 +61,6 @@ class Service:
     def _map_recurrence_update_input(  # noqa: C901, PLR0912
         self, data: m.RecurrenceUpdateInput
     ) -> em.RecurrenceUpdateInput:
-        """Map recurrence rule update input to internal representation."""
         edata: em.RecurrenceUpdateInput = {}
 
         if "frequency" in data:
@@ -113,7 +111,6 @@ class Service:
         return edata
 
     def _map_event_update_input(self, data: m.EventUpdateInput) -> em.EventUpdateInput:
-        """Map event update input to internal representation."""
         edata: em.EventUpdateInput = {}
 
         if "id" in data:
@@ -155,7 +152,6 @@ class Service:
         return edata
 
     def _map_event_split_input(self, data: m.EventSplitInput) -> em.EventSplitInput:
-        """Map event split input to internal representation."""
         edata: em.EventSplitInput = {"at": data["at"]}
 
         if "update" in data:

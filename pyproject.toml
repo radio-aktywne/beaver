@@ -5,8 +5,8 @@ classifiers = ["Private :: Do Not Upload"]
 
 requires-python = "~= 3.14.0"
 dependencies = [
-  # Async HTTP requests
-  "httpx2 ~= 2.13.0",
+  # CalDAV client
+  "caldav ~= 3.7.0",
   # iCalendar handling
   "icalendar ~= 7.3.0",
   # Main API framework
@@ -33,6 +33,8 @@ dependencies = [
 dev = [
   # Template management
   "copier ~= 9.15.0",
+  # Async HTTP requests
+  "httpx2 ~= 2.13.0",
   # Testing framework
   "pytest ~= 9.1.0",
   # Asyncio support for pytest

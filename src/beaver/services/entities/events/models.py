@@ -1,220 +1,64 @@
-from collections.abc import Sequence, Set as AbstractSet
-from datetime import datetime, timedelta
-from typing import NotRequired, Self, TypedDict
-from zoneinfo import ZoneInfo
+from collections.abc import Sequence
+from datetime import datetime
+from typing import NotRequired, TypedDict
 
 from beaver.models.base import datamodel
-from beaver.services.data.howlite import models as hm
-from beaver.services.data.sapphire import enums as se, models as sm, types as st
+from beaver.services.persistence.events import models as pm
 
 
-EventType = se.EventType
+EventType = pm.EventType
 
-Frequency = hm.Frequency
+Frequency = pm.Frequency
 
-Weekday = hm.Weekday
+Weekday = pm.Weekday
 
-CountTermination = hm.CountTermination
+CountTermination = pm.CountTermination
 
-UntilTermination = hm.UntilTermination
+UntilTermination = pm.UntilTermination
 
-type Termination = hm.Termination
+type Termination = pm.Termination
 
-WeekdayRule = hm.WeekdayRule
+WeekdayRule = pm.WeekdayRule
 
-Recurrence = hm.Recurrence
+Recurrence = pm.Recurrence
 
-Inclusion = hm.Inclusion
+Inclusion = pm.Inclusion
 
-Exclusion = hm.Exclusion
+Exclusion = pm.Exclusion
 
+Show = pm.Show
 
-@datamodel
-class Show:
-    """Show data."""
+Event = pm.Event
 
-    id: str
-    """Identifier of the show."""
+EventWhereInput = pm.EventWhereInput
 
-    title: str
-    """Title of the show."""
+EventInclude = pm.EventInclude
 
-    description: str | None
-    """Description of the show."""
-
-    events: Sequence[Event] | None
-    """Events belonging to the show."""
-
-    @classmethod
-    def map(cls, show: sm.Show, events: Sequence[Event] | None) -> Self:
-        """Map from internal representation."""
-        return cls(
-            id=show.id, title=show.title, description=show.description, events=events
-        )
-
-
-@datamodel
-class Event:
-    """Event data."""
-
-    id: str
-    """Identifier of the event."""
-
-    type: EventType
-    """Type of the event."""
-
-    show_id: str | None
-    """Identifier of the show the event belongs to."""
-
-    show: Show | None
-    """Show the event belongs to."""
-
-    start: datetime
-    """Start datetime of the event in event timezone."""
-
-    duration: timedelta
-    """Duration of the event."""
-
-    timezone: ZoneInfo
-    """Timezone of the event."""
-
-    recurrence: Recurrence | None
-    """Recurrence rule of the event."""
-
-    include: AbstractSet[Inclusion] | None
-    """Included instances of the event."""
-
-    exclude: AbstractSet[Exclusion] | None
-    """Excluded instances of the event."""
-
-    @classmethod
-    def map(cls, sevent: sm.Event, hevent: hm.Event, show: Show | None) -> Event:
-        """Map from internal representation."""
-        return Event(
-            id=sevent.id,
-            type=sevent.type,
-            show_id=sevent.showId,
-            show=show,
-            start=hevent.start,
-            duration=hevent.duration,
-            timezone=hevent.timezone,
-            recurrence=hevent.recurrence,
-            include=hevent.include,
-            exclude=hevent.exclude,
-        )
-
-
-EventWhereInput = st.EventWhereInput
-
-EventInclude = st.EventInclude
-
-EventWhereUniqueIdInput = st._EventWhereUnique_id_Input  # noqa: SLF001
+EventWhereUniqueIdInput = pm.EventWhereUniqueIdInput
 
 type EventWhereUniqueInput = EventWhereUniqueIdInput
 
-Query = hm.Query
+Query = pm.Query
 
-RecurringQuery = hm.RecurringQuery
+RecurringQuery = pm.RecurringQuery
 
-TimeRangeQuery = hm.TimeRangeQuery
+TimeRangeQuery = pm.TimeRangeQuery
 
-EventOrderByIdInput = st._Event_id_OrderByInput  # noqa: SLF001
+EventOrderByIdInput = pm.EventOrderByIdInput
 
-EventOrderByTypeInput = st._Event_type_OrderByInput  # noqa: SLF001
+EventOrderByTypeInput = pm.EventOrderByTypeInput
 
-EventOrderByShowIdInput = st._Event_showId_OrderByInput  # noqa: SLF001
-
+EventOrderByShowIdInput = pm.EventOrderByShowIdInput
 
 type EventOrderByInput = (
     EventOrderByIdInput | EventOrderByTypeInput | EventOrderByShowIdInput
 )
 
+EventCreateInput = pm.EventCreateInput
 
-class EventCreateInput(st.EventCreateWithoutRelationsInput):
-    """Data to create an event."""
+RecurrenceUpdateInput = pm.RecurrenceUpdateInput
 
-    start: datetime
-    """Start datetime of the event in event timezone."""
-
-    duration: timedelta
-    """Duration of the event."""
-
-    timezone: ZoneInfo
-    """Timezone of the event."""
-
-    recurrence: NotRequired[Recurrence | None]
-    """Recurrence rule of the event."""
-
-    include: NotRequired[AbstractSet[Inclusion] | None]
-    """Included instances of the event."""
-
-    exclude: NotRequired[AbstractSet[Exclusion] | None]
-    """Excluded instances of the event."""
-
-
-class RecurrenceUpdateInput(TypedDict, total=False):
-    """Data to update a recurrence rule."""
-
-    frequency: Frequency
-    """Frequency of the recurrence."""
-
-    termination: Termination | None
-    """Termination of the recurrence."""
-
-    interval: int | None
-    """Interval of the recurrence."""
-
-    by_seconds: AbstractSet[int] | None
-    """Seconds of the recurrence."""
-
-    by_minutes: AbstractSet[int] | None
-    """Minutes of the recurrence."""
-
-    by_hours: AbstractSet[int] | None
-    """Hours of the recurrence."""
-
-    by_weekdays: AbstractSet[WeekdayRule] | None
-    """Weekdays of the recurrence."""
-
-    by_monthdays: AbstractSet[int] | None
-    """Monthdays of the recurrence."""
-
-    by_yeardays: AbstractSet[int] | None
-    """Yeardays of the recurrence."""
-
-    by_weeks: AbstractSet[int] | None
-    """Weeks of the recurrence."""
-
-    by_months: AbstractSet[int] | None
-    """Months of the recurrence."""
-
-    by_set_positions: AbstractSet[int] | None
-    """Set positions of the recurrence."""
-
-    week_start: Weekday | None
-    """Start day of the week."""
-
-
-class EventUpdateInput(st.EventUpdateManyMutationInput, total=False):
-    """Data to update an event."""
-
-    start: datetime
-    """Start datetime of the event in event timezone."""
-
-    duration: timedelta
-    """Duration of the event."""
-
-    timezone: ZoneInfo
-    """Timezone of the event."""
-
-    recurrence: RecurrenceUpdateInput | None
-    """Recurrence rule of the event."""
-
-    include: AbstractSet[Inclusion] | None
-    """Included instances of the event."""
-
-    exclude: AbstractSet[Exclusion] | None
-    """Excluded instances of the event."""
+EventUpdateInput = pm.EventUpdateInput
 
 
 class EventSplitInput(TypedDict):

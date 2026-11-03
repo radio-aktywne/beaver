@@ -22,9 +22,7 @@ class DependenciesBuilder:
     """Builder for the dependencies of the controller."""
 
     async def _build_service(self, state: State) -> Service:
-        return Service(
-            shows=ShowsService(howlite=state.howlite, sapphire=state.sapphire)
-        )
+        return Service(shows=ShowsService(coordination=state.coordination))
 
     def build(self) -> Mapping[str, Provide]:
         """Build the dependencies."""

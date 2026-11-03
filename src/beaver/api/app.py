@@ -9,7 +9,6 @@ from litestar.plugins import PluginProtocol
 
 from beaver.api.lifespans import (
     SapphireLifespan,
-    SuppressHTTPX2LoggingLifespan,
     SuppressHTTPXLoggingLifespan,
     TestLifespan,
 )
@@ -17,6 +16,7 @@ from beaver.api.openapi import OpenAPIConfigBuilder
 from beaver.api.plugins.pydantic import PydanticPlugin
 from beaver.api.routes.router import router
 from beaver.config.models import Config
+from beaver.services.consistency.coordination.service import CoordinationService
 from beaver.services.data.howlite.service import HowliteService
 from beaver.services.data.sapphire.service import SapphireService
 from beaver.state import State
@@ -39,7 +39,6 @@ class AppBuilder:
         return [
             TestLifespan,
             SuppressHTTPXLoggingLifespan,
-            SuppressHTTPX2LoggingLifespan,
             SapphireLifespan,
         ]
 
@@ -53,13 +52,20 @@ class AppBuilder:
         ]
 
     def _build_initial_state(self) -> State:
+        howlite = HowliteService(config=self._config.howlite)
+        sapphire = SapphireService(datasource={"url": self._config.sapphire.sql.url})
+        coordination = CoordinationService(
+            config=self._config.coordination,
+            howlite=howlite,
+            sapphire=sapphire,
+        )
+
         return State(
             {
                 "config": self._config,
-                "howlite": HowliteService(config=self._config.howlite),
-                "sapphire": SapphireService(
-                    datasource={"url": self._config.sapphire.sql.url}
-                ),
+                "coordination": coordination,
+                "howlite": howlite,
+                "sapphire": sapphire,
             }
         )
 

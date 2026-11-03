@@ -1,6 +1,7 @@
 from litestar.datastructures import State as LitestarState
 
 from beaver.config.models import Config
+from beaver.services.consistency.coordination.service import CoordinationService
 from beaver.services.data.howlite.service import HowliteService
 from beaver.services.data.sapphire.service import SapphireService
 
@@ -10,6 +11,9 @@ class State(LitestarState):
 
     config: Config
     """Configuration for the service."""
+
+    coordination: CoordinationService
+    """Service for cross-store coordination."""
 
     howlite: HowliteService
     """Service for howlite database."""

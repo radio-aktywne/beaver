@@ -17,7 +17,7 @@ class ICalendarParser:
 
     def string_to_ical(self, value: str) -> icalendar.vText:
         """Convert a string to an icalendar.vText object."""
-        return icalendar.vText.from_ical(value)
+        return icalendar.vText(value)
 
     def ical_to_string(self, vtext: icalendar.vText) -> str:
         """Convert an icalendar.vText object to a string."""
@@ -66,6 +66,25 @@ class ICalendarParser:
     def timedelta_to_ical(self, td: timedelta) -> icalendar.vDuration:
         """Convert a timedelta to an icalendar.vDuration object."""
         return icalendar.vDuration(td)
+
+    def categories_to_ical(self, values: AbstractSet[str]) -> icalendar.vCategory:
+        """Convert categories to an icalendar.vCategory object."""
+        return icalendar.vCategory(
+            [self.string_to_ical(value) for value in sorted(values)]
+        )
+
+    def ical_to_categories(
+        self, vcategories: icalendar.vCategory | Sequence[icalendar.vCategory]
+    ) -> AbstractSet[str]:
+        """Convert icalendar.vCategory objects to categories."""
+        if isinstance(vcategories, icalendar.vCategory):
+            vcategories = [vcategories]
+
+        return {
+            self.ical_to_string(cast(icalendar.vText, value))
+            for category in vcategories
+            for value in category.cats
+        }
 
     def frequency_to_ical(self, frequency: m.Frequency) -> icalendar.vFrequency:
         """Convert a Frequency to an icalendar.vFrequency object."""
@@ -223,7 +242,7 @@ class ICalendarParser:
             )
 
         if rule.by_weekdays is not None:
-            parts["BYWEEKDAY"] = ",".join(
+            parts["BYDAY"] = ",".join(
                 [
                     weekday.to_ical().decode("utf-8")
                     for weekday in self.weekday_rules_to_ical(rule.by_weekdays)
@@ -460,6 +479,19 @@ class ICalendarParser:
         duration = event.duration
         ical.add("DURATION", self.timedelta_to_ical(duration), encode=False)
 
+        if event.summary is not None:
+            ical.add("SUMMARY", self.string_to_ical(event.summary), encode=False)
+
+        if event.description is not None:
+            ical.add(
+                "DESCRIPTION", self.string_to_ical(event.description), encode=False
+            )
+
+        if event.categories:
+            ical.add(
+                "CATEGORIES", self.categories_to_ical(event.categories), encode=False
+            )
+
         if event.recurrence is not None:
             ical.add(
                 "RRULE",
@@ -495,6 +527,19 @@ class ICalendarParser:
         duration = event.duration
         tz = ZoneInfo(tz)
 
+        summary = event.get("SUMMARY")
+        summary = self.ical_to_string(summary) if summary is not None else None
+
+        description = event.get("DESCRIPTION")
+        description = (
+            self.ical_to_string(description) if description is not None else None
+        )
+
+        categories = event.get("CATEGORIES")
+        categories = (
+            self.ical_to_categories(categories) if categories is not None else None
+        )
+
         rrule = event.get("RRULE")
         rdate = event.get("RDATE")
         rdate = [rdate] if isinstance(rdate, icalendar.vDDDLists) else rdate
@@ -511,6 +556,9 @@ class ICalendarParser:
             start=start,
             duration=duration,
             timezone=tz,
+            summary=summary,
+            description=description,
+            categories=categories,
             recurrence=recurrence,
             include=include,
             exclude=exclude,

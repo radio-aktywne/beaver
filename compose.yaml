@@ -4,6 +4,8 @@ services:
       context: ./
       network: host
     environment:
+      - "BEAVER__COORDINATION__GRACE=${BEAVER__COORDINATION__GRACE:-10}"
+      - "BEAVER__COORDINATION__TIMEOUT=${BEAVER__COORDINATION__TIMEOUT:-60}"
       - "BEAVER__DEBUG=${BEAVER__DEBUG:-true}"
       - "BEAVER__HOWLITE__CALDAV__CALENDAR=${BEAVER__HOWLITE__CALDAV__CALENDAR:-calendar}"
       - "BEAVER__HOWLITE__CALDAV__HOST=${BEAVER__HOWLITE__CALDAV__HOST:-localhost}"

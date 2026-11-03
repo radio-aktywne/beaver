@@ -1,116 +1,149 @@
-from collections.abc import Mapping
-from http import HTTPMethod, HTTPStatus
-from typing import Any
-from xml.etree import ElementTree as ET
+from collections.abc import AsyncGenerator, Awaitable
+from contextlib import asynccontextmanager
+from http import HTTPStatus
+from uuid import UUID
 
-from httpx2 import AsyncClient, BasicAuth, HTTPError, HTTPStatusError, Response
+from caldav import aio
+from caldav.elements import dav
+from caldav.lib import error as ce
 
-from beaver.config.models import HowliteCalDAVConfig, HowliteConfig
+from beaver.config.models import HowliteConfig
 from beaver.services.data.howlite import errors as e, models as m
 from beaver.services.data.howlite.queries import QueryBuilderFactory
+from beaver.services.icalendar import errors as ie
 from beaver.services.icalendar.service import ICalendarService
-
-
-class HowliteClient:
-    """Client for howlite API."""
-
-    def __init__(self, config: HowliteCalDAVConfig) -> None:
-        self.config = config
-
-    async def request(
-        self,
-        method: str,
-        path: str,
-        *,
-        content: str | bytes | None = None,
-        data: Any | None = None,
-        params: Mapping[str, str] | None = None,
-        headers: Mapping[str, str] | None = None,
-    ) -> Response:
-        """Make a request and return the response."""
-        try:
-            async with AsyncClient(
-                auth=BasicAuth(
-                    username=self.config.user,
-                    password=self.config.password,
-                ),
-                base_url=self.config.url,
-            ) as client:
-                return await client.request(
-                    method,
-                    path,
-                    content=content,
-                    json=data,
-                    params=params,
-                    headers=headers,
-                )
-        except HTTPError as ex:
-            raise e.ServiceError from ex
 
 
 class HowliteService:
     """Service for howlite API."""
 
     def __init__(self, config: HowliteConfig) -> None:
-        self.client = HowliteClient(config.caldav)
+        self.config = config
         self.icalendar = ICalendarService()
         self.query_builder_factory = QueryBuilderFactory()
+
+    @asynccontextmanager
+    async def _client(self) -> AsyncGenerator[aio.AsyncDAVClient]:
+        try:
+            async with aio.AsyncDAVClient(
+                url=self.config.caldav.url,
+                username=self.config.caldav.user,
+                password=self.config.caldav.password,
+                auth_type="basic",
+            ) as client:
+                yield client
+        except (ce.DAVError, ie.ServiceError, OSError, SyntaxError, ValueError) as ex:
+            raise e.ServiceError from ex
+
+    def _check_status(self, status: int, *, expected: set[HTTPStatus]) -> None:
+        match status:
+            case _ if status not in expected:
+                raise e.UnexpectedStatusError(status)
+            case HTTPStatus.NOT_FOUND:
+                raise e.NotFoundError
+
+    async def _request(
+        self,
+        request: Awaitable[aio.DAVResponse],
+        *,
+        expected: set[HTTPStatus],
+    ) -> aio.DAVResponse:
+        response = await request
+        self._check_status(response.status, expected=expected)
+
+        return response
 
     async def get_calendar(
         self, request: m.GetCalendarRequest
     ) -> m.GetCalendarResponse:
         """Get calendar."""
-        response = await self.client.request(HTTPMethod.GET, "/")
+        async with self._client() as client:
+            response = await self._request(
+                client.request(self.config.caldav.url),
+                expected={HTTPStatus.OK},
+            )
 
-        try:
-            response.raise_for_status()
-        except HTTPStatusError as ex:
-            if ex.response.status_code == HTTPStatus.NOT_FOUND:
-                raise e.NotFoundError from ex
-            raise e.ServiceError from ex
+            calendar = self.icalendar.parser.string_to_calendar(response.raw)
 
-        calendar = self.icalendar.parser.string_to_calendar(response.text)
         return m.GetCalendarResponse(calendar=calendar)
 
     async def get_event(self, request: m.GetEventRequest) -> m.GetEventResponse:
         """Get event."""
-        response = await self.client.request(HTTPMethod.GET, f"/{request.id}.ics")
+        async with self._client() as client:
+            response = await self._request(
+                client.request(f"{self.config.caldav.url}/{request.id}.ics"),
+                expected={HTTPStatus.OK, HTTPStatus.NOT_FOUND},
+            )
 
-        try:
-            response.raise_for_status()
-        except HTTPStatusError as ex:
-            if ex.response.status_code == HTTPStatus.NOT_FOUND:
-                raise e.NotFoundError from ex
-            raise e.ServiceError from ex
+            calendar = self.icalendar.parser.string_to_calendar(response.raw)
+            event = calendar.events[0]
 
-        calendar = self.icalendar.parser.string_to_calendar(response.text)
-        event = calendar.events[0]
         return m.GetEventResponse(event=event)
+
+    async def list_events(self, request: m.ListEventsRequest) -> m.ListEventsResponse:
+        """List event identifiers without downloading calendar data."""
+        async with self._client() as client:
+            response = await self._request(
+                client.propfind(
+                    self.config.caldav.url, depth=1, props=["resourcetype"]
+                ),
+                expected={HTTPStatus.OK, HTTPStatus.MULTI_STATUS},
+            )
+
+            resources = response.parse_propfind()
+            if not resources:
+                raise e.IncompleteCalendarListingError
+
+            ids = set()
+            for resource in resources:
+                self._check_status(resource.status, expected={HTTPStatus.OK})
+
+                if dav.ResourceType.tag not in resource.properties:
+                    raise e.MissingCalendarResourceTypeError
+
+                if dav.Collection.tag in (
+                    resource.properties[dav.ResourceType.tag] or []
+                ):
+                    continue
+
+                name = resource.href.rsplit("/", 1)[-1]
+                if name.endswith(".ics"):
+                    ids.add(UUID(name.removesuffix(".ics")))
+
+        return m.ListEventsResponse(ids=ids)
 
     async def query_events(
         self, request: m.QueryEventsRequest
     ) -> m.QueryEventsResponse:
         """Query events."""
-        builder = self.query_builder_factory.get(request.query)
-        query = builder.build()
-        content = ET.tostring(query).decode("utf-8")
+        async with self._client() as client:
+            try:
+                builder = self.query_builder_factory.get(request.query)
+            except TypeError as ex:
+                raise e.UnknownQueryTypeError(type(request.query)) from ex
 
-        response = await self.client.request(
-            "REPORT", "/", content=content, headers={"Content-Type": "application/xml"}
-        )
+            content = builder.build()
 
-        try:
-            response.raise_for_status()
-        except HTTPStatusError as ex:
-            raise e.ServiceError from ex
+            response = await self._request(
+                client.report(self.config.caldav.url, body=content, depth=1),
+                expected={HTTPStatus.OK, HTTPStatus.MULTI_STATUS},
+            )
 
-        root = ET.fromstring(response.text)  # noqa: S314
-        calendars = root.findall(
-            ".//C:calendar-data", namespaces=dict(builder.namespaces)
-        )
-        data = [calendar.text for calendar in calendars if calendar.text is not None]
-        calendars = [self.icalendar.parser.string_to_calendar(d) for d in data]
-        events = [event for calendar in calendars for event in calendar.events]
+            if response.tree is None:
+                raise e.MissingQueryResponseBodyError
+
+            events = []
+            for resource in response.parse_calendar_query():
+                self._check_status(resource.status, expected={HTTPStatus.OK})
+
+                if resource.calendar_data is None:
+                    raise e.MissingCalendarDataError
+
+                calendar = self.icalendar.parser.string_to_calendar(
+                    resource.calendar_data
+                )
+                events.extend(calendar.events)
+
         return m.QueryEventsResponse(events=events)
 
     async def upsert_event(
@@ -119,45 +152,31 @@ class HowliteService:
         """Upsert event."""
         calendar = m.Calendar(events=[request.event])
         content = self.icalendar.parser.calendar_to_string(calendar)
+        url = f"{self.config.caldav.url}/{request.event.id}.ics"
 
-        response = await self.client.request(
-            HTTPMethod.PUT,
-            f"/{request.event.id}.ics",
-            content=content,
-            headers={"Content-Type": "text/calendar"},
-        )
+        async with self._client() as client:
+            await self._request(
+                client.put(url, content, headers={"Content-Type": "text/calendar"}),
+                expected={HTTPStatus.CREATED, HTTPStatus.NO_CONTENT},
+            )
 
-        try:
-            response.raise_for_status()
-        except HTTPStatusError as ex:
-            if ex.response.status_code == HTTPStatus.NOT_FOUND:
-                raise e.NotFoundError from ex
-            raise e.ServiceError from ex
+            response = await self._request(
+                client.request(url), expected={HTTPStatus.OK}
+            )
 
-        response = await self.client.request(HTTPMethod.GET, f"/{request.event.id}.ics")
+            calendar = self.icalendar.parser.string_to_calendar(response.raw)
+            event = calendar.events[0]
 
-        try:
-            response.raise_for_status()
-        except HTTPStatusError as ex:
-            if ex.response.status_code == HTTPStatus.NOT_FOUND:
-                raise e.NotFoundError from ex
-            raise e.ServiceError from ex
-
-        calendar = self.icalendar.parser.string_to_calendar(response.text)
-        event = calendar.events[0]
         return m.UpsertEventResponse(event=event)
 
     async def delete_event(
         self, request: m.DeleteEventRequest
     ) -> m.DeleteEventResponse:
         """Delete event."""
-        response = await self.client.request(HTTPMethod.DELETE, f"/{request.id}.ics")
-
-        try:
-            response.raise_for_status()
-        except HTTPStatusError as ex:
-            if ex.response.status_code == HTTPStatus.NOT_FOUND:
-                raise e.NotFoundError from ex
-            raise e.ServiceError from ex
+        async with self._client() as client:
+            await self._request(
+                client.delete(f"{self.config.caldav.url}/{request.id}.ics"),
+                expected={HTTPStatus.OK, HTTPStatus.NO_CONTENT, HTTPStatus.NOT_FOUND},
+            )
 
         return m.DeleteEventResponse()
