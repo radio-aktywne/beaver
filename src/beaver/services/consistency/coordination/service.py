@@ -1,7 +1,6 @@
 import asyncio
 from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager, contextmanager
-from datetime import timedelta
 
 from beaver.config.models import CoordinationConfig
 from beaver.services.consistency.coordination import errors as e, models as m
@@ -48,12 +47,12 @@ class CoordinationService:
             yield transaction
             return
 
-        lifetime = timedelta(seconds=self._config.timeout + self._config.grace)
+        lifetime = self._config.timeout + self._config.grace
 
         with self._handle_errors():
             async with (
                 self._sapphire.tx(timeout=lifetime) as sapphire,
-                asyncio.timeout(self._config.timeout),
+                asyncio.timeout(self._config.timeout.total_seconds()),
             ):
                 transaction = m.Transaction(howlite=self._howlite, sapphire=sapphire)
 
