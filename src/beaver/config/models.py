@@ -1,18 +1,20 @@
 from collections.abc import Sequence
+from datetime import timedelta
 
 from pydantic import BaseModel, Field
 
 from beaver.config.base import BaseConfig
+from beaver.utils.time import Timedelta
 
 
 class CoordinationConfig(BaseModel):
     """Configuration for cross-store coordination."""
 
-    grace: float = Field(default=10, gt=0)
-    """Extra time for the database transaction to finish in seconds."""
+    grace: Timedelta = Field(default=timedelta(seconds=10), gt=timedelta())
+    """Extra time for the database transaction to finish."""
 
-    timeout: float = Field(default=60, gt=0)
-    """Time limit for a coordinated operation in seconds."""
+    timeout: Timedelta = Field(default=timedelta(seconds=60), gt=timedelta())
+    """Time limit for a coordinated operation."""
 
 
 class HowliteCalDAVConfig(BaseModel):
